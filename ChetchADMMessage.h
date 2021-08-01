@@ -79,6 +79,8 @@ namespace Chetch{
             ADMMessage(byte maxBytes);
             ~ADMMessage();
 
+            void clear();
+
             bool deserialize(byte* source, byte bCount);
 
             byte getByteCount();

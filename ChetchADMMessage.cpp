@@ -52,6 +52,21 @@ namespace Chetch{
         id = millis();
     }
 
+    void ADMMessage::clear(){
+        type = 0;
+        tag = 0;
+        target = 0;
+        command = 0;
+        sender = 0;
+
+        for(int i = 0; i < byteCount; i++)bytes[i] = 0;
+        for(int i = 0; i < argumentCount; i++)argumentIndices[i] = 0;
+
+        byteCount = ADMMessage::HEADER_SIZE;
+        argumentCount = 0;
+        newID();
+    }
+
     bool ADMMessage::deserialize(byte* source, byte bCount){
         ADMMessage::error = ADMMessage::NO_ERROR;
 
@@ -154,11 +169,11 @@ namespace Chetch{
         if(byteCount + bytec + 1 > maxBytes)return;
         if(byteCount < ADMMessage::HEADER_SIZE)byteCount = ADMMessage::HEADER_SIZE;
 
-        bytes[byteCount++] = bytec;
+        argumentIndices[argumentCount++] = byteCount; //record the index
+        bytes[byteCount++] = bytec; //add the number of bytes this argument requires
         for(int i = 0; i < bytec; i++){
-            bytes[byteCount++] = bytev[i];
+            bytes[byteCount++] = bytev[i]; //add the bytes
         }
-        argumentCount++;
     }
 
     void ADMMessage::addByte(byte argv){
