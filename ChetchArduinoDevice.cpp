@@ -1,47 +1,61 @@
+#include "ChetchUtils.h"
 #include "ChetchArduinoDevice.h"
 
 namespace Chetch{
-
-  ArduinoDevice::ArduinoDevice(){
-  }
-  
-  ArduinoDevice::ArduinoDevice(byte tgt, byte cat, char *dn){
-    target = tgt;
-    category = cat;
-
-    if(dn != NULL){
-      for(int i = 0; i < strlen(dn); i++){
-        name[i] = dn[i];
-      }
-      name[strlen(dn)] = 0;
+	ArduinoDevice::ArduinoDevice(byte id, byte category, char* dname){
+        this->ID = id;
+        this->category = category;
     }
-  }
 
-  ArduinoDevice::~ArduinoDevice() {
-	  //because declared virtual
-  }
+    void ArduinoDevice::initialise(ADMMessage* message){
+        if(message->hasArgument(DEVICE_ENABLED_INDEX)){
+        enable(message->argumentAsBool(DEVICE_ENABLED_INDEX));
+        }
+        if(message->hasArgument(REPORT_INTERVAL_INDEX)){
+        setReportInterval(message->argumentAsInt(REPORT_INTERVAL_INDEX));
+        }
+    }
 
-  void ArduinoDevice::handleStatusRequest(ADMMessage *message, ADMMessage *response) {
-	  //A hook
-  }
+    byte ArduinoDevice::getID(){
+        return ID;
+    }
+    
+    void ArduinoDevice::enable(bool enable){
+        enabled = enable;
+    }
 
-  void ArduinoDevice::configure(bool initial, ADMMessage *message, ADMMessage *response) {
-	  //A hook
-  }
+    void ArduinoDevice::setReportInterval(int interval){
+        reportInterval = interval;
+    }
+    
+    bool ArduinoDevice::isMessageReady(){
+        return messageToCreate > 0;
+    }
 
-  bool ArduinoDevice::handleCommand(ADMMessage *message, ADMMessage *response) {
-	  //Return true to send response, false to cancel send (unless specified message type for response is DATA)
-	  switch (message->commandType()) {
-		  case ADMMessage::COMMAND_TYPE_TEST:
-			  return true;
-	  
-		  default:
-			  return false;
-	  }
-  }
+    int ArduinoDevice::receiveMessage(byte *message, byte *response){
+      
+        return 0;  
+    }
 
-  ADMMessage* ArduinoDevice::loop() {
-	  return NULL;
-  }
+    int ArduinoDevice::createMessage(byte messageType, byte *message){
+        return 0;
+    }
+
+    int ArduinoDevice::sendMessage(byte *message){     
+        int bytes2send = 0;
+        if(messageToCreate > 0){
+        bytes2send = createMessage(messageToCreate, message);
+        messageToCreate = 0;
+        }
+        return bytes2send;
+    }
+
+    void ArduinoDevice::loop(){
+        if(reportInterval > 0 && millis() - lastMillis >= reportInterval){
+        Serial.print("Message ready at device "); Serial.print(ID); Serial.print(" after "); Serial.print(millis() - lastMillis); Serial.println("ms");
+        lastMillis = millis();
+        messageToCreate = 2;
+        }
+    }
 
 } //end namespace

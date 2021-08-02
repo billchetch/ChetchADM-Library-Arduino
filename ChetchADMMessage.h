@@ -52,6 +52,7 @@ namespace Chetch{
      
 
             static const byte HEADER_SIZE = 5;
+            
 
         private:
             byte maxBytes = 0;
@@ -87,12 +88,15 @@ namespace Chetch{
             byte getArgumentCount();
             byte getArgumentSize(byte argIdx);
             byte *getArgument(byte argIdx);
+            bool hasArgument(byte argIdx);
+            
 
             long argumentAsLong(byte argIdx);
             unsigned long argumentAsULong(byte argIdx);
             int argumentAsInt(byte argIdx);
             char *argumentAsCharArray(byte argIdx, char *s);
             byte argumentAsByte(byte argIdx);
+            bool argumentAsBool(byte argIdx);
 
             void addBytes(byte *bytev, byte bytec);
             void addByte(byte argv);

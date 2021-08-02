@@ -109,8 +109,12 @@ namespace Chetch{
         return argumentCount;
     }
 
+    bool ADMMessage::hasArgument(byte argIdx){
+        return argIdx < argumentCount;
+    }
+
     byte *ADMMessage::getArgument(byte argIdx){
-        if(argIdx >=0 && argIdx < argumentCount){
+        if(hasArgument(argIdx)){
             return &bytes[argumentIndices[argIdx] + 1]; //add 1 cos the first byte designates the argument size
         } else {
             return NULL;
@@ -118,15 +122,15 @@ namespace Chetch{
     }
 
     byte ADMMessage::getArgumentSize(byte argIdx){
-        if(argIdx >=0 && argIdx < argumentCount){
-                return bytes[argumentIndices[argIdx]];
-            } else {
-                return 0;
-            }
+        if(hasArgument(argIdx)){
+            return bytes[argumentIndices[argIdx]];
+        } else {
+            return 0;
         }
+    }
 
     long ADMMessage::argumentAsLong(byte argIdx){
-        if(argIdx >=0 && argIdx < argumentCount){
+        if(hasArgument(argIdx)){
             return ADMMessage::bytesToLong(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
         } else {
             return 0;
@@ -134,7 +138,7 @@ namespace Chetch{
     }
 
     unsigned long ADMMessage::argumentAsULong(byte argIdx){
-        if(argIdx >=0 && argIdx < argumentCount){
+        if(hasArgument(argIdx)){
             return ADMMessage::bytesToULong(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
         } else {
             return 0;
@@ -160,12 +164,16 @@ namespace Chetch{
     }
 
     byte ADMMessage::argumentAsByte(byte argIdx){
-        if(argIdx >=0 && argIdx < argumentCount){
+        if(hasArgument(argIdx)){
             byte *arg = getArgument(argIdx);
             return arg[0];
         } else {
             return 0;
         }
+    }
+
+    bool ADMMessage::argumentAsBool(byte argIdx){
+        return argumentAsByte(argIdx) > 0;
     }
 
     void ADMMessage::addBytes(byte *bytev, byte bytec){
