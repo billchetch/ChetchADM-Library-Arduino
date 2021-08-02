@@ -63,6 +63,10 @@ namespace Chetch{
     
         public:  
             static ErrorCode error;
+            static bool hasError();
+            static long bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian = true);
+            static unsigned long bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian = true);
+            static int bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian = true);
 
             unsigned long id = 0; 
             byte type = 0; //should take messsage type value
@@ -70,12 +74,8 @@ namespace Chetch{
             byte target = 0; //used to select a 'device'
             byte command = 0; //should take a command Type value
             byte sender = 0; //should take the ID of the ADM that sends the message
-      
-
-            static long bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian = true);
-            static unsigned long bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian = true);
-            static int bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian = true);
-      
+            
+            //Constructor/Destructor
             ADMMessage(byte maxBytes);
             ~ADMMessage();
 

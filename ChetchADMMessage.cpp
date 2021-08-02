@@ -4,6 +4,9 @@
 namespace Chetch{
 
     ADMMessage::ErrorCode ADMMessage::error = ADMMessage::NO_ERROR;
+    bool ADMMessage::hasError(){
+        return ADMMessage::error != ADMMessage::NO_ERROR;
+    }
 
     /*
     * Helper functions for processing byte arrays
