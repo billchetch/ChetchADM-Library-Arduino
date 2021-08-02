@@ -41,6 +41,7 @@ namespace Chetch{
 
             virtual void initialise(ADMMessage* message);
             byte getID();
+            char *getName();
             void enable(bool enable);
             void setReportInterval(int interval);
             bool isMessageReady();

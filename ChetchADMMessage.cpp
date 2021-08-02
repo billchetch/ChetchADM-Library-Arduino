@@ -150,7 +150,7 @@ namespace Chetch{
     }
 
     char *ADMMessage::argumentAsCharArray(byte argIdx, char *s){
-        if(argIdx >=0 && argIdx < argumentCount){
+        if(hasArgument(argIdx)){
             byte *arg = getArgument(argIdx);
             int i = 0;
             for(i = 0; i < getArgumentSize(argIdx); i++){

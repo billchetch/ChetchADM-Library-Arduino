@@ -1,6 +1,14 @@
 #include "ChetchUtils.h"
 #include "ChetchADM.h"
 
+const char DS18B20[] PROGMEM = "DS18B20";
+const char JSN_SR04T[] PROGMEM = "JSN-SR04T";
+
+const char *const DEVICES_TABLE[] PROGMEM = {
+	DS18B20,
+	JSN_SR04T
+};
+
 namespace Chetch{
 	ArduinoDeviceManager::~ArduinoDeviceManager(){
         for(int i = 0; i < deviceCount; i++){
@@ -35,7 +43,14 @@ namespace Chetch{
 
     ArduinoDevice *ArduinoDeviceManager::addDevice(ADMMessage *message){
         //TODO: name of device
-        return addDevice(message->target, message->argumentAsByte(ArduinoDevice::DEVICE_CATEGROY_INDEX), NULL);
+        if(message->hasArgument(ArduinoDevice::DEVICE_NAME_INDEX)){
+            char deviceName[ArduinoDevice::DEVICE_NAME_LENGTH];
+            message->argumentAsCharArray(ArduinoDevice::DEVICE_NAME_INDEX, deviceName);
+            return addDevice(message->target, message->argumentAsByte(ArduinoDevice::DEVICE_CATEGROY_INDEX), deviceName);
+        } else {
+            return addDevice(message->target, message->argumentAsByte(ArduinoDevice::DEVICE_CATEGROY_INDEX), NULL);
+        }
+        
     }
 
     ArduinoDevice* ArduinoDeviceManager::getDevice(byte deviceID){
@@ -58,17 +73,17 @@ namespace Chetch{
         switch ((ADMMessage::MessageType)message->type) {
         case ADMMessage::TYPE_INITIALISE:
             if(message->target == 0){ //means we are targetting the board
-            //initialise(message);
+                initialise(message);
             } else {
-            if(device == NULL){ //we are creating a new device
-                device = addDevice(message);
-                if(device == NULL){
-                //TODO: handle error
-                break;
-                }
-            } 
-            device->initialise(message);
-            Serial.println("Initialised device");
+                if(device == NULL){ //we are creating a new device
+                    device = addDevice(message);
+                    if(device == NULL){
+                    //TODO: handle error
+                    break;
+                    }
+                } 
+                device->initialise(message);
+                Serial.print("Initialised device "); Serial.println(device->getName());
             }
             break;
 
