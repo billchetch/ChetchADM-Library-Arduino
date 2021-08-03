@@ -11,7 +11,8 @@ namespace Chetch{
     /*
     * Helper functions for processing byte arrays
     */
-    long ADMMessage::bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian){
+    
+    /*long ADMMessage::bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian){
         //TODO:: allow for littleEndian to be false (i.e. big endian)
         long retVal = 0L;
         for(int i = 0; i < numberOfBytes; i++){
@@ -31,9 +32,9 @@ namespace Chetch{
 
     int ADMMessage::bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian){
         return (int)ADMMessage::bytesToLong(bytes, numberOfBytes, littleEndian); 
-    }
+    }*/
 
-
+    
     /*
     * Constructor
     */
@@ -131,7 +132,7 @@ namespace Chetch{
 
     long ADMMessage::argumentAsLong(byte argIdx){
         if(hasArgument(argIdx)){
-            return ADMMessage::bytesToLong(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
+            return Utils::bytesTo<long>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
         } else {
             return 0;
         }
@@ -139,7 +140,7 @@ namespace Chetch{
 
     unsigned long ADMMessage::argumentAsULong(byte argIdx){
         if(hasArgument(argIdx)){
-            return ADMMessage::bytesToULong(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
+            return Utils::bytesTo<unsigned long>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
         } else {
             return 0;
         }
@@ -176,6 +177,18 @@ namespace Chetch{
         return argumentAsByte(argIdx) > 0;
     }
 
+    float ADMMessage::argumentAsFloat(byte argIdx){
+        if(hasArgument(argIdx)){
+            return Utils::bytesTo<float>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
+        } else {
+            return 0;
+        }
+    }
+
+    double ADMMessage::argumentAsDouble(byte argIdx){
+        return (double)argumentAsFloat(argIdx);
+    }
+
     void ADMMessage::addBytes(byte *bytev, byte bytec){
         if(byteCount + bytec + 1 > maxBytes)return;
         if(byteCount < ADMMessage::HEADER_SIZE)byteCount = ADMMessage::HEADER_SIZE;
@@ -209,6 +222,10 @@ namespace Chetch{
   
     void ADMMessage::addFloat(float argv){
         addBytes((byte*)&argv, sizeof(argv));
+    }
+
+    void ADMMessage::addDouble(double argv){
+        addFloat((float)argv);
     }
   
     byte* ADMMessage::getBytes(){

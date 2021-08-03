@@ -8,6 +8,7 @@
 namespace Chetch{
     class ZMPT101B : public ArduinoDevice {
         private:
+            int voltagePin = A0;
             double summedVoltages = 0;
             int hzCount = 0;
             unsigned int sampleCount = 0;
@@ -31,6 +32,7 @@ namespace Chetch{
 
             ZMPT101B(byte id, byte cat, char *dn);
 
+            void configure(ADMMessage* message) override;
             void setStableVoltage(double v, double t = 0, double vlb = 0, double vub = -1);
             void loop() override;
             double getVoltage();

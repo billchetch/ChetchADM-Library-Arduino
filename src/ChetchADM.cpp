@@ -15,7 +15,7 @@
 #endif
 
 #if (INCLUDE_DEVICES & ELECTRICITY_MEASURING_DEVICES) == ELECTRICITY_MEASURING_DEVICES
-//#include "devices/ChetchZMPT101B.h"
+#include "devices/ChetchZMPT101B.h"
 #endif
 
 const char DS18B20[] PROGMEM = "DS18B20";
@@ -52,6 +52,10 @@ namespace Chetch{
         initialised = true;
     }
   
+    void ArduinoDeviceManager::configure(ADMMessage *message){
+        configured = true;
+    }
+
     ArduinoDevice *ArduinoDeviceManager::addDevice(byte id, byte category, char *dname){
         if(id == 0){
             error = ErrorCode::NO_DEVICE_ID;
@@ -67,8 +71,7 @@ namespace Chetch{
         }
 
         ArduinoDevice *device = NULL;
-        //device = new ZMPT101B(id, category, dname);
-	    int deviceIndex = inDevicesTable(dname);
+        int deviceIndex = inDevicesTable(dname);
         
 	    switch (deviceIndex) {
 #if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
@@ -83,7 +86,7 @@ namespace Chetch{
 #endif
 #if (INCLUDE_DEVICES & ELECTRICITY_MEASURING_DEVICES) == ELECTRICITY_MEASURING_DEVICES
 	        case 2:
-		        //device = new ZMPT101B(id, category, dname);
+                device = new ZMPT101B(id, category, dname);
 		        break;
 #endif
             default:
@@ -138,7 +141,7 @@ namespace Chetch{
 
     void ArduinoDeviceManager::loop(){
         for(int i = 0; i < deviceCount; i++){
-            devices[i]->loop();
+            if(devices[i]->isActive())devices[i]->loop();
         }
     }
 
@@ -163,6 +166,15 @@ namespace Chetch{
             break;
 
         case ADMMessage::TYPE_CONFIGURE:
+            Serial.println("Fuck yes");
+             if(message->target == 0){ //means we are targetting the board
+                configure(message);
+            } else {
+                if(device == NULL){ //TODO: this is an error condition so handle
+                    break;
+                } 
+                device->configure(message);
+            }
             break;
           
         }

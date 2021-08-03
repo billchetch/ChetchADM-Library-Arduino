@@ -65,9 +65,10 @@ namespace Chetch{
         public:  
             static ErrorCode error;
             static bool hasError();
-            static long bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian = true);
-            static unsigned long bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian = true);
-            static int bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian = true);
+            
+            //static long bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian = true);
+            //static unsigned long bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian = true);
+            //static int bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian = true);
 
             unsigned long id = 0; 
             byte type = 0; //should take messsage type value
@@ -97,6 +98,8 @@ namespace Chetch{
             char *argumentAsCharArray(byte argIdx, char *s);
             byte argumentAsByte(byte argIdx);
             bool argumentAsBool(byte argIdx);
+            float argumentAsFloat(byte argIdx);
+            double argumentAsDouble(byte argIdx);
 
             void addBytes(byte *bytev, byte bytec);
             void addByte(byte argv);
@@ -105,6 +108,7 @@ namespace Chetch{
             void addLong(long argv);
             void addString(const char *argv);
             void addFloat(float argv);
+            void addDouble(double argv);
 
             byte serialize(byte *destination);
             byte *getBytes();

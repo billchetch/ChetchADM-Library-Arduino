@@ -34,6 +34,7 @@ namespace Chetch{
             byte deviceCount = 0;
             byte currentDevice = 0;
             bool initialised = false;
+            bool configured = false;
 
         public:
             enum ErrorCode{
@@ -49,6 +50,7 @@ namespace Chetch{
 
             ~ArduinoDeviceManager();
             void initialise(ADMMessage *message);
+            void configure(ADMMessage *message);
             ArduinoDevice *addDevice(byte id, byte category, char *dname);
             ArduinoDevice *addDevice(ADMMessage *message);
             ArduinoDevice* getDevice(byte deviceID);

@@ -8,6 +8,19 @@ namespace Chetch{
     }
 
 
+    void ZMPT101B::configure(ADMMessage* message){
+        ArduinoDevice::configure(message);
+
+        voltagePin = message->argumentAsInt(0);
+
+        setStableVoltage(
+            message->argumentAsDouble(1),
+            message->argumentAsDouble(2),
+            message->argumentAsDouble(3),
+            message->argumentAsDouble(4)
+            );
+    }
+
 	void ZMPT101B::setStableVoltage(double v, double t = 0, double vlb = 0, double vub = -1){
         stableVoltage = v;
         stabiliseThreshold = t;
@@ -16,12 +29,12 @@ namespace Chetch{
     }                   
     
     void ZMPT101B::loop(){
-        ::loop();
-
+        ArduinoDevice::loop();
+        
         //take samples
         unsigned long m = micros();
         if(m - lastSampled >= sampleInterval){
-            double v = (double)(analogRead(A0) - midPoint);
+            double v = (double)(analogRead(voltagePin) - midPoint);
             summedVoltages += sq(v);
             sampleCount++;
             lastSampled = m;
@@ -72,5 +85,5 @@ namespace Chetch{
         double v = getVoltage();
         double adjustment = stableVoltage - v;
         return abs(adjustment) > stabiliseThreshold ? adjustment : 0;
-    }
+    } 
 } //end namespace

@@ -23,6 +23,14 @@ namespace Chetch{
         }
     }
 
+    void ArduinoDevice::configure(ADMMessage* message){
+        configured = true;
+    }
+
+    bool ArduinoDevice::isActive(){
+        return enabled && configured;
+    }
+
     byte ArduinoDevice::getID(){
         return ID;
     }
@@ -62,7 +70,7 @@ namespace Chetch{
     }
 
     void ArduinoDevice::loop(){
-        if(enabled && reportInterval > 0 && millis() - lastMillis >= reportInterval){
+        if(reportInterval > 0 && millis() - lastMillis >= reportInterval){
             Serial.print("Message ready at device "); Serial.print(ID); Serial.print(" after "); Serial.print(millis() - lastMillis); Serial.println("ms");
             lastMillis = millis();
             messageToCreate = 2;

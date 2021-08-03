@@ -35,15 +35,18 @@ namespace Chetch{
             byte messageToCreate = 0;
 
             bool enabled = false;
+            bool configured = false;
 
         public:
             ArduinoDevice(byte id, byte category, char* dname);
             //~ArduinoDevice();
 
             virtual void initialise(ADMMessage* message);
+            virtual void configure(ADMMessage* message);
             byte getID();
             char *getName();
             void enable(bool enable);
+            bool isActive();
             void setReportInterval(int interval);
             bool isMessageReady();
             int receiveMessage(byte *message, byte *response);
