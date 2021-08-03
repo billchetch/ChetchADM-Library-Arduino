@@ -15,7 +15,8 @@ namespace Chetch{
                 TEMPERATURE_SENSOR = 4,
                 COUNTER = 5,
                 RANGE_FINDER = 6,
-                ALARM = 7
+                ALARM = 7,
+                VAC_SENSOR = 8,
             };
 
             static const byte DEVICE_NAME_LENGTH = 10;

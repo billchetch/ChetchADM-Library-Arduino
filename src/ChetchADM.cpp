@@ -1,15 +1,47 @@
 #include "ChetchUtils.h"
 #include "ChetchADM.h"
 
+#if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
+#include "devices/ChetchDS18B20Array.h"
+#endif
+
+#if (INCLUDE_DEVICES & RANGE_FINDER_DEVICES) == RANGE_FINDER_DEVICES
+#include "devices/ChetchJSN_SR04T.h"
+#endif
+
+#if (INCLUDE_DEVICES & IR_DEVICES) == IR_DEVICES
+#include "devices/ChetchIRReceiver.h"
+#include "devices/ChetchIRTransmitter.h"
+#endif
+
+#if (INCLUDE_DEVICES & ELECTRICITY_MEASURING_DEVICES) == ELECTRICITY_MEASURING_DEVICES
+//#include "devices/ChetchZMPT101B.h"
+#endif
+
 const char DS18B20[] PROGMEM = "DS18B20";
 const char JSN_SR04T[] PROGMEM = "JSN-SR04T";
+const char ZMPT101B[] PROGMEM = "ZMPT101B";
 
 const char *const DEVICES_TABLE[] PROGMEM = {
 	DS18B20,
-	JSN_SR04T
+	JSN_SR04T,
+    ZMPT101B
 };
 
 namespace Chetch{
+    int ArduinoDeviceManager::inDevicesTable(char *dname){
+        char stBuffer[ArduinoDevice::DEVICE_NAME_LENGTH];
+        for(int i = 0; i < 3; i++){
+            if (strcmp(dname, Utils::getStringFromProgmem(stBuffer, i, DEVICES_TABLE)) == 0) {
+			    return i;
+		    } 
+        }
+        return -1;
+    }
+
+    /*
+    * Constructor
+    */
 	ArduinoDeviceManager::~ArduinoDeviceManager(){
         for(int i = 0; i < deviceCount; i++){
             delete devices[i];
@@ -34,7 +66,51 @@ namespace Chetch{
             return NULL;
         }
 
-        ArduinoDevice *device = new ArduinoDevice(id, category, dname);
+        ArduinoDevice *device = NULL;
+        //device = new ZMPT101B(id, category, dname);
+	    int deviceIndex = inDevicesTable(dname);
+        
+	    switch (deviceIndex) {
+#if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
+	        case 0:
+		        device = new DS18B20Array(id, category, dname);
+		        break;
+#endif
+#if (INCLUDE_DEVICES & RANGE_FINDER_DEVICES) == RANGE_FINDER_DEVICES
+	        case 1:
+		        device = new JSN_SR04T(id, category, dname);
+		        break;
+#endif
+#if (INCLUDE_DEVICES & ELECTRICITY_MEASURING_DEVICES) == ELECTRICITY_MEASURING_DEVICES
+	        case 2:
+		        //device = new ZMPT101B(id, category, dname);
+		        break;
+#endif
+            default:
+                switch(category){
+#if (INCLUDE_DEVICES & IR_DEVICES) == IR_DEVICES
+	                case ArduinoDevice::IR_RECEIVER:
+		                device = new IRReceiver(id, category, dname);
+		                break;
+
+	                case ArduinoDevice::IR_TRANSMITTER:
+		                device = new IRTransmitter(id, category, dname);
+		                break;
+#endif
+	                case ArduinoDevice::COUNTER:
+		                //device = new Counter(id, category, dname);
+		                break;
+
+                    default:
+                        device = NULL;
+                }
+                break;
+	    } //end device name switch
+	
+	    if (device == NULL) {
+            device = new ArduinoDevice(id, category, dname);
+	    }
+        
         devices[deviceCount] = device;
         deviceCount++;
       
@@ -83,7 +159,6 @@ namespace Chetch{
                     }
                 } 
                 device->initialise(message);
-                Serial.print("Initialised device "); Serial.println(device->getName());
             }
             break;
 

@@ -1,3 +1,6 @@
+#ifndef CHETCH_ADM_COUNTER_H
+#define CHETCH_ADM_COUNTER_H
+
 #include <Arduino.h>
 #include "../ChetchArduinoDevice.h"
 #include "../ChetchADMMessage.h"
@@ -22,3 +25,4 @@ namespace Chetch{
 		ADMMessage* loop();
   };
 } //end namespace	
+#endif
