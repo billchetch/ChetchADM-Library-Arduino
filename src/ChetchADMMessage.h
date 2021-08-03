@@ -82,6 +82,7 @@ namespace Chetch{
             ~ADMMessage();
 
             void clear();
+            bool isEmpty(); //no arguments
 
             bool deserialize(byte* source, byte bCount);
 

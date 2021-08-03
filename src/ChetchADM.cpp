@@ -145,7 +145,7 @@ namespace Chetch{
         }
     }
 
-    int ArduinoDeviceManager::receiveMessage(ADMMessage* message){
+    void ArduinoDeviceManager::receiveMessage(ADMMessage* message){
         //find the device targeted by the message
         ArduinoDevice *device = message->target == 0 ? NULL : getDevice(message->target);
       
@@ -166,7 +166,6 @@ namespace Chetch{
             break;
 
         case ADMMessage::TYPE_CONFIGURE:
-            Serial.println("Fuck yes");
              if(message->target == 0){ //means we are targetting the board
                 configure(message);
             } else {
@@ -178,17 +177,14 @@ namespace Chetch{
             break;
           
         }
-        return 0;
     }
 
-    int ArduinoDeviceManager::sendMessage(byte *b){
+    void ArduinoDeviceManager::sendMessage(ADMMessage* message){
         ArduinoDevice *dev = devices[currentDevice];
-        int n = 0;
         if(dev->isMessageReady()){
-            n = dev->sendMessage(b); 
+            dev->sendMessage(message); 
         }
         currentDevice = (currentDevice + 1) % deviceCount;
-        return n;
     }
 
 } //end namespace

@@ -21,6 +21,11 @@ namespace Chetch{
             );
     }
 
+    void ZMPT101B::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
+        message->type = messageTypeToCreate;
+        message->addInt(120);
+    }
+
 	void ZMPT101B::setStableVoltage(double v, double t = 0, double vlb = 0, double vub = -1){
         stableVoltage = v;
         stabiliseThreshold = t;

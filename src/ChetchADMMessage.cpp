@@ -8,32 +8,6 @@ namespace Chetch{
         return ADMMessage::error != ADMMessage::NO_ERROR;
     }
 
-    /*
-    * Helper functions for processing byte arrays
-    */
-    
-    /*long ADMMessage::bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian){
-        //TODO:: allow for littleEndian to be false (i.e. big endian)
-        long retVal = 0L;
-        for(int i = 0; i < numberOfBytes; i++){
-            retVal += (long)bytes[i] << (8*i);
-        }
-        return retVal;
-    }
-
-    unsigned long ADMMessage::bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian){
-        //TODO:: allow for littleEndian to be false (i.e. big endian)
-        unsigned long retVal = 0L;
-        for(int i = 0; i < numberOfBytes; i++){
-            retVal += (unsigned long)bytes[i] << (8*i);
-        }
-        return retVal;
-    }
-
-    int ADMMessage::bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian){
-        return (int)ADMMessage::bytesToLong(bytes, numberOfBytes, littleEndian); 
-    }*/
-
     
     /*
     * Constructor
@@ -69,6 +43,10 @@ namespace Chetch{
         byteCount = ADMMessage::HEADER_SIZE;
         argumentCount = 0;
         newID();
+    }
+
+    bool ADMMessage::isEmpty(){
+        return argumentCount == 0;
     }
 
     bool ADMMessage::deserialize(byte* source, byte bCount){

@@ -33,6 +33,8 @@ namespace Chetch{
             ZMPT101B(byte id, byte cat, char *dn);
 
             void configure(ADMMessage* message) override;
+            void createMessage(ADMMessage::MessageType messageType, ADMMessage* message) override;
+
             void setStableVoltage(double v, double t = 0, double vlb = 0, double vub = -1);
             void loop() override;
             double getVoltage();

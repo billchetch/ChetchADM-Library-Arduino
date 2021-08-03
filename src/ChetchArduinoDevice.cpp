@@ -48,32 +48,30 @@ namespace Chetch{
     }
     
     bool ArduinoDevice::isMessageReady(){
-        return messageToCreate > 0;
+        return messageTypeToCreate > 0;
     }
 
-    int ArduinoDevice::receiveMessage(byte *message, byte *response){
+    void ArduinoDevice::receiveMessage(ADMMessage *message, ADMMessage *response){
       
-        return 0;  
+        
     }
 
-    int ArduinoDevice::createMessage(byte messageType, byte *message){
-        return 0;
+    void ArduinoDevice::createMessage(ADMMessage::MessageType messageType, ADMMessage *message){
+        
     }
 
-    int ArduinoDevice::sendMessage(byte *message){     
-        int bytes2send = 0;
-        if(messageToCreate > 0){
-            bytes2send = createMessage(messageToCreate, message);
-            messageToCreate = 0;
+    void ArduinoDevice::sendMessage(ADMMessage *message){     
+        if(isMessageReady()){
+            createMessage(messageTypeToCreate, message);
+            messageTypeToCreate = 0;
         }
-        return bytes2send;
     }
 
     void ArduinoDevice::loop(){
         if(reportInterval > 0 && millis() - lastMillis >= reportInterval){
-            Serial.print("Message ready at device "); Serial.print(ID); Serial.print(" after "); Serial.print(millis() - lastMillis); Serial.println("ms");
+            //Serial.print("Message ready at device "); Serial.print(ID); Serial.print(" after "); Serial.print(millis() - lastMillis); Serial.println("ms");
             lastMillis = millis();
-            messageToCreate = 2;
+            messageTypeToCreate = ADMMessage::MessageType::TYPE_DATA;
         }
     }
 

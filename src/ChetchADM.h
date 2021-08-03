@@ -55,8 +55,8 @@ namespace Chetch{
             ArduinoDevice *addDevice(ADMMessage *message);
             ArduinoDevice* getDevice(byte deviceID);
             void loop();
-            int receiveMessage(ADMMessage* message);
-            int sendMessage(byte *b);
+            void receiveMessage(ADMMessage* message);
+            void sendMessage(ADMMessage* message);
     }; //end class
 } //end namespace
 

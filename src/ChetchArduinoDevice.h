@@ -32,7 +32,7 @@ namespace Chetch{
     
             unsigned long lastMillis = 0;
             int reportInterval = -1;
-            byte messageToCreate = 0;
+            ADMMessage::MessageType messageTypeToCreate = 0;
 
             bool enabled = false;
             bool configured = false;
@@ -49,9 +49,9 @@ namespace Chetch{
             bool isActive();
             void setReportInterval(int interval);
             bool isMessageReady();
-            int receiveMessage(byte *message, byte *response);
-            virtual int createMessage(byte messageType, byte *message);
-            int sendMessage(byte *message);
+            void receiveMessage(ADMMessage *message, ADMMessage *response);
+            virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
+            void sendMessage(ADMMessage *message);
             virtual void loop();
     };
 
