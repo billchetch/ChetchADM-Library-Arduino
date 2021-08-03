@@ -31,12 +31,12 @@ namespace Chetch{
 
             ZMPT101B(byte id, byte cat, char *dn);
 
-            /*void setStableVoltage(double v, double t = 0, double vlb = 0, double vub = -1);
-            //void loop() override;
+            void setStableVoltage(double v, double t = 0, double vlb = 0, double vub = -1);
+            void loop() override;
             double getVoltage();
             double getHZ();
             bool isVoltageInRange();
-            double adjustVoltageBy();*/
+            double adjustVoltageBy();
     }; //end class
 } //end namespae
 #endif
