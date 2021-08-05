@@ -76,16 +76,29 @@ namespace Chetch{
         //now we validate the frame and act depending on result
         if(f.validate()){
             //ok so the data is valid now we convert to an ADM message
-            message.deserialize(f.getPayload(), messageFrame.getPayloadSize());
+            message.deserialize(f.getPayload(), f.getPayloadSize());
             if(message.hasError()){
-                //Process error...
+                //Process error... we know message frames are ok so we return
+
             } else {
                //ok so everything checks out ... let's get on with it'
-               
+               stream->sendEvent(StreamWithCTS::Event::ALL_OK);
             }
         } else {
-        //not valid so return an error...
-        serial->sendEvent(221);
+            //not valid so return an error...
+            //TODO: return an ADMMessage...
+            byte eventByte = 0;
+            switch(f.error){
+                case MessageFrame::FrameError::CHECKSUM_FAILED:
+                    eventByte = StreamWithCTS::Event::CHECKSUM_FAILED;
+                    break;
+
+                default:
+                    eventByte = StreamWithCTS::Event::UNKNOWN_ERROR;
+                    break;
+                    
+            }
+            stream->sendEvent(eventByte);
         }
     }
 
