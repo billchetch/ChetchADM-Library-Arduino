@@ -107,6 +107,7 @@ namespace Chetch{
             void addBool(bool argv);
             void addInt(int argv);
             void addLong(long argv);
+            void addULong(unsigned long argv);
             void addString(const char *argv);
             void addFloat(float argv);
             void addDouble(double argv);

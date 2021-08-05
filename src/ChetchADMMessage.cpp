@@ -194,6 +194,10 @@ namespace Chetch{
         addBytes((byte*)&argv, sizeof(argv));
     }
 
+    void ADMMessage::addULong(unsigned long argv){
+        addBytes((byte*)&argv, sizeof(argv));
+    }
+
     void ADMMessage::addString(const char *argv){
         addBytes((byte*)argv, strlen(argv));
     }

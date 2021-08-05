@@ -12,12 +12,14 @@ namespace Chetch{
         ArduinoDevice::configure(message);
 
         voltagePin = message->argumentAsInt(0);
+        sampleSize = message->argumentAsInt(1);
+        sampleInterval = message->argumentAsULong(2);
 
         setStableVoltage(
-            message->argumentAsDouble(1),
-            message->argumentAsDouble(2),
             message->argumentAsDouble(3),
-            message->argumentAsDouble(4)
+            message->argumentAsDouble(4),
+            message->argumentAsDouble(5),
+            message->argumentAsDouble(6)
             );
     }
 

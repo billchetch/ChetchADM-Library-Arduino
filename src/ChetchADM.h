@@ -2,6 +2,7 @@
 #define CHETCH_ADM_ADM_H
 
 #include <Arduino.h>
+#include "ChetchStreamWithCTS.h"
 #include "ChetchADMMessage.h"
 #include "ChetchArduinoDevice.h"
 
@@ -30,11 +31,15 @@
 namespace Chetch{
     class ArduinoDeviceManager{
         private:
+            char* id;
+            StreamWithCTS *stream;
             ArduinoDevice *devices[MAX_DEVICES];
             byte deviceCount = 0;
             byte currentDevice = 0;
             bool initialised = false;
             bool configured = false;
+
+            static ArduinoDeviceManager *ADM = NULL;
 
         public:
             enum ErrorCode{
@@ -43,12 +48,22 @@ namespace Chetch{
                 DEVICE_LIMIT_REACHED = 3,
                 DEVICE_ID_ALREADY_USED = 4,
             };
+            ErrorCode error = NO_ERROR;
     
+            static const byte ADM_MESSAGE_SIZE = 50;
+
             static int inDevicesTable(char *dname);
+            static ArduinoDeviceManager *create(char *id, StreamWithCTS *stream);
+            static ArduinoDeviceManager *getInstance();
+            static void handleStreamReset(StreamWithCTS *stream);
+            static void handleStreamReceive(StreamWithCTS *stream, int bytesToRead);
+            static void handleStreamSend(StreamWithCTS *stream);
+            
 
-            byte error = 0;
-
+            ArduinoDeviceManager(char *id, StreamWithCTS *stream);
             ~ArduinoDeviceManager();
+            bool setup();
+
             void initialise(ADMMessage *message);
             void configure(ADMMessage *message);
             ArduinoDevice *addDevice(byte id, byte category, char *dname);

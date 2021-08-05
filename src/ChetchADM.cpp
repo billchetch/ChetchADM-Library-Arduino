@@ -1,5 +1,6 @@
 #include "ChetchUtils.h"
 #include "ChetchADM.h"
+#include "ChetchMessageFrame.h"
 
 #if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
 #include "devices/ChetchDS18B20Array.h"
@@ -29,6 +30,8 @@ const char *const DEVICES_TABLE[] PROGMEM = {
 };
 
 namespace Chetch{
+    ArduinoDeviceManager *ArduinoDeviceManager::ADM;    
+
     int ArduinoDeviceManager::inDevicesTable(char *dname){
         char stBuffer[ArduinoDevice::DEVICE_NAME_LENGTH];
         for(int i = 0; i < 3; i++){
@@ -40,14 +43,70 @@ namespace Chetch{
     }
 
     /*
+    * Create static instance because stream callbacks cannot (not easy to?) use instance member methods
+    */
+    ArduinoDeviceManager *ArduinoDeviceManager::create(char *id, StreamWithCTS *stream){
+        if(ADM == NULL){
+            stream->setResetHandler(handleStreamReset);
+            stream->setReceiveHandler(handleStreamReceive);
+            stream->setSendHandler(handleStreamSend);
+            ADM = new ArduinoDeviceManager(id, stream);
+        }
+        return ADM;
+    }
+
+
+    ArduinoDeviceManager *ArduinoDeviceManager::getInstance(){
+        return ADM;
+    }
+
+    void ArduinoDeviceManager::handleStreamReset(StreamWithCTS *stream){
+        
+    }
+
+    void ArduinoDeviceManager::handleStreamReceive(StreamWithCTS *stream, int bytesToRead){
+        MessageFrame f(MessageFrame::FrameSchema::SMALL_SIMPLE_CHECKSUM, ADM_MESSAGE_SIZE);
+        ADMMessage message(ADM_MESSAGE_SIZE);
+
+        //add all bytes to a frame (also removes from stream buffer so next byte block can be received)
+        for(int i = 0; i < bytesToRead; i++){
+            f.add(stream->read());
+        }
+
+        //now we validate the frame and act depending on result
+        if(f.validate()){
+            //ok so the data is valid now we convert to an ADM message
+            message.deserialize(f.getPayload(), messageFrame.getPayloadSize());
+            if(message.hasError()){
+                //Process error...
+            } else {
+               //ok so everything checks out ... let's get on with it'
+               
+            }
+        } else {
+        //not valid so return an error...
+        serial->sendEvent(221);
+        }
+    }
+
+    void ArduinoDeviceManager::handleStreamSend(StreamWithCTS *stream){
+
+    }
+     
+    /*
     * Constructor
     */
+    ArduinoDeviceManager::ArduinoDeviceManager(char* id, StreamWithCTS *stream){
+        this->id = id;
+        this->stream = stream;
+    }
+
 	ArduinoDeviceManager::~ArduinoDeviceManager(){
         for(int i = 0; i < deviceCount; i++){
             delete devices[i];
         }
     }
-    
+
     void ArduinoDeviceManager::initialise(ADMMessage *message){
         initialised = true;
     }
@@ -143,6 +202,10 @@ namespace Chetch{
         for(int i = 0; i < deviceCount; i++){
             if(devices[i]->isActive())devices[i]->loop();
         }
+
+        stream->receive();
+        stream->process();
+        stream->send();
     }
 
     void ArduinoDeviceManager::receiveMessage(ADMMessage* message){
