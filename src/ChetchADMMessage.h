@@ -66,10 +66,6 @@ namespace Chetch{
             static ErrorCode error;
             static bool hasError();
             
-            //static long bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian = true);
-            //static unsigned long bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian = true);
-            //static int bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian = true);
-
             unsigned long id = 0; 
             byte type = 0; //should take messsage type value
             byte tag = 0; //tagging data sent from computer ... can be re-used to send back to make comms linked
@@ -83,8 +79,7 @@ namespace Chetch{
 
             void clear();
             bool isEmpty(); //no arguments
-
-            bool deserialize(byte* source, byte bCount);
+            void copy(ADMMessage *message);
 
             byte getByteCount();
             byte getArgumentCount();
@@ -112,7 +107,8 @@ namespace Chetch{
             void addFloat(float argv);
             void addDouble(double argv);
 
-            byte serialize(byte *destination);
+            bool deserialize(byte* source, byte bCount);
+            byte serialize(byte *destination = NULL);
             byte *getBytes();
             
             //these extract values from the 'command' byte

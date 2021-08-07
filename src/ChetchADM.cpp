@@ -67,43 +67,59 @@ namespace Chetch{
     void ArduinoDeviceManager::handleStreamReceive(StreamWithCTS *stream, int bytesToRead){
         MessageFrame f(MessageFrame::FrameSchema::SMALL_SIMPLE_CHECKSUM, ADM_MESSAGE_SIZE);
         ADMMessage message(ADM_MESSAGE_SIZE);
+        ADMMessage response(ADM_MESSAGE_SIZE);
 
-        //add all bytes to a frame (also removes from stream buffer so next byte block can be received)
-        for(int i = 0; i < bytesToRead; i++){
-            f.add(stream->read());
-        }
-
-        //now we validate the frame and act depending on result
-        if(f.validate()){
-            //ok so the data is valid now we convert to an ADM message
-            message.deserialize(f.getPayload(), f.getPayloadSize());
-            if(message.hasError()){
-                //Process error... we know message frames are ok so we return
-
-            } else {
-               //ok so everything checks out ... let's get on with it'
-               stream->sendEvent(StreamWithCTS::Event::ALL_OK);
-            }
+        //very first thing we do is ensure we have an instance
+        if(ADM == NULL){
+            addErrorInfo(&response, ErrorCode::NO_ADM_INSTANCE);
         } else {
-            //not valid so return an error...
-            //TODO: return an ADMMessage...
-            byte eventByte = 0;
-            switch(f.error){
-                case MessageFrame::FrameError::CHECKSUM_FAILED:
-                    eventByte = StreamWithCTS::Event::CHECKSUM_FAILED;
-                    break;
-
-                default:
-                    eventByte = StreamWithCTS::Event::UNKNOWN_ERROR;
-                    break;
-                    
+            //So we have an instance we can proeeed b first adding  all bytes to a frame 
+            //(also removes from stream buffer so next byte block can be received)
+            for(int i = 0; i < bytesToRead; i++){
+                f.add(stream->read());
             }
-            stream->sendEvent(eventByte);
+
+            //now we validate the frame and act depending on result
+            if(f.validate()){
+                //ok so the data is valid now we convert to an ADM message
+                message.deserialize(f.getPayload(), f.getPayloadSize());
+                if(message.hasError()){
+                    //Process error... we know message frames are ok so we return
+                    addErrorInfo(&response, ErrorCode::ADM_MESSAGE_ERROR, message.error, &message);
+                } else if(message.isEmpty()) {
+                    addErrorInfo(&response, ErrorCode::ADM_MESSAGE_IS_EMPTY, 0, &message);
+                } else { //ok so everything checks out ... let's get on with it by passing this to ADM
+                   ADM->receiveMessage(&message, &response);
+                }
+            } else {
+                //not valid so return an error...
+                addErrorInfo(&response, ErrorCode::MESSAGE_FRAME_ERROR, f.error);
+            }
+        } //end check if there is an ADM instance
+
+        //if we have a response then send it!
+        if(!response.isEmpty()){
+            f.reset();
+            response.serialize();
+            f.setPayload(response.getBytes(), response.getByteCount());
+            stream->write(f.getBytes(), f.getSize(), true);
         }
     }
 
     void ArduinoDeviceManager::handleStreamSend(StreamWithCTS *stream){
 
+    }
+
+    void ArduinoDeviceManager::addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode, ADMMessage *originalMessage){
+        message->clear();
+        message->type = ADMMessage::MessageType::TYPE_ERROR;
+        message->addByte(errorCode);
+        message->addByte(subCode);
+        if(originalMessage != NULL){
+            message->addByte(originalMessage->type);
+            message->addByte(originalMessage->target);
+            message->addByte(originalMessage->sender);
+        }
     }
      
     /*
@@ -221,37 +237,51 @@ namespace Chetch{
         stream->send();
     }
 
-    void ArduinoDeviceManager::receiveMessage(ADMMessage* message){
+    void ArduinoDeviceManager::receiveMessage(ADMMessage* message, ADMMessage* response){
         //find the device targeted by the message
         ArduinoDevice *device = message->target == 0 ? NULL : getDevice(message->target);
+        ErrorCode error = ErrorCode::NO_ERROR;
       
         switch ((ADMMessage::MessageType)message->type) {
-        case ADMMessage::TYPE_INITIALISE:
-            if(message->target == 0){ //means we are targetting the board
-                initialise(message);
-            } else {
-                if(device == NULL){ //we are creating a new device
-                    device = addDevice(message);
-                    if(device == NULL){
-                    //TODO: handle error
-                    break;
-                    }
-                } 
-                device->initialise(message);
-            }
-            break;
+            case ADMMessage::TYPE_INITIALISE:
+                if(message->target == ADM_TARGET_ID){ //means we are targetting the board
+                    initialise(message);
+                } else {
+                    if(device == NULL){ //we are creating a new device
+                        device = addDevice(message);
+                        if(device == NULL){
+                            error = ErrorCode::DEVICE_NOT_FOUND;
+                            break;
+                        }
+                    } 
+                    device->initialise(message);
+                }
+                break;
 
-        case ADMMessage::TYPE_CONFIGURE:
-             if(message->target == 0){ //means we are targetting the board
-                configure(message);
-            } else {
-                if(device == NULL){ //TODO: this is an error condition so handle
-                    break;
-                } 
-                device->configure(message);
-            }
-            break;
-          
+            case ADMMessage::TYPE_CONFIGURE:
+                 if(message->target == ADM_TARGET_ID){ //means we are targetting the board
+                    configure(message);
+                } else {
+                    if(device == NULL){
+                        error = ErrorCode::DEVICE_NOT_FOUND;
+                        break;
+                    } 
+                    device->configure(message);
+                }
+                break;
+
+            case ADMMessage::TYPE_ECHO:
+                 if(message->target == ADM_TARGET_ID){
+                    response->copy(message);
+                    response->type = ADMMessage::MessageType::TYPE_ECHO_RESPONSE;
+                    response->sender = ADM_TARGET_ID;
+                 }
+
+        } //end message type switch
+
+        if(error != ErrorCode::NO_ERROR){
+            response->clear(); //an error overrides any other response
+            addErrorInfo(response, error, message);
         }
     }
 

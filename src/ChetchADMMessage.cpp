@@ -49,6 +49,16 @@ namespace Chetch{
         return argumentCount == 0;
     }
 
+    void ADMMessage::copy(ADMMessage *message){
+        clear();
+        byte *mbytes = message->getBytes();
+        for(int i = 0; i < message->getByteCount(); i++){
+            bytes[i] = mbytes[i];
+        }
+        argumentCount = message->getArgumentCount();
+        byteCount = message->getByteCount();
+    }
+
     bool ADMMessage::deserialize(byte* source, byte bCount){
         ADMMessage::error = ADMMessage::NO_ERROR;
 
@@ -211,6 +221,13 @@ namespace Chetch{
     }
   
     byte* ADMMessage::getBytes(){
+        //Add all the message data to the byte array
+        bytes[0] = type;
+        bytes[1] = tag;
+        bytes[2] = target;
+        bytes[3] = command;
+        bytes[4] = sender;
+
         return bytes;
     }
 
@@ -219,14 +236,8 @@ namespace Chetch{
     }
 
     byte ADMMessage::serialize(byte* destination){
-
-        //Add all the message data to the byte array
-        bytes[0] = type;
-        bytes[1] = tag;
-        bytes[2] = target;
-        bytes[3] = command;
-        bytes[4] = sender;
-
+        getBytes(); // will add everything to byte array
+        
         if(destination != NULL){
             for(int i = 0; i < byteCount; i++){
                 destination[i] = bytes[i];

@@ -43,14 +43,20 @@ namespace Chetch{
 
         public:
             enum ErrorCode{
-                NO_ERROR = 1,
-                NO_DEVICE_ID = 2,
-                DEVICE_LIMIT_REACHED = 3,
-                DEVICE_ID_ALREADY_USED = 4,
+                NO_ERROR = 0,
+                NO_ADM_INSTANCE = 1,
+                MESSAGE_FRAME_ERROR = 10,
+                ADM_MESSAGE_ERROR = 11,
+                ADM_MESSAGE_IS_EMPTY= 12,
+                NO_DEVICE_ID = 20,
+                DEVICE_LIMIT_REACHED = 21,
+                DEVICE_ID_ALREADY_USED = 22,
+                DEVICE_NOT_FOUND = 23,
             };
             ErrorCode error = NO_ERROR;
     
             static const byte ADM_MESSAGE_SIZE = 50;
+            static const byte ADM_TARGET_ID = 0;
 
             static int inDevicesTable(char *dname);
             static ArduinoDeviceManager *create(char *id, StreamWithCTS *stream);
@@ -58,6 +64,7 @@ namespace Chetch{
             static void handleStreamReset(StreamWithCTS *stream);
             static void handleStreamReceive(StreamWithCTS *stream, int bytesToRead);
             static void handleStreamSend(StreamWithCTS *stream);
+            static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
             
 
             ArduinoDeviceManager(char *id, StreamWithCTS *stream);
@@ -70,7 +77,7 @@ namespace Chetch{
             ArduinoDevice *addDevice(ADMMessage *message);
             ArduinoDevice* getDevice(byte deviceID);
             void loop();
-            void receiveMessage(ADMMessage* message);
+            void receiveMessage(ADMMessage* message, ADMMessage* response = NULL);
             void sendMessage(ADMMessage* message);
     }; //end class
 } //end namespace
