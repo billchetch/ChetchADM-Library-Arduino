@@ -28,7 +28,7 @@ namespace Chetch{
         message->addInt(120);
     }
 
-	void ZMPT101B::setStableVoltage(double v, double t = 0, double vlb = 0, double vub = -1){
+	void ZMPT101B::setStableVoltage(double v, double t, double vlb, double vub){
         stableVoltage = v;
         stabiliseThreshold = t;
         voltageLowerBound = vlb;

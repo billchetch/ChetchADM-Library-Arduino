@@ -7,6 +7,8 @@ namespace Chetch{
     class ADMMessage{
         public:
             enum MessageType {
+                TYPE_NONE = 0, //used as a 'zero' value
+                TYPE_CUSTOM = 2,
 	            TYPE_INFO = 3,
 	            TYPE_WARNING,
 	            TYPE_ERROR,
@@ -24,6 +26,7 @@ namespace Chetch{
 	            TYPE_INITIALISE,
 	            TYPE_DATA,
 	            TYPE_COMMAND_RESPONSE = 24,
+                TYPE_NOTIFICATION = 26,
 	            TYPE_INITIALISE_RESPONSE = 28
             };
 	  

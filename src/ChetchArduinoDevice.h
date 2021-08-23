@@ -32,7 +32,7 @@ namespace Chetch{
     
             unsigned long lastMillis = 0;
             int reportInterval = -1;
-            ADMMessage::MessageType messageTypeToCreate = 0;
+            ADMMessage::MessageType messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
 
             bool enabled = false;
             bool configured = false;

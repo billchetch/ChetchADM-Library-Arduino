@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "ChetchStreamWithCTS.h"
+#include "ChetchMessageFrame.h"
 #include "ChetchADMMessage.h"
 #include "ChetchArduinoDevice.h"
 
@@ -15,7 +16,8 @@
 #elif defined(ARDUINO_SAM_DUE)
 	#define MAX_DEVICES 16
 #else
-#error Unsupported hardware
+    #define MAX_DEVICES 8
+//#error Unsupported hardware
 #endif
 
 #define TEMPERATURE_DEVICES 1
@@ -39,10 +41,14 @@ namespace Chetch{
             bool initialised = false;
             bool configured = false;
 
-            static ArduinoDeviceManager *ADM = NULL;
+            static ArduinoDeviceManager *ADM;
+            static ADMMessage inMessage;
+            static ADMMessage outMessage;
+            static MessageFrame frame;
 
         public:
-            enum ErrorCode{
+        
+            enum class ErrorCode{
                 NO_ERROR = 0,
                 NO_ADM_INSTANCE = 1,
                 MESSAGE_FRAME_ERROR = 10,
@@ -53,26 +59,31 @@ namespace Chetch{
                 DEVICE_ID_ALREADY_USED = 22,
                 DEVICE_NOT_FOUND = 23,
             };
-            ErrorCode error = NO_ERROR;
+            ErrorCode error = ErrorCode::NO_ERROR;
     
             static const byte ADM_MESSAGE_SIZE = 50;
             static const byte ADM_TARGET_ID = 0;
+            static const byte STREAM_TARGET_ID = 255;
 
             static int inDevicesTable(char *dname);
             static ArduinoDeviceManager *create(char *id, StreamWithCTS *stream);
             static ArduinoDeviceManager *getInstance();
-            static void handleStreamReset(StreamWithCTS *stream);
+            static void handleStreamCommand(StreamWithCTS *stream, byte cmd);
+            static void handleStreamLocalEvent(StreamWithCTS *stream, byte cmd);
+            static void handleStreamRemoteEvent(StreamWithCTS *stream, byte cmd);
+            static bool handleStreamReadyToReceive(StreamWithCTS *stream);
             static void handleStreamReceive(StreamWithCTS *stream, int bytesToRead);
-            static void handleStreamSend(StreamWithCTS *stream);
+            static void handleStreamSend(StreamWithCTS *stream, int sendBufferRemaining);
             static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
-            
+            static void send(StreamWithCTS *stream, ADMMessage *message);
 
             ArduinoDeviceManager(char *id, StreamWithCTS *stream);
             ~ArduinoDeviceManager();
             bool setup();
 
-            void initialise(ADMMessage *message);
-            void configure(ADMMessage *message);
+            void reset();
+            void initialise(ADMMessage *message, ADMMessage *response);
+            void configure(ADMMessage *message, ADMMessage *response);
             ArduinoDevice *addDevice(byte id, byte category, char *dname);
             ArduinoDevice *addDevice(ADMMessage *message);
             ArduinoDevice* getDevice(byte deviceID);

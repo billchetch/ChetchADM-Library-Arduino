@@ -48,11 +48,10 @@ namespace Chetch{
     }
     
     bool ArduinoDevice::isMessageReady(){
-        return messageTypeToCreate > 0;
+        return messageTypeToCreate != ADMMessage::MessageType::TYPE_NONE;
     }
 
     void ArduinoDevice::receiveMessage(ADMMessage *message, ADMMessage *response){
-      
         
     }
 
@@ -63,7 +62,7 @@ namespace Chetch{
     void ArduinoDevice::sendMessage(ADMMessage *message){     
         if(isMessageReady()){
             createMessage(messageTypeToCreate, message);
-            messageTypeToCreate = 0;
+            messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
         }
     }
 

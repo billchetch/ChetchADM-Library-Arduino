@@ -35,7 +35,7 @@ namespace Chetch{
             void configure(ADMMessage* message) override;
             void createMessage(ADMMessage::MessageType messageType, ADMMessage* message) override;
 
-            void setStableVoltage(double v, double t = 0, double vlb = 0, double vub = -1);
+            void setStableVoltage(double v, double t = 0.0, double vlb = 0.0, double vub = -1.0);
             void loop() override;
             double getVoltage();
             double getHZ();

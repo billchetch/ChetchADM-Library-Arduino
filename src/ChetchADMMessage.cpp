@@ -60,6 +60,7 @@ namespace Chetch{
     }
 
     bool ADMMessage::deserialize(byte* source, byte bCount){
+        clear();
         ADMMessage::error = ADMMessage::NO_ERROR;
 
         int argByteCountIdx = ADMMessage::HEADER_SIZE;
