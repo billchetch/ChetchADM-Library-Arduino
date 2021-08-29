@@ -40,6 +40,7 @@ namespace Chetch{
             byte currentDevice = 0;
             bool initialised = false;
             bool configured = false;
+            unsigned long unixTime = 0; //set in initialisation
 
             static ArduinoDeviceManager *ADM;
             static ADMMessage inMessage;
@@ -71,24 +72,25 @@ namespace Chetch{
             static void handleStreamCommand(StreamWithCTS *stream, byte cmd);
             static void handleStreamLocalEvent(StreamWithCTS *stream, byte cmd);
             static void handleStreamRemoteEvent(StreamWithCTS *stream, byte cmd);
-            static bool handleStreamReadyToReceive(StreamWithCTS *stream);
+            static bool handleStreamReadyToReceive(StreamWithCTS *stream, bool request4cts);
             static void handleStreamReceive(StreamWithCTS *stream, int bytesToRead);
             static void handleStreamSend(StreamWithCTS *stream, int sendBufferRemaining);
             static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
             static void send(StreamWithCTS *stream, ADMMessage *message);
+            static int getMaxFrameSize();
 
             ArduinoDeviceManager(char *id, StreamWithCTS *stream);
             ~ArduinoDeviceManager();
             bool setup();
 
             void reset();
-            void initialise(ADMMessage *message, ADMMessage *response);
-            void configure(ADMMessage *message, ADMMessage *response);
+            virtual void initialise(ADMMessage *message, ADMMessage *response);
+            virtual void configure(ADMMessage *message, ADMMessage *response);
             ArduinoDevice *addDevice(byte id, byte category, char *dname);
             ArduinoDevice *addDevice(ADMMessage *message);
             ArduinoDevice* getDevice(byte deviceID);
             void loop();
-            void receiveMessage(ADMMessage* message, ADMMessage* response = NULL);
+            virtual void receiveMessage(ADMMessage* message, ADMMessage* response);
             void sendMessage(ADMMessage* message);
     }; //end class
 } //end namespace

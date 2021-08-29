@@ -41,15 +41,15 @@ namespace Chetch{
             ArduinoDevice(byte id, byte category, char* dname);
             //~ArduinoDevice();
 
-            virtual void initialise(ADMMessage* message);
-            virtual void configure(ADMMessage* message);
+            virtual void initialise(ADMMessage *message, ADMMessage *response);
+            virtual void configure(ADMMessage *message, ADMMessage *response);
             byte getID();
             char *getName();
             void enable(bool enable);
             bool isActive();
             void setReportInterval(int interval);
             bool isMessageReady();
-            void receiveMessage(ADMMessage *message, ADMMessage *response);
+            virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
             void sendMessage(ADMMessage *message);
             virtual void loop();

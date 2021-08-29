@@ -52,7 +52,15 @@ namespace Chetch{
     }
 
     void ArduinoDevice::receiveMessage(ADMMessage *message, ADMMessage *response){
-        
+        switch ((ADMMessage::MessageType)message->type) {
+            case ADMMessage::MessageType::TYPE_INITIALISE:
+                initialise(message, response);
+                break;
+
+             case ADMMessage::MessageType::TYPE_CONFIGURE:
+                configure(message, response);
+                break;
+        }
     }
 
     void ArduinoDevice::createMessage(ADMMessage::MessageType messageType, ADMMessage *message){

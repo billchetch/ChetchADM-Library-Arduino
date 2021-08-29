@@ -31,7 +31,7 @@ namespace Chetch{
     }
 
     void ADMMessage::clear(){
-        type = 0;
+        type = (byte)MessageType::TYPE_NONE;
         tag = 0;
         target = 0;
         command = 0;
@@ -46,7 +46,7 @@ namespace Chetch{
     }
 
     bool ADMMessage::isEmpty(){
-        return argumentCount == 0;
+        return type == (byte)MessageType::TYPE_NONE && argumentCount == 0;
     }
 
     void ADMMessage::copy(ADMMessage *message){

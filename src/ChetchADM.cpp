@@ -55,6 +55,7 @@ namespace Chetch{
             stream->setReadyToReceiveHandler(handleStreamReadyToReceive);
             stream->setReceiveHandler(handleStreamReceive);
             stream->setSendHandler(handleStreamSend);
+            stream->setMaxDatablockSize(frame.getMaxSize());
             ADM = new ArduinoDeviceManager(id, stream);
         }
         
@@ -84,6 +85,22 @@ namespace Chetch{
                     break;
 
                 case (byte)StreamWithCTS::Event::RECEIVE_BUFFER_FULL:
+                case (byte)StreamWithCTS::Event::MAX_DATABLOCK_SIZE_EXCEEDED:
+                case (byte)StreamWithCTS::Event::CTS_REQUEST_TIMEOUT:
+                    
+
+                    /*outMessage.clear();
+                    outMessage.type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
+                        outMessage.addBool(stream->isClearToSend());
+                        outMessage.addInt(stream->getBytesReceived());
+                        outMessage.addInt(stream->getBytesSent());
+                        outMessage.addInt(stream->bytesToRead());
+                        outMessage.addInt(stream->receiveBuffer->remaining());
+                        outMessage.addInt(stream->receiveBuffer->getMarkerCount());
+                        outMessage.addInt(stream->sendBuffer->remaining());
+                        outMessage.addInt(stream->sendBuffer->getMarkerCount());
+                        outMessage.addInt(stream->getLimit(StreamWithCTS::MAX_DATABLOCK_SIZE)); */
+                    //}
                     break;
 
             } //end switch
@@ -100,13 +117,17 @@ namespace Chetch{
 
                 case (byte)StreamWithCTS::Event::CTS_TIMEOUT: //remote has waited too long for a CTS from local
                     //if(stream->canReceive(StreamWithCTS::UART_BUFFER_SIZE)){
-                        //stream->sendCTS(true); //send CTS regardless if the remote announces it has waited too long
+                        /*outMessage.clear();
                         outMessage.type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
                         outMessage.addBool(stream->isClearToSend());
-                        outMessage.addInt(stream->bytesReceived);
-                        outMessage.addInt(stream->bytesSent);
+                        outMessage.addInt(stream->getBytesReceived());
+                        outMessage.addInt(stream->getBytesSent());
+                        outMessage.addInt(stream->bytesToRead());
                         outMessage.addInt(stream->receiveBuffer->remaining());
+                        outMessage.addInt(stream->receiveBuffer->getMarkerCount());
                         outMessage.addInt(stream->sendBuffer->remaining());
+                        outMessage.addInt(stream->sendBuffer->getMarkerCount());
+                        outMessage.addInt(stream->getLimit(StreamWithCTS::MAX_DATABLOCK_SIZE));*/
                     //}
                     break;
 
@@ -115,8 +136,12 @@ namespace Chetch{
         }
     }
 
-    bool ArduinoDeviceManager::handleStreamReadyToReceive(StreamWithCTS *stream){
-        return stream->bytesToRead() == 0 && stream->canSend(ADM_MESSAGE_SIZE + 4); //TODO: change 4 to a frame value (header + checksum)
+    bool ArduinoDeviceManager::handleStreamReadyToReceive(StreamWithCTS *stream, bool request4cts){
+        if(request4cts){
+            return stream->canReceive(StreamWithCTS::UART_LOCAL_BUFFER_SIZE);
+        } else {
+            return stream->bytesToRead() == 0 && stream->canSend(frame.getMaxSize());
+        }
     }
 
     void ArduinoDeviceManager::handleStreamReceive(StreamWithCTS *stream, int bytesToRead){
@@ -127,6 +152,9 @@ namespace Chetch{
         } else if(!outMessage.isEmpty()){
             return; //we already have an outgoing message so we defer to that
         } else {
+            //we copy the 'tag' to the outmessage for identification at target
+            outMessage.tag = inMessage.tag;
+
             //So we have an instance we can proeeed b first adding  all bytes to a frame 
             //(also removes from stream buffer so next byte block can be received)
             frame.reset();
@@ -141,8 +169,6 @@ namespace Chetch{
                 if(inMessage.hasError()){
                     //Process error... we know message frames are ok so we return
                     addErrorInfo(&outMessage, ErrorCode::ADM_MESSAGE_ERROR, inMessage.error, &inMessage);
-                } else if(inMessage.isEmpty()) {
-                    addErrorInfo(&outMessage, ErrorCode::ADM_MESSAGE_IS_EMPTY, 0, &inMessage);
                 } else { //ok so everything checks out ... let's get on with it by passing this to ADM
                     ADM->receiveMessage(&inMessage, &outMessage);
                 }
@@ -173,7 +199,25 @@ namespace Chetch{
                 frame.reset();
             } else {
                 //TODO: make this part of debug mode
-                stream->sendEvent(StreamWithCTS::Event::SEND_BUFFER_OVERFLOW_ALERT);
+                /*stream->sendEvent(StreamWithCTS::Event::SEND_BUFFER_OVERFLOW_ALERT);
+                outMessage.clear();
+                outMessage.type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
+                outMessage.addBool(stream->isClearToSend());
+                outMessage.addInt(stream->getBytesReceived());
+                outMessage.addInt(stream->getBytesSent());
+                outMessage.addInt(stream->bytesToRead());
+                outMessage.addInt(stream->receiveBuffer->remaining());
+                outMessage.addInt(stream->receiveBuffer->getMarkerCount());
+                outMessage.addInt(stream->sendBuffer->remaining());
+                outMessage.addInt(stream->sendBuffer->getMarkerCount());
+                outMessage.addBool(stream->localRequestedCTS);
+                outMessage.addBool(stream->remoteRequestedCTS);
+                frame.reset();
+                frame.setPayload(outMessage.getBytes(), outMessage.getByteCount());
+                stream->sendBuffer->reset();
+                stream->write(frame.getBytes(), frame.getSize(), true);
+                outMessage.clear();
+                frame.reset();*/
             }
         }
     }
@@ -188,6 +232,10 @@ namespace Chetch{
             message->addByte(originalMessage->target);
             message->addByte(originalMessage->sender);
         }
+    }
+
+    int ArduinoDeviceManager::getMaxFrameSize(){
+        return frame.getMaxSize();
     }
      
     /*
@@ -210,7 +258,13 @@ namespace Chetch{
 
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
         initialised = true;
+
+        int argIdx = 0;
+        unixTime = message->argumentAsULong(argIdx++);
+
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
+        response->target = ADM_TARGET_ID;
+        response->sender = ADM_TARGET_ID;
         response->addByte(1);
     }
   
@@ -321,6 +375,10 @@ namespace Chetch{
                 case ADMMessage::MessageType::TYPE_INITIALISE:
                     initialise(message, response);
                     break;
+
+                case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
+                    response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
+                    break;
             
                 case ADMMessage::MessageType::TYPE_ECHO:
                     response->copy(message);
@@ -333,10 +391,15 @@ namespace Chetch{
                 case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
                     response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
                     response->addBool(stream->isClearToSend());
-                    response->addInt(stream->bytesReceived);
-                    response->addInt(stream->bytesSent);
+                    response->addInt(stream->getBytesReceived());
+                    response->addInt(stream->getBytesSent());
+                    response->addInt(stream->bytesToRead());
                     response->addInt(stream->receiveBuffer->remaining());
+                    response->addInt(stream->receiveBuffer->getMarkerCount());
                     response->addInt(stream->sendBuffer->remaining());
+                    response->addInt(stream->sendBuffer->getMarkerCount());
+                    response->addBool(stream->localRequestedCTS);
+                    response->addBool(stream->remoteRequestedCTS);
                     break;
             }
         } else { //targetting device
