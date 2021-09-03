@@ -16,17 +16,25 @@
 #endif
 
 #if (INCLUDE_DEVICES & ELECTRICITY_MEASURING_DEVICES) == ELECTRICITY_MEASURING_DEVICES
-#include "devices/ChetchZMPT101B.h"
+#include "devices/electricity/ChetchZMPT101B.h"
+#endif
+
+#if (INCLUDE_DEVICES & DIAGNOSTIC_DEVICES) == DIAGNOSTIC_DEVICES
+#include "devices/diagnostics/ChetchTest01.h"
 #endif
 
 const char DS18B20[] PROGMEM = "DS18B20";
 const char JSN_SR04T[] PROGMEM = "JSN-SR04T";
 const char ZMPT101B[] PROGMEM = "ZMPT101B";
+const char TEST01[] PROGMEM = "TEST01";
+const char TEST02[] PROGMEM = "TEST02";
 
 const char *const DEVICES_TABLE[] PROGMEM = {
 	DS18B20,
 	JSN_SR04T,
-    ZMPT101B
+    ZMPT101B,
+    TEST01,
+    TEST02
 };
 
 namespace Chetch{
@@ -48,7 +56,7 @@ namespace Chetch{
     /*
     * Create static instance because stream callbacks cannot (not easy to?) use instance member methods
     */
-    ArduinoDeviceManager *ArduinoDeviceManager::create(char *id, StreamWithCTS *stream){
+    ArduinoDeviceManager *ArduinoDeviceManager::create(StreamWithCTS *stream){
         if(ADM == NULL){
             stream->setCommandHandler(handleStreamCommand);
             stream->setEventHandlers(handleStreamLocalEvent, handleStreamRemoteEvent);
@@ -56,7 +64,7 @@ namespace Chetch{
             stream->setReceiveHandler(handleStreamReceive);
             stream->setSendHandler(handleStreamSend);
             stream->setMaxDatablockSize(frame.getMaxSize());
-            ADM = new ArduinoDeviceManager(id, stream);
+            ADM = new ArduinoDeviceManager(stream);
         }
         
         return ADM;
@@ -198,26 +206,7 @@ namespace Chetch{
                 outMessage.clear();
                 frame.reset();
             } else {
-                //TODO: make this part of debug mode
-                /*stream->sendEvent(StreamWithCTS::Event::SEND_BUFFER_OVERFLOW_ALERT);
-                outMessage.clear();
-                outMessage.type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
-                outMessage.addBool(stream->isClearToSend());
-                outMessage.addInt(stream->getBytesReceived());
-                outMessage.addInt(stream->getBytesSent());
-                outMessage.addInt(stream->bytesToRead());
-                outMessage.addInt(stream->receiveBuffer->remaining());
-                outMessage.addInt(stream->receiveBuffer->getMarkerCount());
-                outMessage.addInt(stream->sendBuffer->remaining());
-                outMessage.addInt(stream->sendBuffer->getMarkerCount());
-                outMessage.addBool(stream->localRequestedCTS);
-                outMessage.addBool(stream->remoteRequestedCTS);
-                frame.reset();
-                frame.setPayload(outMessage.getBytes(), outMessage.getByteCount());
-                stream->sendBuffer->reset();
-                stream->write(frame.getBytes(), frame.getSize(), true);
-                outMessage.clear();
-                frame.reset();*/
+                //TODO: something?
             }
         }
     }
@@ -241,8 +230,7 @@ namespace Chetch{
     /*
     * Constructor
     */
-    ArduinoDeviceManager::ArduinoDeviceManager(char* id, StreamWithCTS *stream){
-        this->id = id;
+    ArduinoDeviceManager::ArduinoDeviceManager(StreamWithCTS *stream){
         this->stream = stream;
     }
 
@@ -252,24 +240,17 @@ namespace Chetch{
         }
     }
 
-    void ArduinoDeviceManager::reset(){
-        //Called when connection is rese
-    }
-
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
+        deviceCount = 0;
         initialised = true;
 
-        int argIdx = 0;
-        unixTime = message->argumentAsULong(argIdx++);
-
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
-        response->target = ADM_TARGET_ID;
-        response->sender = ADM_TARGET_ID;
-        response->addByte(1);
+        
     }
   
     void ArduinoDeviceManager::configure(ADMMessage *message, ADMMessage *response){
         configured = true;
+        response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
     }
 
     ArduinoDevice *ArduinoDeviceManager::addDevice(byte id, byte category, char *dname){
@@ -305,6 +286,15 @@ namespace Chetch{
                 device = new ZMPT101B(id, category, dname);
 		        break;
 #endif
+
+#if (INCLUDE_DEVICES & DIAGNOSTIC_DEVICES) == DIAGNOSTIC_DEVICES
+            case 3:
+                device = new Test01(id, category, dname);
+                break;
+            case 4:
+                break;
+#endif
+
             default:
                 switch(category){
 #if (INCLUDE_DEVICES & IR_DEVICES) == IR_DEVICES
@@ -371,25 +361,34 @@ namespace Chetch{
         ErrorCode error = ErrorCode::NO_ERROR;
       
         if(message->target == ADM_TARGET_ID){ //targetting ADM
+            response->sender = ADM_TARGET_ID;
+            response->target = ADM_TARGET_ID;
             switch ((ADMMessage::MessageType)message->type) {
                 case ADMMessage::MessageType::TYPE_INITIALISE:
                     initialise(message, response);
                     break;
 
+                 case ADMMessage::MessageType::TYPE_CONFIGURE:
+                    configure(message, response);
+                    break;
+
                 case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
                     response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
+                    response->addByte(deviceCount);
                     break;
             
                 case ADMMessage::MessageType::TYPE_ECHO:
                     response->copy(message);
                     response->type = ADMMessage::MessageType::TYPE_ECHO_RESPONSE;
-                    response->sender = ADM_TARGET_ID;
                     break;
             }
         } else if (message->target == STREAM_TARGET_ID){ //targetting stream
+            response->sender = STREAM_TARGET_ID;
+            response->target = STREAM_TARGET_ID;
             switch ((ADMMessage::MessageType)message->type) {
                 case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
                     response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
+                    response->sender = STREAM_TARGET_ID;
                     response->addBool(stream->isClearToSend());
                     response->addInt(stream->getBytesReceived());
                     response->addInt(stream->getBytesSent());
@@ -422,6 +421,8 @@ namespace Chetch{
         
         if(error != ErrorCode::NO_ERROR){
             response->clear(); //an error overrides any other response
+            response->sender = ADM_TARGET_ID;
+            response->target = ADM_TARGET_ID;
             addErrorInfo(response, error, 0, message);
         }
     }
@@ -434,4 +435,8 @@ namespace Chetch{
         currentDevice = (currentDevice + 1) % deviceCount;
     }
 
+
+    bool ArduinoDeviceManager::isReady(){
+        return stream->isReady() && initialised && configured;
+    }
 } //end namespace

@@ -31,22 +31,23 @@ namespace Chetch{
             char name[DEVICE_NAME_LENGTH];
     
             unsigned long lastMillis = 0;
-            int reportInterval = -1;
+            int reportInterval = -1; //negative or zero means no reporting
             ADMMessage::MessageType messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
 
-            bool enabled = false;
+            bool initialised = false;
             bool configured = false;
-
+            bool enabled = false;
+            
         public:
             ArduinoDevice(byte id, byte category, char* dname);
             //~ArduinoDevice();
 
-            virtual void initialise(ADMMessage *message, ADMMessage *response);
-            virtual void configure(ADMMessage *message, ADMMessage *response);
+            virtual int initialise(ADMMessage *message, ADMMessage *response);
+            virtual int configure(ADMMessage *message, ADMMessage *response);
             byte getID();
             char *getName();
             void enable(bool enable);
-            bool isActive();
+            bool isActive(); //configured AND enabled
             void setReportInterval(int interval);
             bool isMessageReady();
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);

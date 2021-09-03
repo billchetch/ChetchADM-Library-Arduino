@@ -14,17 +14,22 @@ namespace Chetch{
         }
     }
 
-    void ArduinoDevice::initialise(ADMMessage* message){
+    int ArduinoDevice::initialise(ADMMessage *message, ADMMessage *response){
+        initialised = true;
         if(message->hasArgument(DEVICE_ENABLED_INDEX)){
             enable(message->argumentAsBool(DEVICE_ENABLED_INDEX));
         }
         if(message->hasArgument(REPORT_INTERVAL_INDEX)){
             setReportInterval(message->argumentAsInt(REPORT_INTERVAL_INDEX));
         }
+        return 0;
     }
 
-    void ArduinoDevice::configure(ADMMessage* message){
+    int ArduinoDevice::configure(ADMMessage *message, ADMMessage *response){
         configured = true;
+        int argIdx = 0;
+        setReportInterval(message->argumentAsInt(argIdx++));
+        return argIdx;
     }
 
     bool ArduinoDevice::isActive(){
@@ -52,6 +57,9 @@ namespace Chetch{
     }
 
     void ArduinoDevice::receiveMessage(ADMMessage *message, ADMMessage *response){
+        response->sender = getID();
+        response->target = getID();
+                
         switch ((ADMMessage::MessageType)message->type) {
             case ADMMessage::MessageType::TYPE_INITIALISE:
                 initialise(message, response);
@@ -64,12 +72,13 @@ namespace Chetch{
     }
 
     void ArduinoDevice::createMessage(ADMMessage::MessageType messageType, ADMMessage *message){
-        
+        message->type = messageType;
     }
 
     void ArduinoDevice::sendMessage(ADMMessage *message){     
         if(isMessageReady()){
             createMessage(messageTypeToCreate, message);
+            //reset messageTypeToCreate as it is used by isMessageReady
             messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
         }
     }

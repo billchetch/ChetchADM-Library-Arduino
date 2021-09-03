@@ -8,23 +8,23 @@ namespace Chetch{
     }
 
 
-    void ZMPT101B::configure(ADMMessage* message){
-        ArduinoDevice::configure(message);
+    int ZMPT101B::configure(ADMMessage* message, ADMMessage* response){
+        int argIdx = ArduinoDevice::configure(message, response);
 
-        voltagePin = message->argumentAsInt(0);
-        sampleSize = message->argumentAsInt(1);
-        sampleInterval = message->argumentAsULong(2);
+        voltagePin = message->argumentAsInt(argIdx++);
+        sampleSize = message->argumentAsInt(argIdx++);
+        sampleInterval = message->argumentAsULong(argIdx++);
 
         setStableVoltage(
-            message->argumentAsDouble(3),
-            message->argumentAsDouble(4),
-            message->argumentAsDouble(5),
-            message->argumentAsDouble(6)
+            message->argumentAsDouble(argIdx++),
+            message->argumentAsDouble(argIdx++),
+            message->argumentAsDouble(argIdx++),
+            message->argumentAsDouble(argIdx++)
             );
     }
 
     void ZMPT101B::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
-        message->type = messageTypeToCreate;
+        ArduinoDevice::createMessage(messageTypeToCreate, message);
         message->addInt(120);
     }
 

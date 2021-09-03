@@ -64,8 +64,8 @@ namespace Chetch{
         ADMMessage::error = ADMMessage::NO_ERROR;
 
         int argByteCountIdx = ADMMessage::HEADER_SIZE;
-        if(bCount <= argByteCountIdx + 1){
-            ADMMessage::error = ADMMessage::ERROR_BADLY_FORMED;
+        if(bCount < argByteCountIdx){
+            ADMMessage::error = ADMMessage::ERROR_INSUFFICIENT_BYTES;
             return false;
         }
 
@@ -75,7 +75,7 @@ namespace Chetch{
             bytes[i] = source[i];
         }
 
-        //member vars
+        //Member vars (= HEADER)
         type = bytes[0];
         tag = bytes[1];
         target = bytes[2];

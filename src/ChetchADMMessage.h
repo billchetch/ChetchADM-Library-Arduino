@@ -48,13 +48,14 @@ namespace Chetch{
             enum ErrorCode {
                 NO_ERROR = 0,
                 ERROR_UNRECOGNISED_MESSAGE_TYPE = 2,
-                ERROR_BADLY_FORMED = 3,
-                ERROR_UNKNOWN = 4,
-                ERROR_ADM_NOT_INITIALISED = 5
+                ERROR_INSUFFICIENT_BYTES = 3,
+                ERROR_BADLY_FORMED = 4,
+                ERROR_ADM_NOT_INITIALISED = 10,
+                ERROR_UNKNOWN = 20,
             };
      
 
-            static const byte HEADER_SIZE = 5;
+            static const byte HEADER_SIZE = 5; //type, tag, target, command, sender
             
 
         private:
@@ -81,7 +82,7 @@ namespace Chetch{
             ~ADMMessage();
 
             void clear();
-            bool isEmpty(); //no arguments
+            bool isEmpty(); //type is NONE and no arguments
             void copy(ADMMessage *message);
 
             byte getByteCount();

@@ -24,16 +24,18 @@
 #define RANGE_FINDER_DEVICES 2
 #define IR_DEVICES 4
 #define ELECTRICITY_MEASURING_DEVICES 8
+#define DIAGNOSTIC_DEVICES 16
 
-//specify here devices beyond the default set that should be included ... combinations allowed by OR-ing
+//!!!Specify here devices beyond the default set that should be included ... combinations allowed by OR-ing
 //#define INCLUDE_DEVICES TEMPERATURE_DEVICES
 //#define INCLUDE_DEVICES RANGE_FINDER_DEVICES
-#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES
+//#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES
+#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES | DIAGNOSTIC_DEVICES
 
 namespace Chetch{
     class ArduinoDeviceManager{
         private:
-            char* id;
+            //char* id;
             StreamWithCTS *stream;
             ArduinoDevice *devices[MAX_DEVICES];
             byte deviceCount = 0;
@@ -67,7 +69,7 @@ namespace Chetch{
             static const byte STREAM_TARGET_ID = 255;
 
             static int inDevicesTable(char *dname);
-            static ArduinoDeviceManager *create(char *id, StreamWithCTS *stream);
+            static ArduinoDeviceManager *create(StreamWithCTS *stream);
             static ArduinoDeviceManager *getInstance();
             static void handleStreamCommand(StreamWithCTS *stream, byte cmd);
             static void handleStreamLocalEvent(StreamWithCTS *stream, byte cmd);
@@ -79,11 +81,10 @@ namespace Chetch{
             static void send(StreamWithCTS *stream, ADMMessage *message);
             static int getMaxFrameSize();
 
-            ArduinoDeviceManager(char *id, StreamWithCTS *stream);
+            ArduinoDeviceManager(StreamWithCTS *stream);
             ~ArduinoDeviceManager();
             bool setup();
 
-            void reset();
             virtual void initialise(ADMMessage *message, ADMMessage *response);
             virtual void configure(ADMMessage *message, ADMMessage *response);
             ArduinoDevice *addDevice(byte id, byte category, char *dname);
@@ -92,6 +93,8 @@ namespace Chetch{
             void loop();
             virtual void receiveMessage(ADMMessage* message, ADMMessage* response);
             void sendMessage(ADMMessage* message);
+
+            bool isReady(); //connected, initialised and configured
     }; //end class
 } //end namespace
 
