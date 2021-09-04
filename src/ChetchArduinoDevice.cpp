@@ -14,26 +14,32 @@ namespace Chetch{
         }
     }
 
-    int ArduinoDevice::initialise(ADMMessage *message, ADMMessage *response){
+    void ArduinoDevice::initialise(ADMMessage *message, ADMMessage *response){
         initialised = true;
-        if(message->hasArgument(DEVICE_ENABLED_INDEX)){
-            enable(message->argumentAsBool(DEVICE_ENABLED_INDEX));
-        }
-        if(message->hasArgument(REPORT_INTERVAL_INDEX)){
-            setReportInterval(message->argumentAsInt(REPORT_INTERVAL_INDEX));
-        }
-        return 0;
+        
+        response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
+        response->addByte(category);
+        response->addString(this->name);
     }
 
-    int ArduinoDevice::configure(ADMMessage *message, ADMMessage *response){
+    void ArduinoDevice::configure(ADMMessage *message, ADMMessage *response){
         configured = true;
-        int argIdx = 0;
-        setReportInterval(message->argumentAsInt(argIdx++));
-        return argIdx;
+        int argIdx = getArgumentIndex(message, MessageField::ENABLED);
+        enable(message->argumentAsBool(argIdx));
+        argIdx = getArgumentIndex(message, MessageField::REPORT_INTERVAL);
+        setReportInterval(message->argumentAsInt(argIdx));
+        
+        response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
+        response->addBool(isReady());
+        response->addInt(reportInterval);
+    }
+
+    bool ArduinoDevice::isReady(){
+        return initialised && configured;
     }
 
     bool ArduinoDevice::isActive(){
-        return enabled && configured;
+        return enabled && isReady();
     }
 
     byte ArduinoDevice::getID(){
@@ -50,6 +56,10 @@ namespace Chetch{
 
     void ArduinoDevice::setReportInterval(int interval){
         reportInterval = interval;
+    }
+
+    int ArduinoDevice::getReportInterval(){
+        return reportInterval;
     }
     
     bool ArduinoDevice::isMessageReady(){
@@ -68,11 +78,16 @@ namespace Chetch{
              case ADMMessage::MessageType::TYPE_CONFIGURE:
                 configure(message, response);
                 break;
+
+              case ADMMessage::MessageType::TYPE_STATUS_RESPONSE:
+                break;
         }
     }
 
     void ArduinoDevice::createMessage(ADMMessage::MessageType messageType, ADMMessage *message){
         message->type = messageType;
+        message->target = getID();
+        message->sender = getID();
     }
 
     void ArduinoDevice::sendMessage(ADMMessage *message){     
@@ -80,6 +95,13 @@ namespace Chetch{
             createMessage(messageTypeToCreate, message);
             //reset messageTypeToCreate as it is used by isMessageReady
             messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
+        }
+    }
+
+    int ArduinoDevice::getArgumentIndex(ADMMessage *message, MessageField field){
+        switch(field){
+            default:
+                return (int)field;
         }
     }
 

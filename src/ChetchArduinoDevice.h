@@ -20,11 +20,14 @@ namespace Chetch{
             };
 
             static const byte DEVICE_NAME_LENGTH = 10;
-            static const byte DEVICE_CATEGROY_INDEX = 0;
-            static const byte DEVICE_NAME_INDEX = 1;
-            static const byte DEVICE_ENABLED_INDEX = 2;
-            static const byte REPORT_INTERVAL_INDEX = 3;
             
+            enum MessageField{
+                ENABLED = 0,
+                REPORT_INTERVAL,
+                DEVICE_NAME,
+                DEVICE_CATEGORY
+            };
+
         private:
             byte ID;
             byte category;
@@ -42,17 +45,20 @@ namespace Chetch{
             ArduinoDevice(byte id, byte category, char* dname);
             //~ArduinoDevice();
 
-            virtual int initialise(ADMMessage *message, ADMMessage *response);
-            virtual int configure(ADMMessage *message, ADMMessage *response);
+            virtual void initialise(ADMMessage *message, ADMMessage *response);
+            virtual void configure(ADMMessage *message, ADMMessage *response);
             byte getID();
             char *getName();
             void enable(bool enable);
-            bool isActive(); //configured AND enabled
+            bool isReady(); //initialised AND configured
+            bool isActive(); //isReady AND enabled
             void setReportInterval(int interval);
+            int getReportInterval();
             bool isMessageReady();
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
             void sendMessage(ADMMessage *message);
+            int getArgumentIndex(ADMMessage *message, MessageField field);
             virtual void loop();
     };
 

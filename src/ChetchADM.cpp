@@ -1,6 +1,7 @@
 #include "ChetchUtils.h"
 #include "ChetchADM.h"
 #include "ChetchMessageFrame.h"
+#include <MemoryFree.h>
 
 #if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
 #include "devices/ChetchDS18B20Array.h"
@@ -37,6 +38,8 @@ const char *const DEVICES_TABLE[] PROGMEM = {
     TEST02
 };
 
+#define DEVICE_TABLE_SIZE 5
+
 namespace Chetch{
     ArduinoDeviceManager *ArduinoDeviceManager::ADM = NULL;
     MessageFrame ArduinoDeviceManager::frame(MessageFrame::FrameSchema::SMALL_SIMPLE_CHECKSUM, ADM_MESSAGE_SIZE);
@@ -45,7 +48,7 @@ namespace Chetch{
 
     int ArduinoDeviceManager::inDevicesTable(char *dname){
         char stBuffer[ArduinoDevice::DEVICE_NAME_LENGTH];
-        for(int i = 0; i < 3; i++){
+        for(int i = 0; i < DEVICE_TABLE_SIZE; i++){
             if (strcmp(dname, Utils::getStringFromProgmem(stBuffer, i, DEVICES_TABLE)) == 0) {
 			    return i;
 		    } 
@@ -95,20 +98,6 @@ namespace Chetch{
                 case (byte)StreamWithCTS::Event::RECEIVE_BUFFER_FULL:
                 case (byte)StreamWithCTS::Event::MAX_DATABLOCK_SIZE_EXCEEDED:
                 case (byte)StreamWithCTS::Event::CTS_REQUEST_TIMEOUT:
-                    
-
-                    /*outMessage.clear();
-                    outMessage.type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
-                        outMessage.addBool(stream->isClearToSend());
-                        outMessage.addInt(stream->getBytesReceived());
-                        outMessage.addInt(stream->getBytesSent());
-                        outMessage.addInt(stream->bytesToRead());
-                        outMessage.addInt(stream->receiveBuffer->remaining());
-                        outMessage.addInt(stream->receiveBuffer->getMarkerCount());
-                        outMessage.addInt(stream->sendBuffer->remaining());
-                        outMessage.addInt(stream->sendBuffer->getMarkerCount());
-                        outMessage.addInt(stream->getLimit(StreamWithCTS::MAX_DATABLOCK_SIZE)); */
-                    //}
                     break;
 
             } //end switch
@@ -124,19 +113,6 @@ namespace Chetch{
                     break;
 
                 case (byte)StreamWithCTS::Event::CTS_TIMEOUT: //remote has waited too long for a CTS from local
-                    //if(stream->canReceive(StreamWithCTS::UART_BUFFER_SIZE)){
-                        /*outMessage.clear();
-                        outMessage.type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
-                        outMessage.addBool(stream->isClearToSend());
-                        outMessage.addInt(stream->getBytesReceived());
-                        outMessage.addInt(stream->getBytesSent());
-                        outMessage.addInt(stream->bytesToRead());
-                        outMessage.addInt(stream->receiveBuffer->remaining());
-                        outMessage.addInt(stream->receiveBuffer->getMarkerCount());
-                        outMessage.addInt(stream->sendBuffer->remaining());
-                        outMessage.addInt(stream->sendBuffer->getMarkerCount());
-                        outMessage.addInt(stream->getLimit(StreamWithCTS::MAX_DATABLOCK_SIZE));*/
-                    //}
                     break;
 
             } //end switch
@@ -193,7 +169,7 @@ namespace Chetch{
         if(ADM == NULL){
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else if(outMessage.isEmpty()){
-           // ADM->sendMessage(&outMessage); //TODO: this is causing a crash so need to look into it
+            ADM->sendMessage(&outMessage); //TODO: this is causing a crash so need to look into it
         }
 
         if(!outMessage.isEmpty()){
@@ -241,7 +217,11 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
+        for(int i = 0; i < deviceCount; i++){
+            delete devices[i];
+        }
         deviceCount = 0;
+        configured = false;
         initialised = true;
 
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
@@ -286,12 +266,9 @@ namespace Chetch{
                 device = new ZMPT101B(id, category, dname);
 		        break;
 #endif
-
 #if (INCLUDE_DEVICES & DIAGNOSTIC_DEVICES) == DIAGNOSTIC_DEVICES
             case 3:
                 device = new Test01(id, category, dname);
-                break;
-            case 4:
                 break;
 #endif
 
@@ -328,14 +305,10 @@ namespace Chetch{
 
     ArduinoDevice *ArduinoDeviceManager::addDevice(ADMMessage *message){
         //TODO: name of device
-        if(message->hasArgument(ArduinoDevice::DEVICE_NAME_INDEX)){
-            char deviceName[ArduinoDevice::DEVICE_NAME_LENGTH];
-            message->argumentAsCharArray(ArduinoDevice::DEVICE_NAME_INDEX, deviceName);
-            return addDevice(message->target, message->argumentAsByte(ArduinoDevice::DEVICE_CATEGROY_INDEX), deviceName);
-        } else {
-            return addDevice(message->target, message->argumentAsByte(ArduinoDevice::DEVICE_CATEGROY_INDEX), NULL);
-        }
-        
+        char deviceName[ArduinoDevice::DEVICE_NAME_LENGTH];
+        message->argumentAsCharArray(getArgumentIndex(message, MessageField::DEVICE_NAME), deviceName);
+        byte deviceCategory = message->argumentAsByte(getArgumentIndex(message, MessageField::DEVICE_CATEGORY)); 
+        return addDevice(message->target, deviceCategory, deviceName);
     }
 
     ArduinoDevice* ArduinoDeviceManager::getDevice(byte deviceID){
@@ -374,6 +347,8 @@ namespace Chetch{
 
                 case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
                     response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
+                    response->addULong(millis());
+                    response->addInt(freeMemory());
                     response->addByte(deviceCount);
                     break;
             
@@ -408,7 +383,7 @@ namespace Chetch{
                     if(device == NULL){ //we are creating a new device
                         device = addDevice(message);
                         if(device == NULL){
-                            error = ErrorCode::DEVICE_NOT_FOUND;
+                            error = ErrorCode::DEVICE_CANNOT_BE_CREATED;
                             break;
                         }
                     }
@@ -416,6 +391,8 @@ namespace Chetch{
              }
              if(device != NULL){
                 device->receiveMessage(message, response);
+             } else {
+                error = ErrorCode::DEVICE_NOT_FOUND;
              }
         }
         
@@ -428,11 +405,24 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::sendMessage(ADMMessage* message){
-        ArduinoDevice *dev = devices[currentDevice];
-        if(dev->isMessageReady()){
-            dev->sendMessage(message); 
+        if(deviceCount > 0){
+            ArduinoDevice *dev = devices[currentDevice];
+            if(dev->isReady() && dev->isMessageReady()){
+                dev->sendMessage(message); 
+            }
+            currentDevice = (currentDevice + 1) % deviceCount;
         }
-        currentDevice = (currentDevice + 1) % deviceCount;
+    }
+
+    int ArduinoDeviceManager::getArgumentIndex(ADMMessage* message, MessageField field){
+        switch(field){
+            case MessageField::DEVICE_NAME:
+                return 0;
+             case MessageField::DEVICE_CATEGORY:
+                return 1;
+            default:
+                return (int)field;
+        }
     }
 
 

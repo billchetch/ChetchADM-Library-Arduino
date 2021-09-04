@@ -8,9 +8,10 @@ namespace Chetch{
     }
 
 
-    int ZMPT101B::configure(ADMMessage* message, ADMMessage* response){
-        int argIdx = ArduinoDevice::configure(message, response);
+    void ZMPT101B::configure(ADMMessage* message, ADMMessage* response){
+        ArduinoDevice::configure(message, response);
 
+        int argIdx = 2;
         voltagePin = message->argumentAsInt(argIdx++);
         sampleSize = message->argumentAsInt(argIdx++);
         sampleInterval = message->argumentAsULong(argIdx++);
@@ -25,7 +26,7 @@ namespace Chetch{
 
     void ZMPT101B::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
         ArduinoDevice::createMessage(messageTypeToCreate, message);
-        message->addInt(120);
+        message->addInt(220);
     }
 
 	void ZMPT101B::setStableVoltage(double v, double t, double vlb, double vub){

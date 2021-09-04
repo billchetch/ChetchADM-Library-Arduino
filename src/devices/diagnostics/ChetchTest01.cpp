@@ -8,13 +8,14 @@ namespace Chetch{
     }
 
 
-    int Test01::configure(ADMMessage* message, ADMMessage* response){
-        int argIdx = ArduinoDevice::configure(message, response);
-        return argIdx;
+    void Test01::configure(ADMMessage* message, ADMMessage* response){
+        ArduinoDevice::configure(message, response);
+        response->addInt(34);
     }
 
     void Test01::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
-        message->type = messageTypeToCreate;
+        ArduinoDevice::createMessage(messageTypeToCreate, message);
+
         message->addInt(120);
     }
 

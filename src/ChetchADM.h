@@ -30,7 +30,7 @@
 //#define INCLUDE_DEVICES TEMPERATURE_DEVICES
 //#define INCLUDE_DEVICES RANGE_FINDER_DEVICES
 //#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES
-#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES | DIAGNOSTIC_DEVICES
+#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES
 
 namespace Chetch{
     class ArduinoDeviceManager{
@@ -61,8 +61,18 @@ namespace Chetch{
                 DEVICE_LIMIT_REACHED = 21,
                 DEVICE_ID_ALREADY_USED = 22,
                 DEVICE_NOT_FOUND = 23,
+                DEVICE_CANNOT_BE_CREATED = 24,
             };
             ErrorCode error = ErrorCode::NO_ERROR;
+
+            enum class MessageField{
+                MILLIS = 0,
+                MEMORY,
+                DEVICE_COUNT,
+                IS_READY,
+                DEVICE_NAME,
+                DEVICE_CATEGORY,
+            };
     
             static const byte ADM_MESSAGE_SIZE = 50;
             static const byte ADM_TARGET_ID = 0;
@@ -93,6 +103,7 @@ namespace Chetch{
             void loop();
             virtual void receiveMessage(ADMMessage* message, ADMMessage* response);
             void sendMessage(ADMMessage* message);
+            int getArgumentIndex(ADMMessage* message, MessageField field);
 
             bool isReady(); //connected, initialised and configured
     }; //end class
