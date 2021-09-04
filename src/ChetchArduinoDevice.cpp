@@ -30,7 +30,7 @@ namespace Chetch{
         setReportInterval(message->argumentAsInt(argIdx));
         
         response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
-        response->addBool(isReady());
+        response->addBool(enabled);
         response->addInt(reportInterval);
     }
 
@@ -79,7 +79,10 @@ namespace Chetch{
                 configure(message, response);
                 break;
 
-              case ADMMessage::MessageType::TYPE_STATUS_RESPONSE:
+              case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
+                response->type = ADMMessage::TYPE_STATUS_RESPONSE;
+                response->addBool(enabled);
+                response->addInt(reportInterval);
                 break;
         }
     }
