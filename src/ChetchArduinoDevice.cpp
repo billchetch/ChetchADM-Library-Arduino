@@ -34,6 +34,23 @@ namespace Chetch{
         response->addInt(reportInterval);
     }
 
+    ArduinoDevice::DeviceCommand ArduinoDevice::executeCommand(ADMMessage *message, ADMMessage *response){
+        int argIdx = getArgumentIndex(message, MessageField::DEVICE_COMMAND);
+        DeviceCommand deviceCommand = (DeviceCommand)message->argumentAsByte(argIdx);
+
+        response->type = ADMMessage::MessageType::TYPE_COMMAND_RESPONSE;
+        response->addByte(deviceCommand);
+        switch(deviceCommand){
+            case ENABLE:
+                argIdx = getArgumentIndex(message, MessageField::ENABLED);
+                enabled = message->argumentAsBool(argIdx);
+                response->addBool(enabled);
+                break;
+        }
+
+        return deviceCommand;
+    }
+
     bool ArduinoDevice::isReady(){
         return initialised && configured;
     }
@@ -79,10 +96,14 @@ namespace Chetch{
                 configure(message, response);
                 break;
 
-              case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
+             case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
                 response->type = ADMMessage::TYPE_STATUS_RESPONSE;
                 response->addBool(enabled);
                 response->addInt(reportInterval);
+                break;
+
+             case ADMMessage::MessageType::TYPE_COMMAND:
+                executeCommand(message, response);
                 break;
         }
     }
@@ -103,6 +124,12 @@ namespace Chetch{
 
     int ArduinoDevice::getArgumentIndex(ADMMessage *message, MessageField field){
         switch(field){
+            case MessageField::DEVICE_COMMAND:
+                return 0;
+
+            case MessageField::ENABLED:
+                return message->type == ADMMessage::MessageType::TYPE_COMMAND ? 1 : 0;
+            
             default:
                 return (int)field;
         }

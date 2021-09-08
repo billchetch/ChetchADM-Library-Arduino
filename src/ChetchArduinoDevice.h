@@ -25,7 +25,19 @@ namespace Chetch{
                 ENABLED = 0,
                 REPORT_INTERVAL,
                 DEVICE_NAME,
-                DEVICE_CATEGORY
+                DEVICE_CATEGORY,
+                DEVICE_COMMAND,
+            };
+
+            enum DeviceCommand{
+                NONE = 0,
+                TEST = 1,
+                ENABLE,
+                DISABLE,
+                START,
+                STOP,
+                PAUSE,
+                RESET,
             };
 
         private:
@@ -47,6 +59,7 @@ namespace Chetch{
 
             virtual void initialise(ADMMessage *message, ADMMessage *response);
             virtual void configure(ADMMessage *message, ADMMessage *response);
+            virtual DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response);
             byte getID();
             char *getName();
             void enable(bool enable);

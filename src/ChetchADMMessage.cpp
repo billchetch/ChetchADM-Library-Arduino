@@ -34,7 +34,6 @@ namespace Chetch{
         type = (byte)MessageType::TYPE_NONE;
         tag = 0;
         target = 0;
-        command = 0;
         sender = 0;
 
         for(int i = 0; i < byteCount; i++)bytes[i] = 0;
@@ -79,8 +78,7 @@ namespace Chetch{
         type = bytes[0];
         tag = bytes[1];
         target = bytes[2];
-        command = bytes[3];
-        sender = bytes[4];
+        sender = bytes[3];
 
         //Arguments
         int idx = argByteCountIdx;
@@ -226,8 +224,7 @@ namespace Chetch{
         bytes[0] = type;
         bytes[1] = tag;
         bytes[2] = target;
-        bytes[3] = command;
-        bytes[4] = sender;
+        bytes[3] = sender;
 
         return bytes;
     }
@@ -247,13 +244,4 @@ namespace Chetch{
 
         return byteCount;
     }
-
-    ADMMessage::CommandType ADMMessage::commandType(){
-        return (ADMMessage::CommandType)(command & 0xF);
-    }
-
-    byte ADMMessage::commandIndex(){
-        return (byte)(command >> 4);
-    }
-
 } //end of namespace

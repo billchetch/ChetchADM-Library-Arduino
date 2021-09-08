@@ -55,13 +55,13 @@ namespace Chetch{
             };
      
 
-            static const byte HEADER_SIZE = 5; //type, tag, target, command, sender
+            static const byte HEADER_SIZE = 4; //type, tag, target, sender
             
 
         private:
             byte maxBytes = 0;
             byte *bytes; //an array of all the bytes the message uses
-            byte byteCount = HEADER_SIZE; //header size (includes type, tag, target, command and sender)
+            byte byteCount = HEADER_SIZE; //header size (includes type, tag, target and sender)
             byte argumentCount = 0;
             byte *argumentIndices;
             bool littleEndian = true;
@@ -74,7 +74,7 @@ namespace Chetch{
             byte type = 0; //should take messsage type value
             byte tag = 0; //tagging data sent from computer ... can be re-used to send back to make comms linked
             byte target = 0; //used to select a 'device'
-            byte command = 0; //should take a command Type value
+            byte command = 0; //should take a command value
             byte sender = 0; //should take the ID of the ADM that sends the message
             
             //Constructor/Destructor
