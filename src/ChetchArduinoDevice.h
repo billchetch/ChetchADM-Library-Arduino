@@ -31,7 +31,8 @@ namespace Chetch{
 
             enum DeviceCommand{
                 NONE = 0,
-                TEST = 1,
+                COMPOUND,
+                TEST,
                 ENABLE,
                 DISABLE,
                 START,

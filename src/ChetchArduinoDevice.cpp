@@ -47,7 +47,7 @@ namespace Chetch{
                 response->addBool(enabled);
                 break;
         }
-
+                
         return deviceCommand;
     }
 
