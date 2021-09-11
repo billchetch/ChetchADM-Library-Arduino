@@ -59,7 +59,7 @@ namespace Chetch{
     /*
     * Create static instance because stream callbacks cannot (not easy to?) use instance member methods
     */
-    ArduinoDeviceManager *ArduinoDeviceManager::create(StreamWithCTS *stream){
+    ArduinoDeviceManager *ArduinoDeviceManager::create(StreamFlowController *stream){
         if(ADM == NULL){
             stream->setCommandHandler(handleStreamCommand);
             stream->setEventHandlers(handleStreamLocalEvent, handleStreamRemoteEvent);
@@ -79,7 +79,7 @@ namespace Chetch{
         
     }
 
-    void ArduinoDeviceManager::handleStreamCommand(StreamWithCTS *stream, byte cmd){
+    void ArduinoDeviceManager::handleStreamCommand(StreamFlowController *stream, byte cmd){
         if(ADM == NULL){
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else {
@@ -87,32 +87,32 @@ namespace Chetch{
         }
     }
 
-    void ArduinoDeviceManager::handleStreamLocalEvent(StreamWithCTS *stream, byte evt){
+    void ArduinoDeviceManager::handleStreamLocalEvent(StreamFlowController *stream, byte evt){
         if(ADM == NULL){
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else {
             switch(evt){
-                case (byte)StreamWithCTS::Event::CTS_TIMEOUT: //local has waited too long for a CTS from remote
+                case (byte)StreamFlowController::Event::CTS_TIMEOUT: //local has waited too long for a CTS from remote
                     break;
 
-                case (byte)StreamWithCTS::Event::RECEIVE_BUFFER_FULL:
-                case (byte)StreamWithCTS::Event::MAX_DATABLOCK_SIZE_EXCEEDED:
-                case (byte)StreamWithCTS::Event::CTS_REQUEST_TIMEOUT:
+                case (byte)StreamFlowController::Event::RECEIVE_BUFFER_FULL:
+                case (byte)StreamFlowController::Event::MAX_DATABLOCK_SIZE_EXCEEDED:
+                case (byte)StreamFlowController::Event::CTS_REQUEST_TIMEOUT:
                     break;
 
             } //end switch
         }
     }
 
-    void ArduinoDeviceManager::handleStreamRemoteEvent(StreamWithCTS *stream, byte evt){
+    void ArduinoDeviceManager::handleStreamRemoteEvent(StreamFlowController *stream, byte evt){
         if(ADM == NULL){
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else {
             switch(evt){
-                case (byte)StreamWithCTS::Event::RESET: //remote has reset
+                case (byte)StreamFlowController::Event::RESET: //remote has reset
                     break;
 
-                case (byte)StreamWithCTS::Event::CTS_TIMEOUT: //remote has waited too long for a CTS from local
+                case (byte)StreamFlowController::Event::CTS_TIMEOUT: //remote has waited too long for a CTS from local
                     break;
 
             } //end switch
@@ -120,15 +120,15 @@ namespace Chetch{
         }
     }
 
-    bool ArduinoDeviceManager::handleStreamReadyToReceive(StreamWithCTS *stream, bool request4cts){
+    bool ArduinoDeviceManager::handleStreamReadyToReceive(StreamFlowController *stream, bool request4cts){
         if(request4cts){
-            return stream->canReceive(StreamWithCTS::UART_LOCAL_BUFFER_SIZE);
+            return stream->canReceive(StreamFlowController::UART_LOCAL_BUFFER_SIZE);
         } else {
             return stream->bytesToRead() == 0 && stream->canSend(frame.getMaxSize());
         }
     }
 
-    void ArduinoDeviceManager::handleStreamReceive(StreamWithCTS *stream, int bytesToRead){
+    void ArduinoDeviceManager::handleStreamReceive(StreamFlowController *stream, int bytesToRead){
         
         //very first thing we do is ensure we have an instance
         if(ADM == NULL){
@@ -165,7 +165,7 @@ namespace Chetch{
     }
 
 
-    void ArduinoDeviceManager::handleStreamSend(StreamWithCTS *stream, int sendBufferRemaining){
+    void ArduinoDeviceManager::handleStreamSend(StreamFlowController *stream, int sendBufferRemaining){
         if(ADM == NULL){
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else if(outMessage.isEmpty()){
@@ -206,7 +206,7 @@ namespace Chetch{
     /*
     * Constructor
     */
-    ArduinoDeviceManager::ArduinoDeviceManager(StreamWithCTS *stream){
+    ArduinoDeviceManager::ArduinoDeviceManager(StreamFlowController *stream){
         this->stream = stream;
     }
 
@@ -319,14 +319,14 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::loop(){
-        for(int i = 0; i < deviceCount; i++){
-            if(devices[i]->isActive())devices[i]->loop();
+        if(isReady()){
+            for(int i = 0; i < deviceCount; i++){
+                if(devices[i]->isActive())devices[i]->loop();
+            }
         }
-        
+
         stream->loop();
-        /*stream->receive();
-        stream->process();
-        stream->send();*/
+        
     }
 
     void ArduinoDeviceManager::receiveMessage(ADMMessage* message, ADMMessage* response){

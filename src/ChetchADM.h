@@ -2,7 +2,7 @@
 #define CHETCH_ADM_ADM_H
 
 #include <Arduino.h>
-#include "ChetchStreamWithCTS.h"
+#include "ChetchStreamFlowController.h"
 #include "ChetchMessageFrame.h"
 #include "ChetchADMMessage.h"
 #include "ChetchArduinoDevice.h"
@@ -36,7 +36,7 @@ namespace Chetch{
     class ArduinoDeviceManager{
         private:
             //char* id;
-            StreamWithCTS *stream;
+            StreamFlowController *stream;
             ArduinoDevice *devices[MAX_DEVICES];
             byte deviceCount = 0;
             byte currentDevice = 0;
@@ -79,19 +79,19 @@ namespace Chetch{
             static const byte STREAM_TARGET_ID = 255;
 
             static int inDevicesTable(char *dname);
-            static ArduinoDeviceManager *create(StreamWithCTS *stream);
+            static ArduinoDeviceManager *create(StreamFlowController *stream);
             static ArduinoDeviceManager *getInstance();
-            static void handleStreamCommand(StreamWithCTS *stream, byte cmd);
-            static void handleStreamLocalEvent(StreamWithCTS *stream, byte cmd);
-            static void handleStreamRemoteEvent(StreamWithCTS *stream, byte cmd);
-            static bool handleStreamReadyToReceive(StreamWithCTS *stream, bool request4cts);
-            static void handleStreamReceive(StreamWithCTS *stream, int bytesToRead);
-            static void handleStreamSend(StreamWithCTS *stream, int sendBufferRemaining);
+            static void handleStreamCommand(StreamFlowController *stream, byte cmd);
+            static void handleStreamLocalEvent(StreamFlowController *stream, byte cmd);
+            static void handleStreamRemoteEvent(StreamFlowController *stream, byte cmd);
+            static bool handleStreamReadyToReceive(StreamFlowController *stream, bool request4cts);
+            static void handleStreamReceive(StreamFlowController *stream, int bytesToRead);
+            static void handleStreamSend(StreamFlowController *stream, int sendBufferRemaining);
             static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
-            static void send(StreamWithCTS *stream, ADMMessage *message);
+            static void send(StreamFlowController *stream, ADMMessage *message);
             static int getMaxFrameSize();
 
-            ArduinoDeviceManager(StreamWithCTS *stream);
+            ArduinoDeviceManager(StreamFlowController *stream);
             ~ArduinoDeviceManager();
             bool setup();
 

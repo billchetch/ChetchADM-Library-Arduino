@@ -30,21 +30,6 @@ namespace Chetch{
 	            TYPE_INITIALISE_RESPONSE = 28
             };
 	  
-            enum CommandType {
-	            COMMAND_TYPE_SEND = 1,
-	            COMMAND_TYPE_RESET,
-	            COMMAND_TYPE_INITIALISE,
-	            COMMAND_TYPE_RECEIVE,
-	            COMMAND_TYPE_START,
-	            COMMAND_TYPE_STOP,
-	            COMMAND_TYPE_OPEN,
-	            COMMAND_TYPE_CLOSE,
-	            COMMAND_TYPE_RECORD,
-	            COMMAND_TYPE_SAVE,
-	            COMMAND_TYPE_READ,
-	            COMMAND_TYPE_TEST
-            };
-
             enum ErrorCode {
                 NO_ERROR = 0,
                 ERROR_UNRECOGNISED_MESSAGE_TYPE = 2,
@@ -74,7 +59,6 @@ namespace Chetch{
             byte type = 0; //should take messsage type value
             byte tag = 0; //tagging data sent from computer ... can be re-used to send back to make comms linked
             byte target = 0; //used to select a 'device'
-            byte command = 0; //should take a command value
             byte sender = 0; //should take the ID of the ADM that sends the message
             
             //Constructor/Destructor
@@ -114,10 +98,7 @@ namespace Chetch{
             bool deserialize(byte* source, byte bCount);
             byte serialize(byte *destination = NULL);
             byte *getBytes();
-            
-            //these extract values from the 'command' byte
-            CommandType commandType();
-            byte commandIndex();
+          
 
         private:
             void newID();
