@@ -136,9 +136,6 @@ namespace Chetch{
         } else if(!outMessage.isEmpty()){
             return; //we already have an outgoing message so we defer to that
         } else {
-            //we copy the 'tag' to the outmessage for identification at target
-            outMessage.tag = inMessage.tag;
-
             //So we have an instance we can proeeed b first adding  all bytes to a frame 
             //(also removes from stream buffer so next byte block can be received)
             frame.reset();
@@ -154,6 +151,8 @@ namespace Chetch{
                     //Process error... we know message frames are ok so we return
                     addErrorInfo(&outMessage, ErrorCode::ADM_MESSAGE_ERROR, inMessage.error, &inMessage);
                 } else { //ok so everything checks out ... let's get on with it by passing this to ADM
+                    //we copy the 'tag' to the outmessage for identification at target
+                    outMessage.tag = inMessage.tag;
                     ADM->receiveMessage(&inMessage, &outMessage);
                 }
             } else {
@@ -169,7 +168,7 @@ namespace Chetch{
         if(ADM == NULL){
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else if(outMessage.isEmpty()){
-            ADM->sendMessage(&outMessage); //TODO: this is causing a crash so need to look into it
+            ADM->sendMessage(&outMessage);
         }
 
         if(!outMessage.isEmpty()){

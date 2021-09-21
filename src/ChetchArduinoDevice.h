@@ -17,13 +17,14 @@ namespace Chetch{
                 RANGE_FINDER = 6,
                 ALARM = 7,
                 VAC_SENSOR = 8,
+                SWITCH = 9,
             };
 
             static const byte DEVICE_NAME_LENGTH = 10;
             
             enum MessageField{
                 ENABLED = 0,
-                REPORT_INTERVAL,
+                REPORT_INTERVAL = 1,
                 DEVICE_NAME,
                 DEVICE_CATEGORY,
                 DEVICE_COMMAND,

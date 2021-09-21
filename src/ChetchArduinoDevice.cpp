@@ -46,6 +46,11 @@ namespace Chetch{
                 enabled = message->argumentAsBool(argIdx);
                 response->addBool(enabled);
                 break;
+
+            case DISABLE:
+                enabled = false;
+                response->addBool(enabled);
+                break;
         }
                 
         return deviceCommand;

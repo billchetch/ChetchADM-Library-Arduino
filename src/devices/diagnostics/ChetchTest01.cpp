@@ -16,7 +16,11 @@ namespace Chetch{
     void Test01::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
         ArduinoDevice::createMessage(messageTypeToCreate, message);
 
-        message->addInt(120);
+        if(random(0, 2) > 0){
+            message->addInt(random(1, 100));
+        } else {
+             message->addInt(50);
+        }
     }
 
 	/*void Test01::loop(){
