@@ -16,13 +16,13 @@ namespace Chetch{
             enum MessageField{
                 MODE = 2,
                 PIN = 3,
-                TRIGGER_STATE = 4,
+                INITIAL_STATE = 4,
             };
 
         private:
             Mode mode;
             byte pin = 0;
-            bool triggerState = true;
+            bool state = true;
             unsigned long recording = 0;
             int tolerance = 0;
 
@@ -35,7 +35,7 @@ namespace Chetch{
             void configure(ADMMessage* message, ADMMessage* response) override;
             void createMessage(ADMMessage::MessageType messageType, ADMMessage* message) override;
             void loop() override;
-
+            DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
             virtual void trigger();
 
     }; //end class

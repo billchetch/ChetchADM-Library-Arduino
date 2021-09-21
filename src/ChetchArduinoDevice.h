@@ -40,6 +40,8 @@ namespace Chetch{
                 STOP,
                 PAUSE,
                 RESET,
+                ON,
+                OFF
             };
 
         private:
@@ -49,11 +51,14 @@ namespace Chetch{
     
             unsigned long lastMillis = 0;
             int reportInterval = -1; //negative or zero means no reporting
-            ADMMessage::MessageType messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
-
+            
             bool initialised = false;
             bool configured = false;
             bool enabled = false;
+
+        protected:
+            ADMMessage::MessageType messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
+
             
         public:
             ArduinoDevice(byte id, byte category, char* dname);

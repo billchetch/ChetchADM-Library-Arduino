@@ -8,8 +8,8 @@ namespace Chetch{
     }
 
 
-    int Swich::getArgumentIndex(ADMMessage *message, MessageField field){
-        swich(field){
+    int Switch::getArgumentIndex(ADMMessage *message, MessageField field){
+        switch(field){
             default:
                 return (int)field;
         }
@@ -22,8 +22,8 @@ namespace Chetch{
         mode = (Mode)message->argumentAsByte(argIdx);
         argIdx = getArgumentIndex(message, MessageField::PIN);
         pin = message->argumentAsByte(argIdx);
-        argIdx = getArgumentIndex(message, MessageField::TRIGGER_STATE);
-        triggerState = message->argumentAsBool(argIdx);
+        argIdx = getArgumentIndex(message, MessageField::INITIAL_STATE);
+        state = message->argumentAsBool(argIdx);
 
 
         switch(mode){
@@ -39,22 +39,49 @@ namespace Chetch{
     void Switch::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
         ArduinoDevice::createMessage(messageTypeToCreate, message);
 
-        
+        if(mode == Mode::PASSIVE){
+            message->addBool(state);
+        }
     }
 
 	void Switch::loop(){
         ArduinoDevice::loop();
         
         if(mode == Mode::PASSIVE){
-            bool state = digitalRead(pin);
-            if(state == triggerState){
-            } else {
-                
+            bool newState = digitalRead(pin);
+            if(newState != state){
+                recording = millis();
+                state = newState;
+            } else if(recording > 0 && recording - millis() >= tolerance){
+                trigger();
+                recording = 0;
             }
         }
     }
 
-    void Switch::trigger(bool ){
-        
+    ArduinoDevice::DeviceCommand Switch::executeCommand(ADMMessage *message, ADMMessage *response){
+        DeviceCommand deviceCommand = ArduinoDevice::executeCommand(message, response);
+
+        switch(deviceCommand){
+            case ON:
+                if(mode == Mode::ACTIVE){
+                    digitalWrite(pin, HIGH);
+                }
+                break;
+
+            case OFF:
+                if(mode == Mode::ACTIVE){
+                    digitalWrite(pin, LOW);
+                }
+                break;
+        }
+                
+        return deviceCommand;
     }
+
+    void Switch::trigger(){
+        messageTypeToCreate = ADMMessage::MessageType::TYPE_DATA;
+    }
+
+
 } //end namespace
