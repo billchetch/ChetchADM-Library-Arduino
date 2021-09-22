@@ -3,6 +3,10 @@
 #include "ChetchMessageFrame.h"
 #include <MemoryFree.h>
 
+//Generic devices to always include here
+#include "devices/ChetchSwitchDevice.h"
+
+
 #if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
 #include "devices/ChetchDS18B20Array.h"
 #endif
@@ -286,19 +290,20 @@ namespace Chetch{
 		                //device = new Counter(id, category, dname);
 		                break;
 
+                    case ArduinoDevice::SWITCH:
+		                device = new SwitchDevice(id, category, dname);
+		                break;
+
                     default:
                         device = NULL;
                 }
                 break;
 	    } //end device name switch
 	
-	    if (device == NULL) {
-            device = new ArduinoDevice(id, category, dname);
-	    }
-        
-        devices[deviceCount] = device;
-        deviceCount++;
-      
+	    if (device != NULL) {
+            devices[deviceCount] = device;
+            deviceCount++;
+        }
         return device;
     }
 
@@ -390,7 +395,7 @@ namespace Chetch{
              }
              if(device != NULL){
                 device->receiveMessage(message, response);
-             } else {
+             } else if(error == ErrorCode::NO_ERROR) {
                 error = ErrorCode::DEVICE_NOT_FOUND;
              }
         }

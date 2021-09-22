@@ -36,6 +36,7 @@ namespace Chetch{
                 TEST,
                 ENABLE,
                 DISABLE,
+                SET_REPORT_INTERVAL,
                 START,
                 STOP,
                 PAUSE,

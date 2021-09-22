@@ -1,12 +1,12 @@
-#ifndef CHETCH_ADM_SWITCH_H
-#define CHETCH_ADM_SWITCH_H
+#ifndef CHETCH_ADM_SWITCH_DEVICE_H
+#define CHETCH_ADM_SWITCH_DEVICE_H
 
 #include <Arduino.h>
 #include <ChetchArduinoDevice.h>
 #include <ChetchADMMessage.h>
 
 namespace Chetch{
-    class Switch : public ArduinoDevice {
+    class SwitchDevice : public ArduinoDevice {
         public:
             enum Mode {
                 ACTIVE = 1,
@@ -28,15 +28,15 @@ namespace Chetch{
 
         public: 
             
-            Switch(byte id, byte cat, char *dn);
+            SwitchDevice(byte id, byte cat, char *dn);
 
             int getArgumentIndex(ADMMessage *message, MessageField field);
 
             void configure(ADMMessage* message, ADMMessage* response) override;
-            void createMessage(ADMMessage::MessageType messageType, ADMMessage* message) override;
+            /*void createMessage(ADMMessage::MessageType messageType, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
-            virtual void trigger();
+            virtual void trigger();*/
 
     }; //end class
 } //end namespae

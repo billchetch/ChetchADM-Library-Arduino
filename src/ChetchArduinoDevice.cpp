@@ -51,6 +51,12 @@ namespace Chetch{
                 enabled = false;
                 response->addBool(enabled);
                 break;
+
+            case SET_REPORT_INTERVAL:
+                argIdx = getArgumentIndex(message, MessageField::REPORT_INTERVAL);
+                setReportInterval(message->argumentAsInt(argIdx));
+                response->addInt(reportInterval);
+                break;
         }
                 
         return deviceCommand;
@@ -134,6 +140,9 @@ namespace Chetch{
 
             case MessageField::ENABLED:
                 return message->type == ADMMessage::MessageType::TYPE_COMMAND ? 1 : 0;
+
+            case MessageField::REPORT_INTERVAL:
+                return message->type == ADMMessage::MessageType::TYPE_COMMAND ? 1 : (int)field;
             
             default:
                 return (int)field;
