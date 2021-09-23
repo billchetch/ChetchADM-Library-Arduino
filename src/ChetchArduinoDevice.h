@@ -45,6 +45,10 @@ namespace Chetch{
                 OFF
             };
 
+            enum class ErrorCode{
+                INVALID_COMMAND = 1,
+            };
+
         private:
             byte ID;
             byte category;
@@ -78,6 +82,7 @@ namespace Chetch{
             bool isMessageReady();
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
+            void addErrorInfo(ADMMessage *message, ErrorCode errorCode, ADMMessage *originalMessage = NULL);
             void sendMessage(ADMMessage *message);
             int getArgumentIndex(ADMMessage *message, MessageField field);
             virtual void loop();

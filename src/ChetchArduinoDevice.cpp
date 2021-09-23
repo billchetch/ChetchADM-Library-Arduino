@@ -1,5 +1,6 @@
 #include "ChetchUtils.h"
 #include "ChetchArduinoDevice.h"
+#include "ChetchADM.h"
 
 namespace Chetch{
 	ArduinoDevice::ArduinoDevice(byte id, byte category, char* dname){
@@ -38,6 +39,7 @@ namespace Chetch{
         int argIdx = getArgumentIndex(message, MessageField::DEVICE_COMMAND);
         DeviceCommand deviceCommand = (DeviceCommand)message->argumentAsByte(argIdx);
 
+        //prepare for normal response
         response->type = ADMMessage::MessageType::TYPE_COMMAND_RESPONSE;
         response->addByte(deviceCommand);
         switch(deviceCommand){
@@ -123,6 +125,20 @@ namespace Chetch{
         message->type = messageType;
         message->target = getID();
         message->sender = getID();
+    }
+
+    void ArduinoDevice::addErrorInfo(ADMMessage * message, ErrorCode errorCode, ADMMessage *originalMessage){
+        message->clear();
+        message->type = ADMMessage::MessageType::TYPE_ERROR;
+        message->target = getID();
+        message->sender = getID();
+        message->addByte((byte)ArduinoDeviceManager::ErrorCode::DEVICE_ERROR);
+        message->addByte((byte)errorCode);
+        if(originalMessage != NULL){
+            message->addByte(originalMessage->type);
+            message->addByte(originalMessage->target);
+            message->addByte(originalMessage->sender);
+        }
     }
 
     void ArduinoDevice::sendMessage(ADMMessage *message){     

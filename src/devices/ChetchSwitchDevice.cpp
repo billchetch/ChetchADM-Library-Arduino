@@ -19,43 +19,46 @@ namespace Chetch{
         ArduinoDevice::configure(message, response);
         
         int argIdx = getArgumentIndex(message, MessageField::MODE);
-        mode = (Mode)message->argumentAsByte(argIdx);
+        mode = (SwitchMode)message->argumentAsByte(argIdx);
         argIdx = getArgumentIndex(message, MessageField::PIN);
         pin = message->argumentAsByte(argIdx);
-        argIdx = getArgumentIndex(message, MessageField::INITIAL_STATE);
-        state = message->argumentAsBool(argIdx);
+        argIdx = getArgumentIndex(message, MessageField::PIN_STATE);
+        pinState = message->argumentAsBool(argIdx);
+        argIdx = getArgumentIndex(message, MessageField::TOLERANCE);
+        tolerance = message->argumentAsInt(argIdx);
 
         response->addByte((byte)mode);
         response->addByte(pin);
-        response->addBool(state);
+        response->addBool(pinState);
+        response->addInt(tolerance);
 
         switch(mode){
-            case Mode::PASSIVE:
+            case SwitchMode::PASSIVE:
                 pinMode(pin, INPUT); break;
 
-            case Mode::ACTIVE:
+            case SwitchMode::ACTIVE:
                 pinMode(pin, OUTPUT); break;
                 
         }
     }
 
-    /*void SwitchDevice::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
+    void SwitchDevice::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
         ArduinoDevice::createMessage(messageTypeToCreate, message);
 
-        if(mode == Mode::PASSIVE){
-            message->addBool(state);
+        if(mode == SwitchMode::PASSIVE && messageTypeToCreate == ADMMessage::MessageType::TYPE_DATA){
+            message->addBool(pinState);
         }
     }
 
 	void SwitchDevice::loop(){
         ArduinoDevice::loop();
         
-        if(mode == Mode::PASSIVE){
-            bool newState = digitalRead(pin);
-            if(newState != state){
-                recording = millis();
-                state = newState;
-            } else if(recording > 0 && recording - millis() >= tolerance){
+        if(mode == SwitchMode::PASSIVE){
+            bool currentPinState = digitalRead(pin);
+            if(currentPinState != pinState){
+                recording = recording == 0 ? millis() : 0;
+                pinState = currentPinState;
+            } else if(recording > 0 && millis() - recording >= tolerance){
                 trigger();
                 recording = 0;
             }
@@ -67,14 +70,13 @@ namespace Chetch{
 
         switch(deviceCommand){
             case ON:
-                if(mode == Mode::ACTIVE){
-                    digitalWrite(pin, HIGH);
-                }
-                break;
-
             case OFF:
-                if(mode == Mode::ACTIVE){
-                    digitalWrite(pin, LOW);
+                if(mode == SwitchMode::ACTIVE){
+                    pinState = deviceCommand == DeviceCommand::ON;
+                    digitalWrite(pin, pinState);
+                    response->addBool(pinState);
+                } else {
+                    addErrorInfo(response, ErrorCode::INVALID_COMMAND, message);
                 }
                 break;
         }
@@ -83,10 +85,10 @@ namespace Chetch{
     } 
 
     void SwitchDevice::trigger(){
-        if(mode == Mode::PASSIVE){
+        if(mode == SwitchMode::PASSIVE){
             messageTypeToCreate = ADMMessage::MessageType::TYPE_DATA;
         }
-    }*/
+    }
 
 
 } //end namespace

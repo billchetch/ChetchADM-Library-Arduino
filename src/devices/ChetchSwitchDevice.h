@@ -8,7 +8,7 @@
 namespace Chetch{
     class SwitchDevice : public ArduinoDevice {
         public:
-            enum Mode {
+            enum SwitchMode {
                 ACTIVE = 1,
                 PASSIVE = 2
             };
@@ -16,16 +16,17 @@ namespace Chetch{
             enum MessageField{
                 MODE = 2,
                 PIN = 3,
-                INITIAL_STATE = 4,
+                PIN_STATE = 4,
+                TOLERANCE = 5,
             };
 
         private:
-            Mode mode;
+            SwitchMode mode;
             byte pin = 0;
-            bool state = true;
-            unsigned long recording = 0;
+            bool pinState = false;
             int tolerance = 0;
-
+            unsigned long recording = 0;
+            
         public: 
             
             SwitchDevice(byte id, byte cat, char *dn);
@@ -33,10 +34,10 @@ namespace Chetch{
             int getArgumentIndex(ADMMessage *message, MessageField field);
 
             void configure(ADMMessage* message, ADMMessage* response) override;
-            /*void createMessage(ADMMessage::MessageType messageType, ADMMessage* message) override;
+            void createMessage(ADMMessage::MessageType messageType, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
-            virtual void trigger();*/
+            virtual void trigger();
 
     }; //end class
 } //end namespae

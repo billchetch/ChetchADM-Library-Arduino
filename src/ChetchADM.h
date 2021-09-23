@@ -54,7 +54,7 @@ namespace Chetch{
             enum class ErrorCode{
                 NO_ERROR = 0,
                 NO_ADM_INSTANCE = 1,
-                MESSAGE_FRAME_ERROR = 10,
+                MESSAGE_FRAME_ERROR = 10, //To indicate this is a Frame error
                 ADM_MESSAGE_ERROR = 11,
                 ADM_MESSAGE_IS_EMPTY= 12,
                 NO_DEVICE_ID = 20,
@@ -62,6 +62,7 @@ namespace Chetch{
                 DEVICE_ID_ALREADY_USED = 22,
                 DEVICE_NOT_FOUND = 23,
                 DEVICE_CANNOT_BE_CREATED = 24,
+                DEVICE_ERROR = 100, //To indicate this is an error from the device (not ADM)
             };
             ErrorCode error = ErrorCode::NO_ERROR;
 
