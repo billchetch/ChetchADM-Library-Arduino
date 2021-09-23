@@ -37,7 +37,9 @@ namespace Chetch{
                 pinMode(pin, INPUT); break;
 
             case SwitchMode::ACTIVE:
-                pinMode(pin, OUTPUT); break;
+                pinMode(pin, OUTPUT); 
+                digitalWrite(pin, pinState);
+                break;
                 
         }
     }
@@ -48,6 +50,10 @@ namespace Chetch{
         if(mode == SwitchMode::PASSIVE && messageTypeToCreate == ADMMessage::MessageType::TYPE_DATA){
             message->addBool(pinState);
         }
+        if(mode == SwitchMode::ACTIVE && messageTypeToCreate == ADMMessage::MessageType::TYPE_COMMAND_RESPONSE){
+            message->addByte(pinState ? DeviceCommand::ON : DeviceCommand::OFF);
+            message->addBool(pinState);
+        }
     }
 
 	void SwitchDevice::loop(){
@@ -56,13 +62,22 @@ namespace Chetch{
         if(mode == SwitchMode::PASSIVE){
             bool currentPinState = digitalRead(pin);
             if(currentPinState != pinState){
+                //if there is a change of pin state then if we were already recording we simply reset
+                //if we weren't recording then we start'
                 recording = recording == 0 ? millis() : 0;
                 pinState = currentPinState;
-            } else if(recording > 0 && millis() - recording >= tolerance){
+            } else if(recording > 0 && millis() - recording >= tolerance){ 
+                //so here we are reording and have gone over tolerance so we trigger and reset
+                trigger();
+                recording = 0;
+            }
+        } else {
+            if(recording > 0 && millis() - recording >= tolerance){
                 trigger();
                 recording = 0;
             }
         }
+
     }
 
     ArduinoDevice::DeviceCommand SwitchDevice::executeCommand(ADMMessage *message, ADMMessage *response){
@@ -73,8 +88,15 @@ namespace Chetch{
             case OFF:
                 if(mode == SwitchMode::ACTIVE){
                     pinState = deviceCommand == DeviceCommand::ON;
-                    digitalWrite(pin, pinState);
-                    response->addBool(pinState);
+                    bool currentPinState = digitalRead(pin);
+                    if(currentPinState != pinState){
+                        //if there is a request to change of pin state then if we haven't started recording then we start
+                        if(recording == 0)recording = millis();
+                    } else {
+                        //otherwise we've either requested something already the case OR we've undone our previous request
+                        recording = 0;
+                    }
+                    response->clear();
                 } else {
                     addErrorInfo(response, ErrorCode::INVALID_COMMAND, message);
                 }
@@ -87,6 +109,9 @@ namespace Chetch{
     void SwitchDevice::trigger(){
         if(mode == SwitchMode::PASSIVE){
             messageTypeToCreate = ADMMessage::MessageType::TYPE_DATA;
+        } else {
+            digitalWrite(pin, pinState);
+            messageTypeToCreate = ADMMessage::MessageType::TYPE_COMMAND_RESPONSE;
         }
     }
 
