@@ -11,17 +11,31 @@ namespace Chetch{
     void ZMPT101B::configure(ADMMessage* message, ADMMessage* response){
         ArduinoDevice::configure(message, response);
 
-        int argIdx = 2;
-        voltagePin = message->argumentAsInt(argIdx++);
-        sampleSize = message->argumentAsInt(argIdx++);
-        sampleInterval = message->argumentAsULong(argIdx++);
+        int argIdx = getArgumentIndex(message, MessageField::PIN);
+        voltagePin = message->argumentAsByte(argIdx);
 
-        setStableVoltage(
-            message->argumentAsDouble(argIdx++),
-            message->argumentAsDouble(argIdx++),
-            message->argumentAsDouble(argIdx++),
-            message->argumentAsDouble(argIdx++)
+        argIdx = getArgumentIndex(message, MessageField::SAMPLE_SIZE);
+        sampleSize = message->argumentAsInt(argIdx);
+
+        argIdx = getArgumentIndex(message, MessageField::SAMPLE_INTERVAL);
+        sampleInterval = message->argumentAsULong(argIdx);
+
+        setTargetVoltage(
+            message->argumentAsDouble(getArgumentIndex(message, MessageField::TARGET_VOLTAGE)),
+            message->argumentAsDouble(getArgumentIndex(message, MessageField::TARGET_TOLERANCE)),
+            message->argumentAsDouble(getArgumentIndex(message, MessageField::VOLTAGE_LOWER_BOUND)),
+            message->argumentAsDouble(getArgumentIndex(message, MessageField::VOLTAGE_UPPER_BOUND))
             );
+
+        //argIdx = getArgumentIndex(message, MessageField::SAMPLE_INTERVAL);
+        //sampleInterval = message->argumentAsULong(argIdx);
+    }
+
+    int ZMPT101B::getArgumentIndex(ADMMessage *message, ZMPT101B::MessageField field){
+        switch(field){
+            default:
+                return (int)field;
+        }
     }
 
     void ZMPT101B::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
@@ -29,9 +43,9 @@ namespace Chetch{
         message->addInt(220);
     }
 
-	void ZMPT101B::setStableVoltage(double v, double t, double vlb, double vub){
-        stableVoltage = v;
-        stabiliseThreshold = t;
+	void ZMPT101B::setTargetVoltage(double v, double t, double vlb, double vub){
+        targetVoltage = v;
+        targetTolerance = t;
         voltageLowerBound = vlb;
         voltageUpperBound = vub;
     }                   
@@ -88,10 +102,10 @@ namespace Chetch{
     }
     
     double ZMPT101B::adjustVoltageBy(){
-        if(stableVoltage <= 0 || !isVoltageInRange())return 0;
+        if(targetVoltage <= 0 || !isVoltageInRange())return 0;
 
         double v = getVoltage();
-        double adjustment = stableVoltage - v;
-        return abs(adjustment) > stabiliseThreshold ? adjustment : 0;
+        double adjustment = targetVoltage - v;
+        return abs(adjustment) > targetTolerance ? adjustment : 0;
     } 
 } //end namespace

@@ -8,8 +8,9 @@
 namespace Chetch{
     class Test01 : public ArduinoDevice {
         private:
-            
-     
+            int testValue = 0;
+            int incrementTestValue = 0;
+
         public: 
 
             Test01(byte id, byte cat, char *dn);

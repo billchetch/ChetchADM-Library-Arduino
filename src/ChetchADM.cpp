@@ -87,15 +87,23 @@ namespace Chetch{
         if(ADM == NULL){
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else {
-            
+            switch(cmd){
+                case RESET_ADM_COMMAND:
+                    ADM->reset();
+                    break;
+            }
         }
     }
 
-    void ArduinoDeviceManager::handleStreamLocalEvent(StreamFlowController *stream, byte evt){
+    bool ArduinoDeviceManager::handleStreamLocalEvent(StreamFlowController *stream, byte evt){
         if(ADM == NULL){
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else {
             switch(evt){
+                case (byte)StreamFlowController::Event::RESET:
+                    outMessage.clear();
+                    break;
+
                 case (byte)StreamFlowController::Event::CTS_TIMEOUT: //local has waited too long for a CTS from remote
                     break;
 
@@ -106,6 +114,7 @@ namespace Chetch{
 
             } //end switch
         }
+        return true; //false will stop the event being sent
     }
 
     void ArduinoDeviceManager::handleStreamRemoteEvent(StreamFlowController *stream, byte evt){
@@ -219,6 +228,18 @@ namespace Chetch{
         }
     }
 
+    void ArduinoDeviceManager::reset(){
+        for(int i = 0; i < deviceCount; i++){
+            delete devices[i];
+        }
+        deviceCount = 0;
+        configured = false;
+        initialised = false;
+        outMessage.clear();
+        inMessage.clear();
+        stream->reset(false);
+    }
+
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
         for(int i = 0; i < deviceCount; i++){
             delete devices[i];
@@ -322,13 +343,32 @@ namespace Chetch{
         return NULL;
     }
 
+    void ArduinoDeviceManager::flashLED(int interval, int diff, int blinkTime, int ledPin){
+        if(diff >= interval + blinkTime){
+            digitalWrite(ledPin, LOW);
+        } else if(diff >= interval){
+            digitalWrite(ledPin, HIGH);
+        }
+    }
+
     void ArduinoDeviceManager::loop(){
+        //led for status
+        unsigned long diff = millis() - ledMillis;
+        flashLED(0, diff, 200, LED_BUILTIN);
+        if(!stream->isReady())flashLED(750, diff, 200, LED_BUILTIN);
+        if(!initialised)flashLED(1500, diff, 200, LED_BUILTIN);
+        if(!configured)flashLED(2250, diff, 200, LED_BUILTIN);
+        if(diff > 5000){
+            ledMillis = millis();
+        }
+        //loop each active device
         if(isReady()){
             for(int i = 0; i < deviceCount; i++){
                 if(devices[i]->isActive())devices[i]->loop();
             }
         }
 
+        //loop stream
         stream->loop();
         
     }
@@ -353,7 +393,10 @@ namespace Chetch{
                     response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
                     response->addULong(millis());
                     response->addInt(freeMemory());
+                    response->addBool(initialised);
+                    response->addBool(configured);
                     response->addByte(deviceCount);
+                    
                     break;
             
                 case ADMMessage::MessageType::TYPE_ECHO:

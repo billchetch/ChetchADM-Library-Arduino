@@ -42,7 +42,8 @@ namespace Chetch{
             byte currentDevice = 0;
             bool initialised = false;
             bool configured = false;
-            unsigned long unixTime = 0; //set in initialisation
+            unsigned long unixTime = 0; //TODO: set in initialisation
+            unsigned long ledMillis = 0;
 
             static ArduinoDeviceManager *ADM;
             static ADMMessage inMessage;
@@ -78,12 +79,13 @@ namespace Chetch{
             static const byte ADM_MESSAGE_SIZE = 50;
             static const byte ADM_TARGET_ID = 0;
             static const byte STREAM_TARGET_ID = 255;
+            static const byte RESET_ADM_COMMAND = 201;
 
             static int inDevicesTable(char *dname);
             static ArduinoDeviceManager *create(StreamFlowController *stream);
             static ArduinoDeviceManager *getInstance();
             static void handleStreamCommand(StreamFlowController *stream, byte cmd);
-            static void handleStreamLocalEvent(StreamFlowController *stream, byte cmd);
+            static bool handleStreamLocalEvent(StreamFlowController *stream, byte cmd);
             static void handleStreamRemoteEvent(StreamFlowController *stream, byte cmd);
             static bool handleStreamReadyToReceive(StreamFlowController *stream, bool request4cts);
             static void handleStreamReceive(StreamFlowController *stream, int bytesToRead);
@@ -96,6 +98,7 @@ namespace Chetch{
             ~ArduinoDeviceManager();
             bool setup();
 
+            void reset();
             virtual void initialise(ADMMessage *message, ADMMessage *response);
             virtual void configure(ADMMessage *message, ADMMessage *response);
             ArduinoDevice *addDevice(byte id, byte category, char *dname);
@@ -107,6 +110,8 @@ namespace Chetch{
             int getArgumentIndex(ADMMessage* message, MessageField field);
 
             bool isReady(); //connected, initialised and configured
+
+            void flashLED(int interval, int diff, int blinkTime, int ledPin);
     }; //end class
 } //end namespace
 
