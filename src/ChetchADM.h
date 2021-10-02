@@ -79,8 +79,8 @@ namespace Chetch{
             static const byte ADM_MESSAGE_SIZE = 50;
             static const byte ADM_TARGET_ID = 0;
             static const byte STREAM_TARGET_ID = 255;
-            static const byte RESET_ADM_COMMAND = 201;
-
+            static const byte RESET_ADM_COMMAND = 201; //for use by ESP8266
+            
             static int inDevicesTable(char *dname);
             static ArduinoDeviceManager *create(StreamFlowController *stream);
             static ArduinoDeviceManager *getInstance();

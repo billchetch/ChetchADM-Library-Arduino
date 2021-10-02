@@ -361,6 +361,7 @@ namespace Chetch{
         if(diff > 5000){
             ledMillis = millis();
         }
+        
         //loop each active device
         if(isReady()){
             for(int i = 0; i < deviceCount; i++){
@@ -370,7 +371,6 @@ namespace Chetch{
 
         //loop stream
         stream->loop();
-        
     }
 
     void ArduinoDeviceManager::receiveMessage(ADMMessage* message, ADMMessage* response){
