@@ -44,15 +44,18 @@ namespace Chetch{
         }
     }
 
-    void SwitchDevice::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
-        ArduinoDevice::createMessage(messageTypeToCreate, message);
+    void SwitchDevice::createMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::createMessageToSend(messageID, message);
 
-        if(mode == SwitchMode::PASSIVE && messageTypeToCreate == ADMMessage::MessageType::TYPE_DATA){
-            message->addBool(pinState);
-        }
-        if(mode == SwitchMode::ACTIVE && messageTypeToCreate == ADMMessage::MessageType::TYPE_COMMAND_RESPONSE){
-            message->addByte(pinState ? DeviceCommand::ON : DeviceCommand::OFF);
-            message->addBool(pinState);
+        if(messageID == MESSAGE_ID_TRIGGERED){
+            if(mode == SwitchMode::PASSIVE){
+                createMessage(ADMMessage::MessageType::TYPE_COMMAND_RESPONSE, message);
+                message->addBool(pinState);             
+            } else {
+                createMessage(ADMMessage::MessageType::TYPE_COMMAND_RESPONSE, message);
+                message->addByte(pinState ? DeviceCommand::ON : DeviceCommand::OFF);
+                message->addBool(pinState);
+            }
         }
     }
 
@@ -96,7 +99,7 @@ namespace Chetch{
                         //otherwise we've either requested something already the case OR we've undone our previous request
                         recording = 0;
                     }
-                    response->clear();
+                    response->clear(); //clear so we don't send a response immediately (we will use the trigger method to send the response)'
                 } else {
                     addErrorInfo(response, ErrorCode::INVALID_COMMAND, message);
                 }
@@ -108,10 +111,10 @@ namespace Chetch{
 
     void SwitchDevice::trigger(){
         if(mode == SwitchMode::PASSIVE){
-            messageTypeToCreate = ADMMessage::MessageType::TYPE_DATA;
+            enqueueMessageToSend(MESSAGE_ID_TRIGGERED);
         } else {
             digitalWrite(pin, pinState);
-            messageTypeToCreate = ADMMessage::MessageType::TYPE_COMMAND_RESPONSE;
+            enqueueMessageToSend(MESSAGE_ID_TRIGGERED);
         }
     }
 

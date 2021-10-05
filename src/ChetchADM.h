@@ -44,12 +44,12 @@ namespace Chetch{
             bool configured = false;
             unsigned long unixTime = 0; //TODO: set in initialisation
             unsigned long ledMillis = 0;
-
+            
             static ArduinoDeviceManager *ADM;
             static ADMMessage inMessage;
             static ADMMessage outMessage;
             static MessageFrame frame;
-
+        
         public:
         
             enum class ErrorCode{
@@ -81,6 +81,8 @@ namespace Chetch{
             static const byte STREAM_TARGET_ID = 255;
             static const byte RESET_ADM_COMMAND = 201; //for use by ESP8266
             
+            static byte statusIndicatorPin;
+
             static int inDevicesTable(char *dname);
             static ArduinoDeviceManager *create(StreamFlowController *stream);
             static ArduinoDeviceManager *getInstance();
@@ -93,6 +95,7 @@ namespace Chetch{
             static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
             static void send(StreamFlowController *stream, ADMMessage *message);
             static int getMaxFrameSize();
+
 
             ArduinoDeviceManager(StreamFlowController *stream);
             ~ArduinoDeviceManager();

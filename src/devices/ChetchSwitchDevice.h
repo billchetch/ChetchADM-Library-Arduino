@@ -20,6 +20,9 @@ namespace Chetch{
                 TOLERANCE = 5,
             };
 
+
+            static const byte MESSAGE_ID_TRIGGERED = 200;
+
         private:
             SwitchMode mode;
             byte pin = 0;
@@ -34,7 +37,7 @@ namespace Chetch{
             int getArgumentIndex(ADMMessage *message, MessageField field);
 
             void configure(ADMMessage* message, ADMMessage* response) override;
-            void createMessage(ADMMessage::MessageType messageType, ADMMessage* message) override;
+            void createMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
             virtual void trigger();

@@ -13,13 +13,15 @@ namespace Chetch{
         response->addInt(34);
     }
 
-    void Test01::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
-        ArduinoDevice::createMessage(messageTypeToCreate, message);
+    void Test01::createMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::createMessageToSend(messageID, message);
 
-        message->addInt(testValue);
-        if(testValue == 0)incrementTestValue = 1;
-        if(testValue == 100)incrementTestValue = -1;
-        testValue = testValue + incrementTestValue;
+        if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
+            message->addInt(testValue);
+            if(testValue == 0)incrementTestValue = 1;
+            if(testValue == 100)incrementTestValue = -1;
+            testValue = testValue + incrementTestValue;
+        }
     }
 
 	/*void Test01::loop(){

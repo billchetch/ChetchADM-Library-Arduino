@@ -49,6 +49,7 @@ namespace Chetch{
     MessageFrame ArduinoDeviceManager::frame(MessageFrame::FrameSchema::SMALL_SIMPLE_CHECKSUM, ADM_MESSAGE_SIZE);
     ADMMessage ArduinoDeviceManager::inMessage(ADM_MESSAGE_SIZE);
     ADMMessage ArduinoDeviceManager::outMessage(ADM_MESSAGE_SIZE);
+    byte ArduinoDeviceManager::statusIndicatorPin = LED_BUILTIN;
 
     int ArduinoDeviceManager::inDevicesTable(char *dname){
         char stBuffer[ArduinoDevice::DEVICE_NAME_LENGTH];
@@ -72,8 +73,12 @@ namespace Chetch{
             stream->setSendHandler(handleStreamSend);
             stream->setMaxDatablockSize(frame.getMaxSize());
             ADM = new ArduinoDeviceManager(stream);
+            if(statusIndicatorPin > 0){
+                pinMode(statusIndicatorPin, OUTPUT);
+            }
         }
         
+
         return ADM;
     }
 
@@ -88,7 +93,7 @@ namespace Chetch{
             addErrorInfo(&outMessage, ErrorCode::NO_ADM_INSTANCE);
         } else {
             switch(cmd){
-                case RESET_ADM_COMMAND:
+                case RESET_ADM_COMMAND: //for use by ESP8266
                     ADM->reset();
                     break;
             }
@@ -194,6 +199,8 @@ namespace Chetch{
                 outMessage.clear();
                 frame.reset();
             } else {
+                outMessage.clear();
+                frame.reset();
                 //TODO: something?
             }
         }
@@ -237,7 +244,7 @@ namespace Chetch{
         initialised = false;
         outMessage.clear();
         inMessage.clear();
-        stream->reset(false);
+        stream->end();
     }
 
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
@@ -248,6 +255,9 @@ namespace Chetch{
         configured = false;
         initialised = true;
 
+        //some universal config
+        //unixTime =
+        
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
         
     }
@@ -353,13 +363,15 @@ namespace Chetch{
 
     void ArduinoDeviceManager::loop(){
         //led for status
-        unsigned long diff = millis() - ledMillis;
-        flashLED(0, diff, 200, LED_BUILTIN);
-        if(!stream->isReady())flashLED(750, diff, 200, LED_BUILTIN);
-        if(!initialised)flashLED(1500, diff, 200, LED_BUILTIN);
-        if(!configured)flashLED(2250, diff, 200, LED_BUILTIN);
-        if(diff > 5000){
-            ledMillis = millis();
+        if(statusIndicatorPin > 0){
+            unsigned long diff = millis() - ledMillis;
+            flashLED(0, diff, 100, statusIndicatorPin);
+            if(!stream->isReady())flashLED(750, diff, 100, statusIndicatorPin);
+            if(!initialised)flashLED(1500, diff, 100, statusIndicatorPin);
+            if(!configured)flashLED(2250, diff, 100, statusIndicatorPin);
+            if(diff > 5000){
+                ledMillis = millis();
+            }
         }
         
         //loop each active device
@@ -369,7 +381,8 @@ namespace Chetch{
             }
         }
 
-        //loop stream
+        //loop stream: Here is where the receiveMessage and sendMessage instance methods will be called via
+        //the static handleStreamReceive and handStreamSend callback meethods given to the Stream in create above
         stream->loop();
     }
 
@@ -381,6 +394,10 @@ namespace Chetch{
             response->sender = ADM_TARGET_ID;
             response->target = ADM_TARGET_ID;
             switch ((ADMMessage::MessageType)message->type) {
+                case ADMMessage::MessageType::TYPE_RESET:
+                    reset();
+                    break;
+
                 case ADMMessage::MessageType::TYPE_INITIALISE:
                     initialise(message, response);
                     break;
@@ -454,7 +471,7 @@ namespace Chetch{
     void ArduinoDeviceManager::sendMessage(ADMMessage* message){
         if(deviceCount > 0){
             ArduinoDevice *dev = devices[currentDevice];
-            if(dev->isReady() && dev->isMessageReady()){
+            if(dev->isReady() && dev->hasMessageToSend()){
                 dev->sendMessage(message); 
             }
             currentDevice = (currentDevice + 1) % deviceCount;

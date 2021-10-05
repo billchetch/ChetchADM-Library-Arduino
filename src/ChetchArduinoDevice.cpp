@@ -13,6 +13,10 @@ namespace Chetch{
             }
             name[strlen(dname)] = 0;
         }
+
+        for(int i = 0; i < MESSAGE_QUEUE_LENGTH; i++){
+            messageQueue[i] = 0;
+        }
     }
 
     void ArduinoDevice::initialise(ADMMessage *message, ADMMessage *response){
@@ -91,10 +95,7 @@ namespace Chetch{
     int ArduinoDevice::getReportInterval(){
         return reportInterval;
     }
-    
-    bool ArduinoDevice::isMessageReady(){
-        return messageTypeToCreate != ADMMessage::MessageType::TYPE_NONE;
-    }
+   
 
     void ArduinoDevice::receiveMessage(ADMMessage *message, ADMMessage *response){
         response->sender = getID();
@@ -141,11 +142,46 @@ namespace Chetch{
         }
     }
 
+    bool ArduinoDevice::hasMessageToSend(){
+        return messageCount > 0;
+    }
+
+    bool ArduinoDevice::enqueueMessageToSend(byte messageID){
+        if(messageCount >= MESSAGE_QUEUE_LENGTH){
+            return false;
+        } else {
+            messageQueue[messageCount] = messageID;
+            messageCount++;
+            return true;
+        }
+    }
+
+    byte ArduinoDevice::dequeueMessageToSend(){
+        if(messageCount == 0){
+            return 0;
+        } else {
+            byte messageID = messageQueue[0];
+            messageCount--;
+            for(byte i = 0; i < messageCount; i++){
+                messageQueue[i] = messageQueue[i + 1];
+            }
+            messageQueue[messageCount] = 0; //
+            return messageID;
+        }
+    }
+
+    //Note: if you do not wish the message to be sent then you should clear it'
+    void ArduinoDevice::createMessageToSend(byte messageID, ADMMessage *message){
+        switch(messageID){
+            case MESSAGE_ID_REPORT:
+                createMessage(ADMMessage::MessageType::TYPE_DATA, message);
+                break;
+        }
+    }
+
     void ArduinoDevice::sendMessage(ADMMessage *message){     
-        if(isMessageReady()){
-            createMessage(messageTypeToCreate, message);
-            //reset messageTypeToCreate as it is used by isMessageReady
-            messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
+        if(hasMessageToSend()){
+            createMessageToSend(dequeueMessageToSend(), message);
         }
     }
 
@@ -169,7 +205,7 @@ namespace Chetch{
         if(reportInterval > 0 && millis() - lastMillis >= reportInterval){
             //Serial.print("Message ready at device "); Serial.print(ID); Serial.print(" after "); Serial.print(millis() - lastMillis); Serial.println("ms");
             lastMillis = millis();
-            messageTypeToCreate = ADMMessage::MessageType::TYPE_DATA;
+            enqueueMessageToSend(MESSAGE_ID_REPORT);
         }
     }
 

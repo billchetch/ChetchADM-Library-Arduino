@@ -21,7 +21,9 @@ namespace Chetch{
             };
 
             static const byte DEVICE_NAME_LENGTH = 10;
-            
+            static const byte MESSAGE_QUEUE_LENGTH = 8;
+            static const byte MESSAGE_ID_REPORT = 1;
+
             enum MessageField{
                 ENABLED = 0,
                 REPORT_INTERVAL = 1,
@@ -57,15 +59,17 @@ namespace Chetch{
             unsigned long lastMillis = 0;
             int reportInterval = -1; //negative or zero means no reporting
             
+            byte messageQueue[MESSAGE_QUEUE_LENGTH];
+            
+
             bool initialised = false;
             bool configured = false;
             bool enabled = false;
 
-        protected:
-            ADMMessage::MessageType messageTypeToCreate = ADMMessage::MessageType::TYPE_NONE;
-
             
         public:
+            byte messageCount = 0;
+
             ArduinoDevice(byte id, byte category, char* dname);
             //~ArduinoDevice();
 
@@ -79,9 +83,12 @@ namespace Chetch{
             bool isActive(); //isReady AND enabled
             void setReportInterval(int interval);
             int getReportInterval();
-            bool isMessageReady();
+            bool hasMessageToSend(); //if there is a message in the queue or not
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
+            virtual void createMessageToSend(byte messageID, ADMMessage *message);
+            bool enqueueMessageToSend(byte messageID);
+            byte dequeueMessageToSend();
             void addErrorInfo(ADMMessage *message, ErrorCode errorCode, ADMMessage *originalMessage = NULL);
             void sendMessage(ADMMessage *message);
             int getArgumentIndex(ADMMessage *message, MessageField field);

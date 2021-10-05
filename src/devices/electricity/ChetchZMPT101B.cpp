@@ -20,15 +20,19 @@ namespace Chetch{
         argIdx = getArgumentIndex(message, MessageField::SAMPLE_INTERVAL);
         sampleInterval = message->argumentAsULong(argIdx);
 
-        setTargetVoltage(
-            message->argumentAsDouble(getArgumentIndex(message, MessageField::TARGET_VOLTAGE)),
-            message->argumentAsDouble(getArgumentIndex(message, MessageField::TARGET_TOLERANCE)),
-            message->argumentAsDouble(getArgumentIndex(message, MessageField::VOLTAGE_LOWER_BOUND)),
-            message->argumentAsDouble(getArgumentIndex(message, MessageField::VOLTAGE_UPPER_BOUND))
+        setTargetParameters(
+            (Target)message->argumentAsByte(getArgumentIndex(message, MessageField::TARGET)),
+            message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_VALUE)),
+            message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_TOLERANCE)),
+            message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_LOWER_BOUND)),
+            message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_UPPER_BOUND))
             );
+        
+        pinMode(voltagePin, INPUT);
 
-        //argIdx = getArgumentIndex(message, MessageField::SAMPLE_INTERVAL);
-        //sampleInterval = message->argumentAsULong(argIdx);
+        response->addByte(99);
+        response->addByte(target);
+        response->addDouble(targetValue);
     }
 
     int ZMPT101B::getArgumentIndex(ADMMessage *message, ZMPT101B::MessageField field){
@@ -38,25 +42,39 @@ namespace Chetch{
         }
     }
 
-    void ZMPT101B::createMessage(ADMMessage::MessageType messageTypeToCreate, ADMMessage* message){
-        ArduinoDevice::createMessage(messageTypeToCreate, message);
-        message->addInt(220);
+    void ZMPT101B::createMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::createMessageToSend(messageID, message);
+
+        if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
+            message->addDouble(getVoltage());
+            message->addDouble(getHz());
+        }
+
+        if(messageID == MESSAGE_ID_ADJUSTMENT){
+            createMessage(ADMMessage::MessageType::TYPE_WARNING, message);
+            message->addDouble(adjustBy());
+        }
     }
 
-	void ZMPT101B::setTargetVoltage(double v, double t, double vlb, double vub){
-        targetVoltage = v;
-        targetTolerance = t;
-        voltageLowerBound = vlb;
-        voltageUpperBound = vub;
+	void ZMPT101B::setTargetParameters(Target t, double tv, double tt, double tlb, double tub){
+        target = t;
+        targetValue = tv;
+        targetTolerance = tt;
+        targetLowerBound = tlb;
+        targetUpperBound = tub;
     }                   
     
     void ZMPT101B::loop(){
-        ArduinoDevice::loop();
+        //this will flag message to send as DATA for reporting which means if we flag message to create after this it will take precedence
+        //so we need to ensure that we restore the exising messageTypeToCreate value so it's picked up on the next loop'
+        ArduinoDevice::loop(); 
         
         //take samples
         unsigned long m = micros();
         if(m - lastSampled >= sampleInterval){
-            double v = (double)(analogRead(voltagePin) - midPoint);
+            int readValue = analogRead(voltagePin);
+            double v = (double)(readValue - midPoint);
+           
             summedVoltages += sq(v);
             sampleCount++;
             lastSampled = m;
@@ -71,18 +89,22 @@ namespace Chetch{
         //combine samples for final values
         if(sampleCount >= sampleSize){
             voltage = (sqrt(summedVoltages/(double)sampleCount) * scaleWaveform) + finalOffset;
+            
             if(voltage < minVoltage)voltage = 0;
             if(voltage > maxVoltage)voltage = maxVoltage;
-        
+                
             //Serial.print("Sum / Count:"); Serial.print(summedVoltages); Serial.print(" / "); Serial.println(sampleCount);
-            //Serial.print("V: "); Serial.println(voltage);
-        
+            
             hz = (double)hzCount *( 500000.0 / (double)(sampleCount * sampleInterval));
             //Serial.print("Hz count: "); Serial.println(hzCount);
-            //Serial.print("Hz: "); Serial.println(hz);
+            //sSerial.println(hz);
             sampleCount = 0;
             summedVoltages = 0;
             hzCount = 0;
+
+            if(target != Target::NONE && adjustBy() != 0){
+                enqueueMessageToSend(MESSAGE_ID_ADJUSTMENT);
+            }
         }
     }
 
@@ -90,22 +112,35 @@ namespace Chetch{
         return voltage;
     }
 
-    double ZMPT101B::getHZ(){
+    double ZMPT101B::getHz(){
         return hz;
     }
 
-    bool ZMPT101B::isVoltageInRange(){
-        if(voltageUpperBound <= voltageLowerBound)return true;
+    double ZMPT101B::getTargetedValue(){
+        switch(target){
+            case Target::HZ:
+                return getHz();
+            
+            case Target::VOLTAGE:
+                return getVoltage();
+            
+            default:
+                return -1;
+        }
+    }
+
+    bool ZMPT101B::isTargetedValueInRange(){
+        if(targetUpperBound <= targetLowerBound)return true;
       
-        double v = getVoltage();
-        return (v >= voltageLowerBound && v <= voltageUpperBound);
+        double v = getTargetedValue();
+        return (v >= targetLowerBound && v <= targetUpperBound);
     }
     
-    double ZMPT101B::adjustVoltageBy(){
-        if(targetVoltage <= 0 || !isVoltageInRange())return 0;
+    double ZMPT101B::adjustBy(){
+        if(targetValue <= 0 || !isTargetedValueInRange())return 0;
 
-        double v = getVoltage();
-        double adjustment = targetVoltage - v;
+        double v = getTargetedValue();
+        double adjustment = targetValue - v;
         return abs(adjustment) > targetTolerance ? adjustment : 0;
     } 
 } //end namespace
