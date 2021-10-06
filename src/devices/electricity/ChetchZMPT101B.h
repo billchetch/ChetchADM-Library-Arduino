@@ -36,7 +36,7 @@ namespace Chetch{
             static const byte MESSAGE_ID_ADJUSTMENT = 200;
 
         private:
-            byte voltagePin = A0;
+            byte voltagePin = 14;
             double summedVoltages = 0;
             int hzCount = 0;
             unsigned int sampleCount = 0;

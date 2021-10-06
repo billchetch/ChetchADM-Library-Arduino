@@ -49,7 +49,7 @@ namespace Chetch{
 
         if(messageID == MESSAGE_ID_TRIGGERED){
             if(mode == SwitchMode::PASSIVE){
-                createMessage(ADMMessage::MessageType::TYPE_COMMAND_RESPONSE, message);
+                createMessage(ADMMessage::MessageType::TYPE_DATA, message);
                 message->addBool(pinState);             
             } else {
                 createMessage(ADMMessage::MessageType::TYPE_COMMAND_RESPONSE, message);

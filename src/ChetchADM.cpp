@@ -28,6 +28,10 @@
 #include "devices/diagnostics/ChetchTest01.h"
 #endif
 
+#if (INCLUDE_DEVICES & MOTOR_DEVICES) == MOTOR_DEVICES
+#include "devices/motors/ChetchServoController.h"
+#endif
+
 const char DS18B20[] PROGMEM = "DS18B20";
 const char JSN_SR04T[] PROGMEM = "JSN-SR04T";
 const char ZMPT101B[] PROGMEM = "ZMPT101B";
@@ -316,6 +320,11 @@ namespace Chetch{
 	                case ArduinoDevice::IR_TRANSMITTER:
 		                device = new IRTransmitter(id, category, dname);
 		                break;
+#endif
+#if (INCLUDE_DEVICES & MOTOR_DEVICES) == MOTOR_DEVICES
+                    case ArduinoDevice::SERVO:
+                        device = new ServoController(id, category, dname);
+                        break;
 #endif
 	                case ArduinoDevice::COUNTER:
 		                //device = new Counter(id, category, dname);

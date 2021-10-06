@@ -18,6 +18,8 @@ namespace Chetch{
                 ALARM = 7,
                 VAC_SENSOR = 8,
                 SWITCH = 9,
+                SERVO = 10,
+                MOTOR = 11,
             };
 
             static const byte DEVICE_NAME_LENGTH = 10;
@@ -44,7 +46,9 @@ namespace Chetch{
                 PAUSE,
                 RESET,
                 ON,
-                OFF
+                OFF,
+                MOVE,
+                ROTATE,
             };
 
             enum class ErrorCode{
@@ -71,7 +75,7 @@ namespace Chetch{
             byte messageCount = 0;
 
             ArduinoDevice(byte id, byte category, char* dname);
-            //~ArduinoDevice();
+            virtual ~ArduinoDevice(); //to allow for polymorphic deletion
 
             virtual void initialise(ADMMessage *message, ADMMessage *response);
             virtual void configure(ADMMessage *message, ADMMessage *response);

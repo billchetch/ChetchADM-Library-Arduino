@@ -19,6 +19,10 @@ namespace Chetch{
         }
     }
 
+    ArduinoDevice::~ArduinoDevice(){
+        //empty ... to allow for polymorphic destructors
+    }
+
     void ArduinoDevice::initialise(ADMMessage *message, ADMMessage *response){
         initialised = true;
         
