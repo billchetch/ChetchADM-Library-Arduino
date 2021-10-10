@@ -18,8 +18,9 @@ namespace Chetch{
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
             message->addInt(testValue);
+            message->addULong(millis());
             if(testValue == 0)incrementTestValue = 1;
-            if(testValue == 100)incrementTestValue = -1;
+            if(testValue == 1000)incrementTestValue = -1;
             testValue = testValue + incrementTestValue;
         }
     }

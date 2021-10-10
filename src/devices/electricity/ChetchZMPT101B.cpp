@@ -30,7 +30,6 @@ namespace Chetch{
         
         pinMode(voltagePin, INPUT);
 
-        response->addByte(99);
         response->addByte(target);
         response->addDouble(targetValue);
     }
@@ -73,6 +72,7 @@ namespace Chetch{
         unsigned long m = micros();
         if(m - lastSampled >= sampleInterval){
             int readValue = analogRead(voltagePin);
+            Serial.println(readValue);
             double v = (double)(readValue - midPoint);
            
             summedVoltages += sq(v);
@@ -97,13 +97,12 @@ namespace Chetch{
             
             hz = (double)hzCount *( 500000.0 / (double)(sampleCount * sampleInterval));
             //Serial.print("Hz count: "); Serial.println(hzCount);
-            //sSerial.println(hz);
             sampleCount = 0;
             summedVoltages = 0;
             hzCount = 0;
 
             if(target != Target::NONE && adjustBy() != 0){
-                enqueueMessageToSend(MESSAGE_ID_ADJUSTMENT);
+                //enqueueMessageToSend(MESSAGE_ID_ADJUSTMENT);
             }
         }
     }

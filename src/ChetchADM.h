@@ -10,13 +10,20 @@
 #if defined(ARDUINO_AVR_UNO)
 	//Uno specific code
 	#define MAX_DEVICES 8	
+    #define BOARD_NAME "UNO";"	
 #elif defined(ARDUINO_AVR_MEGA2560)
 	//Mega 2560 specific code
 	#define MAX_DEVICES 32
+    #define BOARD_NAME "MEGA"
 #elif defined(ARDUINO_SAM_DUE)
 	#define MAX_DEVICES 16
+    #define BOARD_NAME "SAM""
+#elif defined(ESP8266)
+	#define MAX_DEVICES 8
+    #define BOARD_NAME "ESP8266""
 #else
     #define MAX_DEVICES 8
+    #define BOARD_NAME "OTHER"
 //#error Unsupported hardware
 #endif
 
@@ -116,6 +123,7 @@ namespace Chetch{
 
             bool isReady(); //connected, initialised and configured
 
+            void indicateStatus();
             void flashLED(int interval, int diff, int blinkTime, int ledPin);
     }; //end class
 } //end namespace

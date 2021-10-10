@@ -54,6 +54,8 @@ namespace Chetch{
 	void ServoController::loop(){
         ArduinoDevice::loop();
         
+
+
     }
 
     ArduinoDevice::DeviceCommand ServoController::executeCommand(ADMMessage *message, ADMMessage *response){
@@ -84,14 +86,14 @@ namespace Chetch{
 
     void ServoController::moveTo(int pos){
         if(upperBound > lowerBound){
-            if(pos < lowerBound || pos > upperBound){ 
-                return;
-            } else {
-                servo.write(pos);
-            } 
-        } else {
-            servo.write(pos);
+            if(pos < lowerBound){
+                pos = lowerBound;
+            } else if(pos > upperBound){
+                pos = upperBound;
+            }
         }
+
+        servo.write(pos);
         //update position
         position = servo.read();
     }

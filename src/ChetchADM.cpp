@@ -263,6 +263,8 @@ namespace Chetch{
         //unixTime =
         
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
+        response->addString(BOARD_NAME);
+        response->addByte(MAX_DEVICES);
         
     }
   
@@ -370,8 +372,7 @@ namespace Chetch{
         }
     }
 
-    void ArduinoDeviceManager::loop(){
-        //led for status
+    void ArduinoDeviceManager::indicateStatus(){
         if(statusIndicatorPin > 0){
             unsigned long diff = millis() - ledMillis;
             flashLED(0, diff, 100, statusIndicatorPin);
@@ -382,6 +383,11 @@ namespace Chetch{
                 ledMillis = millis();
             }
         }
+    }
+
+    void ArduinoDeviceManager::loop(){
+        //led for status
+        indicateStatus();
         
         //loop each active device
         if(isReady()){
