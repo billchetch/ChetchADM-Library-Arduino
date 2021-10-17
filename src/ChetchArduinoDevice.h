@@ -34,7 +34,7 @@ namespace Chetch{
                 DEVICE_COMMAND,
             };
 
-            enum DeviceCommand{
+            enum  DeviceCommand{
                 NONE = 0,
                 COMPOUND,
                 TEST,
@@ -49,6 +49,10 @@ namespace Chetch{
                 OFF,
                 MOVE,
                 ROTATE,
+                PRINT,
+                SET_CURSOR,
+                DIZPLAY, //changed S to Z to avoid a define constant name clash
+                CLEAR,
             };
 
             enum class ErrorCode{

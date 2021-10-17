@@ -34,15 +34,16 @@ namespace Chetch{
             };
 
             static const byte MESSAGE_ID_ADJUSTMENT = 200;
+            static const byte HISTORY_SIZE = 8;
 
-        public:
-            byte voltagePin = 14;
+        public: //TODO make private
+            byte voltagePin = A0;
             double summedVoltages = 0;
             int hzCount = 0;
             unsigned int sampleCount = 0;
             int sampleSize = 1000;
             unsigned long lastSampled = 0;
-            double lastVoltage = 0;
+            double lastVoltage = -1;
             unsigned long sampleInterval = 500; //in micros ... Use a value of 500,000 to get a good shaped output in the Serial Plotter
             int midPoint = 510;
             double scaleWaveform = 1.5;
@@ -51,12 +52,19 @@ namespace Chetch{
             double minVoltage = 10; //below which we reduce to 0
             double maxVoltage = 250; //above which we reduce to maxVoltage
             double hz = 0; 
+            
+            double voltageHistory[HISTORY_SIZE];
+            double hzHistory[HISTORY_SIZE];
+            byte historyIndex = 0; 
+            double averageVoltage = 0;
+            double averageHz = 0;
 
             Target target = Target::NONE;
             double targetValue = -1; //if < 0 then no stabalising/adjustment is required
             double targetTolerance = 0;
             double targetLowerBound = 0;
             double targetUpperBound = -1;
+            
      
         public: 
 

@@ -4,7 +4,10 @@
 namespace Chetch{
     
     ZMPT101B::ZMPT101B(byte id, byte cat, char *dn) : ArduinoDevice(id, cat, dn){
-        //empty
+        for(int i = 0; i < HISTORY_SIZE; i++){
+            voltageHistory[i] = 0;
+            hzHistory[i] = 0;
+        }
     }
 
 
@@ -72,11 +75,11 @@ namespace Chetch{
         unsigned long m = micros();
         if(m - lastSampled >= sampleInterval){
             int readValue = analogRead(voltagePin);
-            Serial.println(readValue);
             double v = (double)(readValue - midPoint);
-           
+            //Serial.println(readValue);
             summedVoltages += sq(v);
             sampleCount++;
+            
             lastSampled = m;
     
             //Hz cross over
@@ -84,25 +87,48 @@ namespace Chetch{
                 hzCount++;
             }
             lastVoltage = v;
+            
         }
     
         //combine samples for final values
         if(sampleCount >= sampleSize){
             voltage = (sqrt(summedVoltages/(double)sampleCount) * scaleWaveform) + finalOffset;
-            
+            //Serial.println(voltage);
             if(voltage < minVoltage)voltage = 0;
             if(voltage > maxVoltage)voltage = maxVoltage;
                 
             //Serial.print("Sum / Count:"); Serial.print(summedVoltages); Serial.print(" / "); Serial.println(sampleCount);
             
             hz = (double)hzCount *( 500000.0 / (double)(sampleCount * sampleInterval));
+
+            voltageHistory[historyIndex] = voltage;
+            hzHistory[historyIndex] = hz;
+            historyIndex = (historyIndex + 1) % HISTORY_SIZE;
+            double voltageTotal = 0;
+            double hzTotal = 0;
+            int vCount = 0;
+            int hCount = 0;
+            
+            for(int i = 0; i < HISTORY_SIZE; i++){
+                if(voltageHistory[i] > 0){
+                    voltageTotal += voltageHistory[i];
+                    vCount++;
+                }
+                if(hzHistory[i] > 0){
+                    hzTotal += hzHistory[i];
+                    hCount++;
+                }
+            }
+            if(vCount > 0)averageVoltage = voltageTotal / (double)vCount;
+            if(hCount > 0)averageHz = hzTotal / (double)hCount;
+            
             //Serial.print("Hz count: "); Serial.println(hzCount);
             sampleCount = 0;
             summedVoltages = 0;
             hzCount = 0;
 
-            if(target != Target::NONE && adjustBy() != 0){
-                //enqueueMessageToSend(MESSAGE_ID_ADJUSTMENT);
+            if(target != Target::NONE && adjustBy() != 0){ 
+               enqueueMessageToSend(MESSAGE_ID_ADJUSTMENT);
             }
         }
     }
