@@ -249,6 +249,8 @@ namespace Chetch{
         for(int i = 0; i < deviceCount; i++){
             delete devices[i];
         }
+        timerIndex = 0;
+        totalDevices = 0;
         deviceCount = 0;
         configured = false;
         initialised = false;
@@ -258,6 +260,11 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
+        //some setup stuff
+        //unixTime =
+        attachMode = (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE));
+        totalDevices = message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES));
+
         for(int i = 0; i < deviceCount; i++){
             delete devices[i];
         }
@@ -265,13 +272,11 @@ namespace Chetch{
         configured = false;
         initialised = true;
 
-        //some universal config
-        //unixTime =
         
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
         response->addString(BOARD_NAME);
         response->addByte(MAX_DEVICES);
-        
+        response->addInt(ADN_TIMER_HZ);
     }
   
     void ArduinoDeviceManager::configure(ADMMessage *message, ADMMessage *response){
@@ -387,7 +392,7 @@ namespace Chetch{
         if(statusIndicatorPin > 0){
             unsigned long diff = millis() - ledMillis;
             flashLED(0, diff, 100, statusIndicatorPin);
-            if(!stream->isReady())flashLED(750, diff, 100, statusIndicatorPin);
+            if(stream == NULL || !stream->isReady())flashLED(750, diff, 100, statusIndicatorPin);
             if(!initialised)flashLED(1500, diff, 100, statusIndicatorPin);
             if(!configured)flashLED(2250, diff, 100, statusIndicatorPin);
             if(diff > 5000){
@@ -409,7 +414,9 @@ namespace Chetch{
 
         //loop stream: Here is where the receiveMessage and sendMessage instance methods will be called via
         //the static handleStreamReceive and handStreamSend callback meethods given to the Stream in create above
-        stream->loop();
+        if(stream->hasBegun()){
+            stream->loop();
+        }
     }
 
     void ArduinoDeviceManager::receiveMessage(ADMMessage* message, ADMMessage* response){
@@ -481,6 +488,16 @@ namespace Chetch{
              }
              if(device != NULL){
                 device->receiveMessage(message, response);
+                static int configuredCount = 0;
+                if(response->type == ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE){
+                    if(device->getTimerTicks() > 0){
+                        registerWithTimer(device);
+                    }
+                    configuredCount++;
+                    if(configuredCount == totalDevices){
+                        if(timerIndex > 0)startTimer();
+                    }
+                }
              } else if(error == ErrorCode::NO_ERROR) {
                 error = ErrorCode::DEVICE_NOT_FOUND;
              }
@@ -508,8 +525,13 @@ namespace Chetch{
         switch(field){
             case MessageField::DEVICE_NAME:
                 return 0;
-             case MessageField::DEVICE_CATEGORY:
+            case MessageField::DEVICE_CATEGORY:
                 return 1;
+            case MessageField::ATTACH_MODE:
+                return 0;
+            case MessageField::TOTAL_DEVICES:
+                return 1;
+
             default:
                 return (int)field;
         }
@@ -517,6 +539,57 @@ namespace Chetch{
 
 
     bool ArduinoDeviceManager::isReady(){
-        return stream->isReady() && initialised && configured;
+        return stream->hasBegun() && stream->isReady() && initialised && configured;
     }
+
+    void ArduinoDeviceManager::startTimer(){
+       
+        cli();
+
+#if ADM_TIMER == 3
+        //set timer1 interrupt at 1Hz
+        TCCR3A = 0; // set entire TCCRnA register to 0
+        TCCR3B = 0; // same for TCCRnB
+        TCNT3  = 0; //initialize counter value to 0
+        
+        // set compare match register value = 4KHz
+        OCR3A = 499;
+        
+        // turn on CTC mode and set prescaler to 8
+        TCCR3B |= (1 << WGM32);
+        TCCR3B |= (1 << CS31); 
+        
+        //enable timer compare interrupt
+        TIMSK3 |= (1 << OCIE3A);
+#endif
+
+        //start up interrupts
+        sei();
+    }
+
+    bool ArduinoDeviceManager::registerWithTimer(ArduinoDevice *device){
+        if(timerIndex >= TIMER_REGISTER_SIZE || device == NULL || device->getTimerTicks() == 0)return false;
+        if(timerIndex = 0)resetTimerCounterAt = 1;
+        resetTimerCounterAt *= device->getTimerTicks();
+        timerRegister[timerIndex] = device;
+        timerIndex++;
+        return true;
+    }
+
+    void ArduinoDeviceManager::onTimer(){
+        static ArduinoDevice *device;
+        for(byte i = 0; i < timerIndex; i++){
+            device = timerRegister[i];
+            if(device->getTimerTicks() % timerCounter == 0)device->onTimer();
+        }
+        timerCounter++;
+        if(timerCounter >= resetTimerCounterAt)timerCounter = 0;
+    }   
+    
+#if ADM_TIMER == 3
+    ISR(TIMER3_COMPA_vect){ //timer interrupt
+        if(ADM != NULL)ADM->onTimer();
+    }    
+#endif
+
 } //end namespace

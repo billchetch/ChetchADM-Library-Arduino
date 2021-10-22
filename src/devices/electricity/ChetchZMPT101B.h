@@ -21,16 +21,15 @@ namespace Chetch{
             };
 
             enum MessageField{
-                PIN = 2,
-                SAMPLE_SIZE = 3,
-                SAMPLE_INTERVAL = 4,
-                TARGET = 5,
-                TARGET_VALUE = 6,
-                TARGET_TOLERANCE = 7,
-                TARGET_LOWER_BOUND = 8,
-                TARGET_UPPER_BOUND = 9,
-                SCALE_WAVEFORM = 10,
-                FINAL_OFFSET = 11,
+                PIN = 3,
+                SAMPLE_SIZE,
+                TARGET,
+                TARGET_VALUE,
+                TARGET_TOLERANCE,
+                TARGET_LOWER_BOUND,
+                TARGET_UPPER_BOUN,
+                SCALE_WAVEFORM,
+                FINAL_OFFSE,
             };
 
             static const byte MESSAGE_ID_ADJUSTMENT = 200;
@@ -38,27 +37,22 @@ namespace Chetch{
 
         public: //TODO make private
             byte voltagePin = A0;
-            double summedVoltages = 0;
-            int hzCount = 0;
-            unsigned int sampleCount = 0;
-            int sampleSize = 1000;
-            unsigned long lastSampled = 0;
-            double lastVoltage = -1;
-            unsigned long sampleInterval = 500; //in micros ... Use a value of 500,000 to get a good shaped output in the Serial Plotter
+            volatile long readVoltage = 0;
+            volatile unsigned long sampleCount = 0;
+            volatile unsigned long summedVoltages = 0;
+            volatile unsigned long hzCount = 0;
+
+            unsigned long sampleSize = 2000;
+           
             int midPoint = 510;
-            double scaleWaveform = 1.5;
+            double scaleWaveform = 1.65;
             double finalOffset = 2.5;
             double voltage = 0;
             double minVoltage = 10; //below which we reduce to 0
             double maxVoltage = 250; //above which we reduce to maxVoltage
             double hz = 0; 
             
-            double voltageHistory[HISTORY_SIZE];
-            double hzHistory[HISTORY_SIZE];
-            byte historyIndex = 0; 
-            double averageVoltage = 0;
-            double averageHz = 0;
-
+            
             Target target = Target::NONE;
             double targetValue = -1; //if < 0 then no stabalising/adjustment is required
             double targetTolerance = 0;
@@ -76,6 +70,7 @@ namespace Chetch{
 
             void setTargetParameters(Target t, double tv, double tt = 0.0, double tlb = 0.0, double tub = -1.0);
             void loop() override;
+            void onTimer() override;
             double getVoltage();
             double getHz();
             double getTargetedValue();

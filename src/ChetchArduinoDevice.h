@@ -29,8 +29,7 @@ namespace Chetch{
             enum MessageField{
                 ENABLED = 0,
                 REPORT_INTERVAL = 1,
-                DEVICE_NAME,
-                DEVICE_CATEGORY,
+                TIMER_TICKS,
                 DEVICE_COMMAND,
             };
 
@@ -66,7 +65,8 @@ namespace Chetch{
     
             unsigned long lastMillis = 0;
             int reportInterval = -1; //negative or zero means no reporting
-            
+            unsigned int timerTicks = 0; //set this to register with timer events
+        
             byte messageQueue[MESSAGE_QUEUE_LENGTH];
             
 
@@ -74,10 +74,9 @@ namespace Chetch{
             bool configured = false;
             bool enabled = false;
 
-            
         public:
             byte messageCount = 0;
-
+            
             ArduinoDevice(byte id, byte category, char* dname);
             virtual ~ArduinoDevice(); //to allow for polymorphic deletion
 
@@ -91,6 +90,8 @@ namespace Chetch{
             bool isActive(); //isReady AND enabled
             void setReportInterval(int interval);
             int getReportInterval();
+            void setTimerTicks(unsigned int ticks);
+            unsigned int getTimerTicks();
             bool hasMessageToSend(); //if there is a message in the queue or not
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
@@ -101,6 +102,7 @@ namespace Chetch{
             void sendMessage(ADMMessage *message);
             int getArgumentIndex(ADMMessage *message, MessageField field);
             virtual void loop();
+            virtual void onTimer();
     };
 
 } //end namespace

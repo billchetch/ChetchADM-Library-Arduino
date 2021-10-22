@@ -11,11 +11,11 @@ namespace Chetch{
     class ServoController : public ArduinoDevice {
         public:
             enum MessageField{
-                PIN = 2,
-                POSITION = 3,
-                LOWER_BOUND = 4,
-                UPPER_BOUND = 5,
-                INCREMENT = 6,
+                PIN = 3,
+                POSITION,
+                LOWER_BOUND,
+                UPPER_BOUND,
+                INCREMENT,
             };
 
             

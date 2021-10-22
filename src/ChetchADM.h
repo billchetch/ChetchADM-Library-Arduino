@@ -40,26 +40,16 @@
 //#define INCLUDE_DEVICES TEMPERATURE_DEVICES
 //#define INCLUDE_DEVICES RANGE_FINDER_DEVICES
 //#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES
-#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES + MOTOR_DEVICES + DISPLAY_DEVICES
+//#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES + MOTOR_DEVICES + DISPLAY_DEVICES
+#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES + DISPLAY_DEVICES
+
+#define ADN_TIMER 3 //the timer that the ADM can use, currently only timer 3 which means mega only
+#define ADN_TIMER_HZ 4000 //Read only atm .. do not alter this!
+#define TIMER_REGISTER_SIZE 4
 
 namespace Chetch{
+
     class ArduinoDeviceManager{
-        private:
-            //char* id;
-            StreamFlowController *stream;
-            ArduinoDevice *devices[MAX_DEVICES];
-            byte deviceCount = 0;
-            byte currentDevice = 0;
-            bool initialised = false;
-            bool configured = false;
-            unsigned long unixTime = 0; //TODO: set in initialisation
-            unsigned long ledMillis = 0;
-            
-            static ArduinoDeviceManager *ADM;
-            static ADMMessage inMessage;
-            static ADMMessage outMessage;
-            static MessageFrame frame;
-        
         public:
         
             enum class ErrorCode{
@@ -77,6 +67,13 @@ namespace Chetch{
             };
             ErrorCode error = ErrorCode::NO_ERROR;
 
+            enum class AttachmentMode{
+                NOT_SET,
+                CLEAR,
+                RESET,
+                ATTACH_ONLY,
+            };
+
             enum class MessageField{
                 MILLIS = 0,
                 MEMORY,
@@ -84,8 +81,11 @@ namespace Chetch{
                 IS_READY,
                 DEVICE_NAME,
                 DEVICE_CATEGORY,
+                ATTACH_MODE,
+                TOTAL_DEVICES,
             };
     
+            
             static const byte ADM_MESSAGE_SIZE = 50;
             static const byte ADM_TARGET_ID = 0;
             static const byte STREAM_TARGET_ID = 255;
@@ -93,6 +93,33 @@ namespace Chetch{
             
             static byte statusIndicatorPin;
 
+        private:
+            //char* id;
+            StreamFlowController *stream = NULL;
+            ArduinoDevice *devices[MAX_DEVICES];
+            
+            //set in initialise by remote ADM
+            AttachmentMode attachMode = AttachmentMode::NOT_SET;
+            byte totalDevices = 0; //device count should reach this value indicating end of device initi+config process
+
+            byte deviceCount = 0;
+            byte currentDevice = 0;
+            bool initialised = false;
+            bool configured = false;
+            unsigned long unixTime = 0; //TODO: set in initialisation
+            unsigned long ledMillis = 0;
+            
+            ArduinoDevice *timerRegister[TIMER_REGISTER_SIZE];
+            byte timerIndex = 0;
+            volatile unsigned int timerCounter = 0;
+            unsigned long resetTimerCounterAt = 0;
+
+            static ArduinoDeviceManager *ADM;
+            static ADMMessage inMessage;
+            static ADMMessage outMessage;
+            static MessageFrame frame;
+        
+        public:
             static int inDevicesTable(char *dname);
             static ArduinoDeviceManager *create(StreamFlowController *stream);
             static ArduinoDeviceManager *getInstance();
@@ -105,7 +132,7 @@ namespace Chetch{
             static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
             static void send(StreamFlowController *stream, ADMMessage *message);
             static int getMaxFrameSize();
-
+            
 
             ArduinoDeviceManager(StreamFlowController *stream);
             ~ArduinoDeviceManager();
@@ -126,6 +153,11 @@ namespace Chetch{
 
             void indicateStatus();
             void flashLED(int interval, int diff, int blinkTime, int ledPin);
+
+            void startTimer();
+            bool registerWithTimer(ArduinoDevice *device);
+            void onTimer();
+            
     }; //end class
 } //end namespace
 

@@ -19,10 +19,13 @@ namespace Chetch{
             };
 
             enum MessageField{
-                DATA_PINS = 2,
-                ENABLE_PIN = 3,
-                REGISTER_SELECT_PIN = 4,
-                DISPLAY_DIMENSIONS = 5,
+                DATA_PINS = 3,
+                ENABLE_PIN,
+                REGISTER_SELECT_PIN,
+                DISPLAY_DIMENSION,
+                TEXT_TO_PRIN,
+                CURSOR_POS_X,
+                CURSOR_POS_,
             };
 
 

@@ -17,6 +17,13 @@ namespace Chetch{
 
     int LCD::getArgumentIndex(ADMMessage *message, MessageField field){
         switch(field){
+            case TEXT_TO_PRINT:
+            case CURSOR_POS_X:
+                return 1;
+
+            case CURSOR_POS_Y:
+                return 2;
+
             default:
                 return (int)field;
         }
@@ -85,9 +92,20 @@ namespace Chetch{
         char output[64];
         switch(deviceCommand){
             case PRINT:
-                message->argumentAsCharArray(1, output);
+                message->argumentAsCharArray(getArgumentIndex(message, MessageField::TEXT_TO_PRINT), output);
                 lcd->print(output);
                 break;
+
+            case CLEAR:
+                lcd->clear();
+                break;
+
+             case SET_CURSOR:
+                lcd->setCursor(
+                        message->argumentAsInt(getArgumentIndex(message, MessageField::CURSOR_POS_X)),
+                        message->argumentAsInt(getArgumentIndex(message, MessageField::CURSOR_POS_Y))
+                    );
+                    
         }
                 
         return deviceCommand;

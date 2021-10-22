@@ -4,10 +4,7 @@
 namespace Chetch{
     
     ZMPT101B::ZMPT101B(byte id, byte cat, char *dn) : ArduinoDevice(id, cat, dn){
-        for(int i = 0; i < HISTORY_SIZE; i++){
-            voltageHistory[i] = 0;
-            hzHistory[i] = 0;
-        }
+       setTimerTicks(1);
     }
 
 
@@ -20,9 +17,7 @@ namespace Chetch{
         argIdx = getArgumentIndex(message, MessageField::SAMPLE_SIZE);
         sampleSize = message->argumentAsInt(argIdx);
 
-        argIdx = getArgumentIndex(message, MessageField::SAMPLE_INTERVAL);
-        sampleInterval = message->argumentAsULong(argIdx);
-
+        
         setTargetParameters(
             (Target)message->argumentAsByte(getArgumentIndex(message, MessageField::TARGET)),
             message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_VALUE)),
@@ -70,37 +65,52 @@ namespace Chetch{
         //this will flag message to send as DATA for reporting which means if we flag message to create after this it will take precedence
         //so we need to ensure that we restore the exising messageTypeToCreate value so it's picked up on the next loop'
         ArduinoDevice::loop(); 
-        
+    
+    }
+
+    void ZMPT101B::onTimer(){
+        long v = (analogRead(voltagePin) - midPoint);
+        summedVoltages += (v * v);
+        sampleCount++;
+
+        if((readVoltage < 0 && v >= 0) || (readVoltage > 0 && v <= 0)){
+            hzCount++;
+        }
+        readVoltage = v;
+    }
+
+
+
+    /*void ZMPT101B::readVoltage(bool verifyInterval){
         //take samples
         unsigned long m = micros();
-        if(m - lastSampled >= sampleInterval){
+        if(!verifyInterval || m - lastSampled >= sampleInterval){
+            if(sampleCount == 0)startedSampling = micros();
+
             int readValue = analogRead(voltagePin);
             double v = (double)(readValue - midPoint);
-            //Serial.println(readValue);
             summedVoltages += sq(v);
             sampleCount++;
             
             lastSampled = m;
     
             //Hz cross over
+            int hzCrossOverTolerance = 0;
             if((lastVoltage < 0 && v >= 0) || (lastVoltage > 0 && v <= 0)){
                 hzCount++;
             }
             lastVoltage = v;
-            
         }
     
         //combine samples for final values
         if(sampleCount >= sampleSize){
             voltage = (sqrt(summedVoltages/(double)sampleCount) * scaleWaveform) + finalOffset;
-            //Serial.println(voltage);
             if(voltage < minVoltage)voltage = 0;
             if(voltage > maxVoltage)voltage = maxVoltage;
-                
-            //Serial.print("Sum / Count:"); Serial.print(summedVoltages); Serial.print(" / "); Serial.println(sampleCount);
             
-            hz = (double)hzCount *( 500000.0 / (double)(sampleCount * sampleInterval));
+            hz = (double)hzCount *( 500000.0 / (double)(micros() - startedSampling));
 
+            //put in history and calculate averages
             voltageHistory[historyIndex] = voltage;
             hzHistory[historyIndex] = hz;
             historyIndex = (historyIndex + 1) % HISTORY_SIZE;
@@ -122,16 +132,18 @@ namespace Chetch{
             if(vCount > 0)averageVoltage = voltageTotal / (double)vCount;
             if(hCount > 0)averageHz = hzTotal / (double)hCount;
             
-            //Serial.print("Hz count: "); Serial.println(hzCount);
+            //reset counters etc.
             sampleCount = 0;
+            startedSampling = 0;
             summedVoltages = 0;
             hzCount = 0;
 
+            //sample complete so trigger adjustment event
             if(target != Target::NONE && adjustBy() != 0){ 
                enqueueMessageToSend(MESSAGE_ID_ADJUSTMENT);
             }
         }
-    }
+    } */
 
     double ZMPT101B::getVoltage(){
         return voltage;
