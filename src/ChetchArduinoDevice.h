@@ -65,7 +65,7 @@ namespace Chetch{
     
             unsigned long lastMillis = 0;
             int reportInterval = -1; //negative or zero means no reporting
-            unsigned int timerTicks = 0; //set this to register with timer events
+            int timerTicks = 0; //set this to register with timer events
         
             byte messageQueue[MESSAGE_QUEUE_LENGTH];
             
@@ -90,8 +90,8 @@ namespace Chetch{
             bool isActive(); //isReady AND enabled
             void setReportInterval(int interval);
             int getReportInterval();
-            void setTimerTicks(unsigned int ticks);
-            unsigned int getTimerTicks();
+            void setTimerTicks(int ticks);
+            int getTimerTicks();
             bool hasMessageToSend(); //if there is a message in the queue or not
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);

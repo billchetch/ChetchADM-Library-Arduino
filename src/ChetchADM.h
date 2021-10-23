@@ -43,8 +43,8 @@
 //#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES + MOTOR_DEVICES + DISPLAY_DEVICES
 #define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES + DISPLAY_DEVICES
 
-#define ADN_TIMER 3 //the timer that the ADM can use, currently only timer 3 which means mega only
-#define ADN_TIMER_HZ 4000 //Read only atm .. do not alter this!
+#define ADM_TIMER 3 //the timer that the ADM can use, currently only timer 3 which means mega only
+#define ADM_TIMER_HZ 4000 //Read only atm .. do not alter this!
 #define TIMER_REGISTER_SIZE 4
 
 namespace Chetch{
@@ -69,9 +69,8 @@ namespace Chetch{
 
             enum class AttachmentMode{
                 NOT_SET,
-                CLEAR,
-                RESET,
-                ATTACH_ONLY,
+                MASTER_SLAVE,
+                STANDALONE,
             };
 
             enum class MessageField{
@@ -111,7 +110,7 @@ namespace Chetch{
             
             ArduinoDevice *timerRegister[TIMER_REGISTER_SIZE];
             byte timerIndex = 0;
-            volatile unsigned int timerCounter = 0;
+            volatile unsigned long timerCounter = 0;
             unsigned long resetTimerCounterAt = 0;
 
             static ArduinoDeviceManager *ADM;
@@ -139,8 +138,12 @@ namespace Chetch{
             bool setup();
 
             void reset();
-            virtual void initialise(ADMMessage *message, ADMMessage *response);
-            virtual void configure(ADMMessage *message, ADMMessage *response);
+            virtual void initialise(AttachmentMode attachMode, byte totalDevices);
+            void initialise(ADMMessage *message, ADMMessage *response);
+            virtual void configure();
+            void configure(ADMMessage *message, ADMMessage *response);
+            void onDevicesReady();
+
             ArduinoDevice *addDevice(byte id, byte category, char *dname);
             ArduinoDevice *addDevice(ADMMessage *message);
             ArduinoDevice* getDevice(byte deviceID);

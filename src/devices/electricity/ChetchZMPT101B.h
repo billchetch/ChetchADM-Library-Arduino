@@ -27,9 +27,9 @@ namespace Chetch{
                 TARGET_VALUE,
                 TARGET_TOLERANCE,
                 TARGET_LOWER_BOUND,
-                TARGET_UPPER_BOUN,
+                TARGET_UPPER_BOUND,
                 SCALE_WAVEFORM,
-                FINAL_OFFSE,
+                FINAL_OFFSET,
             };
 
             static const byte MESSAGE_ID_ADJUSTMENT = 200;

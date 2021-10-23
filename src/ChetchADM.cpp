@@ -260,10 +260,20 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
-        //some setup stuff
-        //unixTime =
-        attachMode = (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE));
-        totalDevices = message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES));
+        initialise(
+                (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE)),
+                message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES))
+            );
+
+        response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
+        response->addString(BOARD_NAME);
+        response->addByte(MAX_DEVICES);
+        response->addInt(ADM_TIMER_HZ);
+    }
+
+    void ArduinoDeviceManager::initialise(AttachmentMode attachMode, byte totalDevices){
+        this->attachMode = attachMode;
+        this->totalDevices = totalDevices;
 
         for(int i = 0; i < deviceCount; i++){
             delete devices[i];
@@ -271,17 +281,26 @@ namespace Chetch{
         deviceCount = 0;
         configured = false;
         initialised = true;
-
-        
-        response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
-        response->addString(BOARD_NAME);
-        response->addByte(MAX_DEVICES);
-        response->addInt(ADN_TIMER_HZ);
     }
   
-    void ArduinoDeviceManager::configure(ADMMessage *message, ADMMessage *response){
+    void ArduinoDeviceManager::configure(){
         configured = true;
+    }
+        
+    void ArduinoDeviceManager::configure(ADMMessage *message, ADMMessage *response){
+        configure();
         response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
+    }
+
+    void ArduinoDeviceManager::onDevicesReady(){
+        for(byte i = 0; i < deviceCount; i++){
+            if(devices[i]->getTimerTicks() > 0){
+                registerWithTimer(devices[i]);
+            }
+        }            
+        if(timerIndex > 0){
+            startTimer();
+        }
     }
 
     ArduinoDevice *ArduinoDeviceManager::addDevice(byte id, byte category, char *dname){
@@ -391,7 +410,7 @@ namespace Chetch{
     void ArduinoDeviceManager::indicateStatus(){
         if(statusIndicatorPin > 0){
             unsigned long diff = millis() - ledMillis;
-            flashLED(0, diff, 100, statusIndicatorPin);
+            flashLED(0, diff, 500, statusIndicatorPin);
             if(stream == NULL || !stream->isReady())flashLED(750, diff, 100, statusIndicatorPin);
             if(!initialised)flashLED(1500, diff, 100, statusIndicatorPin);
             if(!configured)flashLED(2250, diff, 100, statusIndicatorPin);
@@ -408,7 +427,9 @@ namespace Chetch{
         //loop each active device
         if(isReady()){
             for(int i = 0; i < deviceCount; i++){
-                if(devices[i]->isActive())devices[i]->loop();
+                if(devices[i]->isActive()){
+                    devices[i]->loop();
+                }
             }
         }
 
@@ -477,26 +498,25 @@ namespace Chetch{
             ArduinoDevice *device = getDevice(message->target);
             switch ((ADMMessage::MessageType)message->type) {
                 case ADMMessage::MessageType::TYPE_INITIALISE:
-                    if(device == NULL){ //we are creating a new device
+                    if(device == NULL && deviceCount < totalDevices){ //we are creating a new device
                         device = addDevice(message);
-                        if(device == NULL){
-                            error = ErrorCode::DEVICE_CANNOT_BE_CREATED;
-                            break;
-                        }
+                    }
+                    if(device == NULL){
+                        error = ErrorCode::DEVICE_CANNOT_BE_CREATED;
                     }
                     break;
              }
              if(device != NULL){
                 device->receiveMessage(message, response);
-                static int configuredCount = 0;
-                if(response->type == ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE){
-                    if(device->getTimerTicks() > 0){
-                        registerWithTimer(device);
+                if(response->type == ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE && deviceCount == totalDevices){
+                    bool allReady = true;
+                   for(byte i = 0; i < deviceCount; i++){
+                        if(!devices[i]->isReady()){
+                            allReady = false;
+                            break;
+                        }
                     }
-                    configuredCount++;
-                    if(configuredCount == totalDevices){
-                        if(timerIndex > 0)startTimer();
-                    }
+                    if(allReady)onDevicesReady();
                 }
              } else if(error == ErrorCode::NO_ERROR) {
                 error = ErrorCode::DEVICE_NOT_FOUND;
@@ -539,15 +559,15 @@ namespace Chetch{
 
 
     bool ArduinoDeviceManager::isReady(){
-        return stream->hasBegun() && stream->isReady() && initialised && configured;
+        return stream->hasBegun() && (attachMode == AttachmentMode::STANDALONE || stream->isReady()) && initialised && configured;
     }
 
     void ArduinoDeviceManager::startTimer(){
-       
+        //stop intterupts
         cli();
 
 #if ADM_TIMER == 3
-        //set timer1 interrupt at 1Hz
+        //set timer1 interrupt 
         TCCR3A = 0; // set entire TCCRnA register to 0
         TCCR3B = 0; // same for TCCRnB
         TCNT3  = 0; //initialize counter value to 0
@@ -569,7 +589,7 @@ namespace Chetch{
 
     bool ArduinoDeviceManager::registerWithTimer(ArduinoDevice *device){
         if(timerIndex >= TIMER_REGISTER_SIZE || device == NULL || device->getTimerTicks() == 0)return false;
-        if(timerIndex = 0)resetTimerCounterAt = 1;
+        if(timerIndex == 0)resetTimerCounterAt = 1;
         resetTimerCounterAt *= device->getTimerTicks();
         timerRegister[timerIndex] = device;
         timerIndex++;
@@ -580,7 +600,9 @@ namespace Chetch{
         static ArduinoDevice *device;
         for(byte i = 0; i < timerIndex; i++){
             device = timerRegister[i];
-            if(device->getTimerTicks() % timerCounter == 0)device->onTimer();
+            if(timerCounter % device->getTimerTicks() == 0){
+                device->onTimer();
+            }
         }
         timerCounter++;
         if(timerCounter >= resetTimerCounterAt)timerCounter = 0;
@@ -588,7 +610,7 @@ namespace Chetch{
     
 #if ADM_TIMER == 3
     ISR(TIMER3_COMPA_vect){ //timer interrupt
-        if(ADM != NULL)ADM->onTimer();
+        ArduinoDeviceManager::getInstance()->onTimer();
     }    
 #endif
 

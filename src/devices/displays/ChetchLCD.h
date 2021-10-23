@@ -22,10 +22,10 @@ namespace Chetch{
                 DATA_PINS = 3,
                 ENABLE_PIN,
                 REGISTER_SELECT_PIN,
-                DISPLAY_DIMENSION,
-                TEXT_TO_PRIN,
+                DISPLAY_DIMENSIONS,
+                TEXT_TO_PRINT,
                 CURSOR_POS_X,
-                CURSOR_POS_,
+                CURSOR_POS_Y,
             };
 
 

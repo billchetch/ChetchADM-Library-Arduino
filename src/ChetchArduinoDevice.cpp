@@ -103,11 +103,11 @@ namespace Chetch{
         return reportInterval;
     }
 
-    void ArduinoDevice::setTimerTicks(unsigned int ticks){
+    void ArduinoDevice::setTimerTicks(int ticks){
         timerTicks = ticks;
     }
 
-    unsigned int ArduinoDevice::getTimerTicks(){
+   int ArduinoDevice::getTimerTicks(){
         return timerTicks;
     }
    
@@ -222,6 +222,10 @@ namespace Chetch{
             lastMillis = millis();
             enqueueMessageToSend(MESSAGE_ID_REPORT);
         }
+    }
+
+    void ArduinoDevice::onTimer(){
+        //a hook
     }
 
 } //end namespace

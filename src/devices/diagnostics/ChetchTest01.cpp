@@ -25,9 +25,17 @@ namespace Chetch{
         }
     }
 
-	/*void Test01::loop(){
+    void Test01::loop(){
         ArduinoDevice::loop();
-        
-        
-    }*/
+
+        if(millis() - ms >= 1000){
+            Serial.println(count);
+            ms = millis();
+        }
+    }
+
+    void Test01::onTimer(){
+        count++;
+    }
+	
 } //end namespace

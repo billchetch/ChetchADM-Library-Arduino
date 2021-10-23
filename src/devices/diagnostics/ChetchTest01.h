@@ -10,13 +10,18 @@ namespace Chetch{
         private:
             int testValue = 0;
             int incrementTestValue = 0;
+            unsigned long ms = 0;
 
         public: 
+
+            volatile unsigned long count = 0;
 
             Test01(byte id, byte cat, char *dn);
 
             void configure(ADMMessage* message, ADMMessage* response) override;
             void createMessageToSend(byte messageID, ADMMessage* message) override;
+            void loop() override;
+            void onTimer() override;
 
     }; //end class
 } //end namespae
