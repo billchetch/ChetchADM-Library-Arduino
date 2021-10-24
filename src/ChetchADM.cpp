@@ -275,12 +275,14 @@ namespace Chetch{
         this->attachMode = attachMode;
         this->totalDevices = totalDevices;
 
-        for(int i = 0; i < deviceCount; i++){
-            delete devices[i];
+        if(this->attachMode == AttachmentMode::MASTER_SLAVE){
+            for(int i = 0; i < deviceCount; i++){
+                delete devices[i];
+            }
+            deviceCount = 0;
+            configured = false;
+            initialised = true;
         }
-        deviceCount = 0;
-        configured = false;
-        initialised = true;
     }
   
     void ArduinoDeviceManager::configure(){
@@ -294,7 +296,9 @@ namespace Chetch{
 
     void ArduinoDeviceManager::onDevicesReady(){
         for(byte i = 0; i < deviceCount; i++){
-            if(devices[i]->getTimerTicks() > 0){
+            if(devices[i]->getTimerInterval() > 0){
+                int ticks = ADM_TIMER_HZ * ((double)devices[i]->getTimerInterval() / 1000000.0);
+                devices[i]->setTimerTicks(ticks);
                 registerWithTimer(devices[i]);
             }
         }            
@@ -506,10 +510,15 @@ namespace Chetch{
                     }
                     break;
              }
+
              if(device != NULL){
+                //Let device proces the message
                 device->receiveMessage(message, response);
+
+                //If the device responds with a configure response then see if it is the last one and if it is
+                //then all devices are ready so we call onDevicesReady
                 if(response->type == ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE && deviceCount == totalDevices){
-                    bool allReady = true;
+                   bool allReady = true;
                    for(byte i = 0; i < deviceCount; i++){
                         if(!devices[i]->isReady()){
                             allReady = false;

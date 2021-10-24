@@ -29,7 +29,7 @@ namespace Chetch{
         ArduinoDevice::loop();
 
         if(millis() - ms >= 1000){
-            Serial.println(count);
+            //Serial.println(count);
             ms = millis();
         }
     }

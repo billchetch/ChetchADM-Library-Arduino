@@ -17,15 +17,17 @@ namespace Chetch{
         argIdx = getArgumentIndex(message, MessageField::SAMPLE_SIZE);
         sampleSize = message->argumentAsInt(argIdx);
 
-        
-        setTargetParameters(
-            (Target)message->argumentAsByte(getArgumentIndex(message, MessageField::TARGET)),
-            message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_VALUE)),
-            message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_TOLERANCE)),
-            message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_LOWER_BOUND)),
-            message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_UPPER_BOUND))
-            );
-        
+        target = (Target)message->argumentAsByte(getArgumentIndex(message, MessageField::TARGET));
+        if(target != Target::NONE){
+            setTargetParameters(
+                target,
+                message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_VALUE)),
+                message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_TOLERANCE)),
+                message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_LOWER_BOUND)),
+                message->argumentAsInt(getArgumentIndex(message, MessageField::TARGET_UPPER_BOUND))
+                );
+        }
+
         pinMode(voltagePin, INPUT);
 
         response->addByte(target);
@@ -62,10 +64,39 @@ namespace Chetch{
     }                   
     
     void ZMPT101B::loop(){
-        //this will flag message to send as DATA for reporting which means if we flag message to create after this it will take precedence
-        //so we need to ensure that we restore the exising messageTypeToCreate value so it's picked up on the next loop'
         ArduinoDevice::loop(); 
     
+        if(sampleCount >= sampleSize){
+            cli();
+            double sv = (double)summedVoltages;
+            double sc = (double)sampleCount;
+            double v = (sqrt(sv/sc) * scaleWaveform) + finalOffset;
+            double hc = (double)hzCount;
+            sei();
+        
+            if(voltage > 0){
+                voltage = (v + voltage) / 2.0;
+            } else {
+                voltage = v;
+            }
+      
+            double sampleDuration = sc * getTimerInterval() / 500000.0;
+            double h = hc / sampleDuration;
+            if(h == 0){
+                hz = h;
+            } else {
+                hz = (h + hz) / 2.0; 
+            }
+            
+            summedVoltages = 0;
+            sampleCount = 0; 
+            hzCount = 0;
+
+            //adjusment
+            /*if(target != Target::NONE && adjustBy() != 0){ 
+               enqueueMessageToSend(MESSAGE_ID_ADJUSTMENT);
+            }*/
+        }  
     }
 
     void ZMPT101B::onTimer(){
@@ -79,9 +110,7 @@ namespace Chetch{
         readVoltage = v;
     }
 
-
-
-    /*void ZMPT101B::readVoltage(bool verifyInterval){
+    /*void ZMPT101B::calculateVoltage(){
         //take samples
         unsigned long m = micros();
         if(!verifyInterval || m - lastSampled >= sampleInterval){
