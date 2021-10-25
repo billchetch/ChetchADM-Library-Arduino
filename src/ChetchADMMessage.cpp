@@ -137,6 +137,10 @@ namespace Chetch{
         return (int)argumentAsLong(argIdx);
     }
 
+    unsigned int ADMMessage::argumentAsUInt(byte argIdx){
+        return (unsigned int)argumentAsLong(argIdx);
+    }
+
     char *ADMMessage::argumentAsCharArray(byte argIdx, char *s){
         if(hasArgument(argIdx)){
             byte *arg = getArgument(argIdx);
@@ -196,6 +200,10 @@ namespace Chetch{
     }
   
     void ADMMessage::addInt(int argv){
+        addBytes((byte*)&argv, sizeof(argv));
+    }
+
+    void ADMMessage::addUInt(unsigned int argv){
         addBytes((byte*)&argv, sizeof(argv));
     }
 

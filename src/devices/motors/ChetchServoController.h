@@ -15,9 +15,11 @@ namespace Chetch{
                 POSITION,
                 LOWER_BOUND,
                 UPPER_BOUND,
+                ROTATIONAL_SPEED,
                 INCREMENT,
             };
 
+            static const byte MESSAGE_ID_STOPPED_MOVING = 200;
             
         private: 
             Servo servo; 
@@ -25,6 +27,11 @@ namespace Chetch{
             int position = 90;
             int lowerBound = 0;
             int upperBound = 180; //set to -1 for continuous
+            unsigned int rotationalSpeed = 0; //degrees per second (assumes servo rotates at same speed in either direction)
+
+            bool moving = false;
+            unsigned long startedMoving = 0;
+            unsigned long stopMoving = 0;
             
         public: 
             
@@ -41,6 +48,8 @@ namespace Chetch{
             int getPosition();
             void moveTo(int angle);
             void rotateBy(int increment);
+
+            bool isMoving();
 
     }; //end class
 } //end namespae

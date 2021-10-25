@@ -79,6 +79,7 @@ namespace Chetch{
             long argumentAsLong(byte argIdx);
             unsigned long argumentAsULong(byte argIdx);
             int argumentAsInt(byte argIdx);
+            unsigned int argumentAsUInt(byte argIdx);
             char *argumentAsCharArray(byte argIdx, char *s);
             byte argumentAsByte(byte argIdx);
             bool argumentAsBool(byte argIdx);
@@ -89,6 +90,7 @@ namespace Chetch{
             void addByte(byte argv);
             void addBool(bool argv);
             void addInt(int argv);
+            void addUInt(unsigned int argv);
             void addLong(long argv);
             void addULong(unsigned long argv);
             void addString(const char *argv);

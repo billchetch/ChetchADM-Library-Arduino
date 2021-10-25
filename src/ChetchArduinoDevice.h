@@ -6,6 +6,8 @@
 
 
 namespace Chetch{
+    class ArduinoDeviceManager;
+
 	class ArduinoDevice{
         public:
             enum Category {
@@ -21,10 +23,6 @@ namespace Chetch{
                 SERVO = 10,
                 MOTOR = 11,
             };
-
-            static const byte DEVICE_NAME_LENGTH = 10;
-            static const byte MESSAGE_QUEUE_LENGTH = 8;
-            static const byte MESSAGE_ID_REPORT = 1;
 
             enum MessageField{
                 ENABLED = 0,
@@ -58,6 +56,11 @@ namespace Chetch{
                 INVALID_COMMAND = 1,
             };
 
+
+            static const byte DEVICE_NAME_LENGTH = 10;
+            static const byte MESSAGE_QUEUE_LENGTH = 8;
+            static const byte MESSAGE_ID_REPORT = 1;
+
         private:
             byte ID;
             byte category;
@@ -76,6 +79,7 @@ namespace Chetch{
             bool enabled = false;
 
         public:
+            ArduinoDeviceManager *ADM = NULL;
             byte messageCount = 0;
             
             ArduinoDevice(byte id, byte category, char* dname);
@@ -95,7 +99,6 @@ namespace Chetch{
             int getTimerTicks();
             void setTimerInterval(unsigned long interval);
             unsigned long getTimerInterval(); //get time in secs between each tiner event (i.e. timerTicks * timer HZ)
-            void updateTimerInterval(int timerHz);
             bool hasMessageToSend(); //if there is a message in the queue or not
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
@@ -107,6 +110,8 @@ namespace Chetch{
             int getArgumentIndex(ADMMessage *message, MessageField field);
             virtual void loop();
             virtual void onTimer();
+            virtual void onPauseTimer();
+            virtual void onResumeTimer();
     };
 
 } //end namespace

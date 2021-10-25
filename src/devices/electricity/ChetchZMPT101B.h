@@ -71,6 +71,7 @@ namespace Chetch{
             void setTargetParameters(Target t, double tv, double tt = 0.0, double tlb = 0.0, double tub = -1.0);
             void loop() override;
             void onTimer() override;
+            void onPauseTimer() override;
             double getVoltage();
             double getHz();
             double getTargetedValue();

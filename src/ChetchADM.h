@@ -40,12 +40,11 @@
 //#define INCLUDE_DEVICES TEMPERATURE_DEVICES
 //#define INCLUDE_DEVICES RANGE_FINDER_DEVICES
 //#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES
-//#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES + MOTOR_DEVICES + DISPLAY_DEVICES
-#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES + DISPLAY_DEVICES
+#define INCLUDE_DEVICES ELECTRICITY_MEASURING_DEVICES + DIAGNOSTIC_DEVICES + MOTOR_DEVICES + DISPLAY_DEVICES
 
 #define ADM_TIMER 3 //the timer that the ADM can use, currently only timer 3 which means mega only
 #define ADM_TIMER_HZ 4000 //Read only atm .. do not alter this!
-#define TIMER_REGISTER_SIZE 4
+#define TIMER_REGISTER_SIZE 4 //Max number of devices that can be called in timer ISR ... kept small so as to not overload the timer
 
 namespace Chetch{
 
@@ -112,6 +111,8 @@ namespace Chetch{
             byte timerIndex = 0;
             volatile unsigned long timerCounter = 0;
             unsigned long resetTimerCounterAt = 0;
+            bool timerStarted = false;
+            bool timerPaused = false;
 
             static ArduinoDeviceManager *ADM;
             static ADMMessage inMessage;
@@ -158,8 +159,11 @@ namespace Chetch{
             void flashLED(int interval, int diff, int blinkTime, int ledPin);
 
             void startTimer();
+            void pauseTimer();
+            void resumeTimer();
             bool registerWithTimer(ArduinoDevice *device);
             void onTimer();
+            bool isUsingTimer();
             
     }; //end class
 } //end namespace

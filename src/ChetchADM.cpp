@@ -504,6 +504,7 @@ namespace Chetch{
                 case ADMMessage::MessageType::TYPE_INITIALISE:
                     if(device == NULL && deviceCount < totalDevices){ //we are creating a new device
                         device = addDevice(message);
+                        device->ADM = this;
                     }
                     if(device == NULL){
                         error = ErrorCode::DEVICE_CANNOT_BE_CREATED;
@@ -594,6 +595,34 @@ namespace Chetch{
 
         //start up interrupts
         sei();
+
+        timerStarted = true;
+    }
+
+    void ArduinoDeviceManager::pauseTimer(){
+        if(timerPaused)return;
+        Serial.print("Pausing timer...");
+        timerPaused = true;
+#if ADM_TIMER == 3
+        TIMSK3 &= ~(1 << OCIE3A);
+#endif
+        for(byte i = 0; i < timerIndex; i++){
+            timerRegister[i]->onPauseTimer();
+        }
+    }
+
+    void ArduinoDeviceManager::resumeTimer(){
+        if(!timerPaused)return;
+
+        Serial.print("Resuming timer...");
+        
+        for(byte i = 0; i < timerIndex; i++){
+            timerRegister[i]->onResumeTimer();
+        }
+#if ADM_TIMER == 3
+        TIMSK3 |= (1 << OCIE3A);
+#endif
+        timerPaused = false;
     }
 
     bool ArduinoDeviceManager::registerWithTimer(ArduinoDevice *device){
@@ -606,6 +635,7 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::onTimer(){
+        if(timerPaused)return;
         static ArduinoDevice *device;
         for(byte i = 0; i < timerIndex; i++){
             device = timerRegister[i];
@@ -616,11 +646,15 @@ namespace Chetch{
         timerCounter++;
         if(timerCounter >= resetTimerCounterAt)timerCounter = 0;
     }   
+
+    bool ArduinoDeviceManager::isUsingTimer(){
+        return timerStarted;
+    }
     
 #if ADM_TIMER == 3
     ISR(TIMER3_COMPA_vect){ //timer interrupt
         ArduinoDeviceManager::getInstance()->onTimer();
-    }    
+    }   
 #endif
 
 } //end namespace

@@ -103,76 +103,19 @@ namespace Chetch{
         long v = (analogRead(voltagePin) - midPoint);
         summedVoltages += (v * v);
         sampleCount++;
-
+        
         if((readVoltage < 0 && v >= 0) || (readVoltage > 0 && v <= 0)){
             hzCount++;
         }
         readVoltage = v;
     }
 
-    /*void ZMPT101B::calculateVoltage(){
-        //take samples
-        unsigned long m = micros();
-        if(!verifyInterval || m - lastSampled >= sampleInterval){
-            if(sampleCount == 0)startedSampling = micros();
-
-            int readValue = analogRead(voltagePin);
-            double v = (double)(readValue - midPoint);
-            summedVoltages += sq(v);
-            sampleCount++;
-            
-            lastSampled = m;
-    
-            //Hz cross over
-            int hzCrossOverTolerance = 0;
-            if((lastVoltage < 0 && v >= 0) || (lastVoltage > 0 && v <= 0)){
-                hzCount++;
-            }
-            lastVoltage = v;
-        }
-    
-        //combine samples for final values
-        if(sampleCount >= sampleSize){
-            voltage = (sqrt(summedVoltages/(double)sampleCount) * scaleWaveform) + finalOffset;
-            if(voltage < minVoltage)voltage = 0;
-            if(voltage > maxVoltage)voltage = maxVoltage;
-            
-            hz = (double)hzCount *( 500000.0 / (double)(micros() - startedSampling));
-
-            //put in history and calculate averages
-            voltageHistory[historyIndex] = voltage;
-            hzHistory[historyIndex] = hz;
-            historyIndex = (historyIndex + 1) % HISTORY_SIZE;
-            double voltageTotal = 0;
-            double hzTotal = 0;
-            int vCount = 0;
-            int hCount = 0;
-            
-            for(int i = 0; i < HISTORY_SIZE; i++){
-                if(voltageHistory[i] > 0){
-                    voltageTotal += voltageHistory[i];
-                    vCount++;
-                }
-                if(hzHistory[i] > 0){
-                    hzTotal += hzHistory[i];
-                    hCount++;
-                }
-            }
-            if(vCount > 0)averageVoltage = voltageTotal / (double)vCount;
-            if(hCount > 0)averageHz = hzTotal / (double)hCount;
-            
-            //reset counters etc.
-            sampleCount = 0;
-            startedSampling = 0;
-            summedVoltages = 0;
-            hzCount = 0;
-
-            //sample complete so trigger adjustment event
-            if(target != Target::NONE && adjustBy() != 0){ 
-               enqueueMessageToSend(MESSAGE_ID_ADJUSTMENT);
-            }
-        }
-    } */
+    void ZMPT101B::onPauseTimer(){
+        summedVoltages = 0;
+        sampleCount = 0;
+        readVoltage = 0;
+        hzCount = 0;
+    }
 
     double ZMPT101B::getVoltage(){
         return voltage;
