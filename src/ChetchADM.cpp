@@ -249,7 +249,6 @@ namespace Chetch{
         for(int i = 0; i < deviceCount; i++){
             delete devices[i];
         }
-        timerIndex = 0;
         totalDevices = 0;
         deviceCount = 0;
         configured = false;
@@ -268,7 +267,6 @@ namespace Chetch{
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
         response->addString(BOARD_NAME);
         response->addByte(MAX_DEVICES);
-        response->addInt(ADM_TIMER_HZ);
     }
 
     void ArduinoDeviceManager::initialise(AttachmentMode attachMode, byte totalDevices){
@@ -295,16 +293,7 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::onDevicesReady(){
-        for(byte i = 0; i < deviceCount; i++){
-            if(devices[i]->getTimerInterval() > 0){
-                int ticks = ADM_TIMER_HZ * ((double)devices[i]->getTimerInterval() / 1000000.0);
-                devices[i]->setTimerTicks(ticks);
-                registerWithTimer(devices[i]);
-            }
-        }            
-        if(timerIndex > 0){
-            startTimer();
-        }
+        //Not yet used
     }
 
     ArduinoDevice *ArduinoDeviceManager::addDevice(byte id, byte category, char *dname){
@@ -571,90 +560,5 @@ namespace Chetch{
     bool ArduinoDeviceManager::isReady(){
         return stream->hasBegun() && (attachMode == AttachmentMode::STANDALONE || stream->isReady()) && initialised && configured;
     }
-
-    void ArduinoDeviceManager::startTimer(){
-        //stop intterupts
-        cli();
-
-#if ADM_TIMER == 3
-        //set timer1 interrupt 
-        TCCR3A = 0; // set entire TCCRnA register to 0
-        TCCR3B = 0; // same for TCCRnB
-        TCNT3  = 0; //initialize counter value to 0
-        
-        // set compare match register value = 4KHz
-        OCR3A = 499;
-        
-        // turn on CTC mode and set prescaler to 8
-        TCCR3B |= (1 << WGM32);
-        TCCR3B |= (1 << CS31); 
-        
-        //enable timer compare interrupt
-        TIMSK3 |= (1 << OCIE3A);
-#endif
-
-        //start up interrupts
-        sei();
-
-        timerStarted = true;
-    }
-
-    void ArduinoDeviceManager::pauseTimer(){
-        if(timerPaused)return;
-        Serial.print("Pausing timer...");
-        timerPaused = true;
-#if ADM_TIMER == 3
-        TIMSK3 &= ~(1 << OCIE3A);
-#endif
-        for(byte i = 0; i < timerIndex; i++){
-            timerRegister[i]->onPauseTimer();
-        }
-    }
-
-    void ArduinoDeviceManager::resumeTimer(){
-        if(!timerPaused)return;
-
-        Serial.print("Resuming timer...");
-        
-        for(byte i = 0; i < timerIndex; i++){
-            timerRegister[i]->onResumeTimer();
-        }
-#if ADM_TIMER == 3
-        TIMSK3 |= (1 << OCIE3A);
-#endif
-        timerPaused = false;
-    }
-
-    bool ArduinoDeviceManager::registerWithTimer(ArduinoDevice *device){
-        if(timerIndex >= TIMER_REGISTER_SIZE || device == NULL || device->getTimerTicks() == 0)return false;
-        if(timerIndex == 0)resetTimerCounterAt = 1;
-        resetTimerCounterAt *= device->getTimerTicks();
-        timerRegister[timerIndex] = device;
-        timerIndex++;
-        return true;
-    }
-
-    void ArduinoDeviceManager::onTimer(){
-        if(timerPaused)return;
-        static ArduinoDevice *device;
-        for(byte i = 0; i < timerIndex; i++){
-            device = timerRegister[i];
-            if(timerCounter % device->getTimerTicks() == 0){
-                device->onTimer();
-            }
-        }
-        timerCounter++;
-        if(timerCounter >= resetTimerCounterAt)timerCounter = 0;
-    }   
-
-    bool ArduinoDeviceManager::isUsingTimer(){
-        return timerStarted;
-    }
-    
-#if ADM_TIMER == 3
-    ISR(TIMER3_COMPA_vect){ //timer interrupt
-        ArduinoDeviceManager::getInstance()->onTimer();
-    }   
-#endif
 
 } //end namespace

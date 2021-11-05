@@ -27,7 +27,6 @@ namespace Chetch{
             enum MessageField{
                 ENABLED = 0,
                 REPORT_INTERVAL = 1, //measured in millis
-                TIMER_INTERVAL, //measured in micros
                 DEVICE_COMMAND,
             };
 
@@ -95,10 +94,6 @@ namespace Chetch{
             bool isActive(); //isReady AND enabled
             void setReportInterval(int interval);
             int getReportInterval();
-            void setTimerTicks(int ticks);
-            int getTimerTicks();
-            void setTimerInterval(unsigned long interval);
-            unsigned long getTimerInterval(); //get time in secs between each tiner event (i.e. timerTicks * timer HZ)
             bool hasMessageToSend(); //if there is a message in the queue or not
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);

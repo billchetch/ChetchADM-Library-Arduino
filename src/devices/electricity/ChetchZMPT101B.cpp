@@ -1,10 +1,65 @@
 #include "ChetchUtils.h"
+#include "ChetchADC.h"
 #include "ChetchZMPT101B.h"
 
+#define TIMER_NUMBER 4
+#define TIMER_PRESCALER 8
+#define TIMER_COMPARE_A 499 //calculate micros from this and8 prescaler
+
 namespace Chetch{
-    
+
+#if TIMER_NUMBER == 4
+    ISR(TIMER4_COMPA_vect){
+        ZMPT101B::handleTimerInterrupt();
+    }
+#endif
+
+    ISRTimer* ZMPT101B::timer = NULL;
+    double ZMPT101B::compareAInterval = 0.0; //in seconds
+    byte ZMPT101B::instanceIndex = 0;
+    byte ZMPT101B::currentInstance = 0; //current instance for reading ISR
+    ZMPT101B* ZMPT101B::instances[ZMPT101B::MAX_INSTANCES];
+    unsigned long ZMPT101B::missedInterrupts = 0;
+    unsigned long ZMPT101B::missedReads = 0;
+
+    ZMPT101B* ZMPT101B::create(byte id, byte cat, char *dn){
+        if(instanceIndex >= MAX_INSTANCES){
+            return NULL;
+        } else {
+            if(instanceIndex == 0){
+                cli();
+                timer = ISRTimer::create(TIMER_NUMBER, TIMER_PRESCALER, ISRTimer::TimerMode::COMPARE);
+                timer->setCompareA(0, TIMER_COMPARE_A);
+                compareAInterval = (double)timer->ticksToMicros(TIMER_COMPARE_A + 1) / 500000.0;
+                sei();
+            }
+
+            ZMPT101B* instance = new ZMPT101B(id, cat, dn);
+            instances[instanceIndex++] = instance;
+            return instance;
+        }
+    }
+
+    void ZMPT101B::handleTimerInterrupt(){
+        ZMPT101B* zmpt = instances[currentInstance];
+        if(zmpt->sampling){
+            if(!CADC::isReading()){
+                zmpt->onAnalogRead(CADC::readResult());
+                currentInstance = (currentInstance + 1) % instanceIndex;
+            } else {
+                missedReads++;
+            }
+        } else {
+            zmpt->sampling = true;
+        }
+        CADC::startRead(zmpt->voltagePin);
+    }
+
+
     ZMPT101B::ZMPT101B(byte id, byte cat, char *dn) : ArduinoDevice(id, cat, dn){
-       setTimerTicks(1);
+        for(byte i = 0; i < BUFFER_SIZE; i++){
+            buffer[i] = 0;
+        }
     }
 
 
@@ -29,6 +84,10 @@ namespace Chetch{
         }
 
         pinMode(voltagePin, INPUT);
+
+        if(!timer->isEnabled()){
+            timer->enable();
+        }
 
         response->addByte(target);
         response->addDouble(targetValue);
@@ -66,21 +125,41 @@ namespace Chetch{
     void ZMPT101B::loop(){
         ArduinoDevice::loop(); 
     
+        if(timer == NULL || !timer->isEnabled())return;
+
+        //read data from buffer
+        for(byte i = 0; i < BUFFER_SIZE; i++){
+            if(buffer[i] == 0)break;
+            long v = buffer[i] - midPoint;
+            summedVoltages += (v * v);
+            sampleCount++;
+        
+            if((readVoltage < 0 && v >= 0) || (readVoltage > 0 && v <= 0)){
+                hzCount++;
+            }
+            readVoltage = v;
+            buffer[i] = 0;
+            
+        }
+        bufferIdx = 0;
+
+        //now if we have enough samples generate a RMS voltage
         if(sampleCount >= sampleSize){
-            cli();
+            //Serial.println(sampleCount);
+            //Serial.println(hzCount);
+            //Serial.println("------");
             double sv = (double)summedVoltages;
             double sc = (double)sampleCount;
             double v = (sqrt(sv/sc) * scaleWaveform) + finalOffset;
             double hc = (double)hzCount;
-            sei();
-        
+            
             if(voltage > 0){
                 voltage = (v + voltage) / 2.0;
             } else {
                 voltage = v;
             }
       
-            double sampleDuration = sc * getTimerInterval() / 500000.0;
+            double sampleDuration = sc * compareAInterval; //replace 250.0 with timer->ticksToMicros(TIMER_COMPARE_A + 1);
             double h = hc / sampleDuration;
             if(h == 0){
                 hz = h;
@@ -99,22 +178,11 @@ namespace Chetch{
         }  
     }
 
-    void ZMPT101B::onTimer(){
-        long v = (analogRead(voltagePin) - midPoint);
-        summedVoltages += (v * v);
-        sampleCount++;
-        
-        if((readVoltage < 0 && v >= 0) || (readVoltage > 0 && v <= 0)){
-            hzCount++;
-        }
-        readVoltage = v;
-    }
-
-    void ZMPT101B::onPauseTimer(){
-        summedVoltages = 0;
-        sampleCount = 0;
-        readVoltage = 0;
-        hzCount = 0;
+    void ZMPT101B::onAnalogRead(uint16_t v){
+        buffer[bufferIdx] = v;
+        bufferIdx = (bufferIdx + 1) % BUFFER_SIZE;
+        //temp for debugging ... remove!
+        if(bufferIdx > maxBufferIdx)maxBufferIdx = bufferIdx;
     }
 
     double ZMPT101B::getVoltage(){

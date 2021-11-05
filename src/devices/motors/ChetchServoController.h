@@ -11,10 +11,11 @@ namespace Chetch{
     class ServoController : public ArduinoDevice {
         public:
             enum MessageField{
-                PIN = 3,
+                PIN = 2,
                 POSITION,
                 LOWER_BOUND,
                 UPPER_BOUND,
+                TRIM_FACTOR,
                 ROTATIONAL_SPEED,
                 INCREMENT,
             };
@@ -27,6 +28,7 @@ namespace Chetch{
             int position = 90;
             int lowerBound = 0;
             int upperBound = 180; //set to -1 for continuous
+            int trimFactor = 0;
             unsigned int rotationalSpeed = 0; //degrees per second (assumes servo rotates at same speed in either direction)
 
             bool moving = false;

@@ -35,10 +35,8 @@ namespace Chetch{
         position = message->argumentAsInt(getArgumentIndex(message, MessageField::POSITION));
         lowerBound = message->argumentAsInt(getArgumentIndex(message, MessageField::LOWER_BOUND));
         upperBound = message->argumentAsInt(getArgumentIndex(message, MessageField::UPPER_BOUND));
+        trimFactor = message->argumentAsInt(getArgumentIndex(message, MessageField::TRIM_FACTOR));
         rotationalSpeed = message->argumentAsUInt(getArgumentIndex(message, MessageField::ROTATIONAL_SPEED)); //in degrees per second
-
-        servo.write(position);
-        moveTo(position);
     }
 
     void ServoController::createMessageToSend(byte messageID, ADMMessage* message){
@@ -57,13 +55,9 @@ namespace Chetch{
         ArduinoDevice::loop();
         
         if(moving && millis() >= stopMoving){
-            Serial.println("Stopped!");
+            //Serial.println("Stopped!");
             moving = false;
             enqueueMessageToSend(MESSAGE_ID_STOPPED_MOVING);
-            if(ADM->isUsingTimer()){
-                servo.detach();
-                ADM->resumeTimer();
-            }
         }
 
     }
@@ -104,25 +98,23 @@ namespace Chetch{
                 pos = upperBound;
             }
         }
+        pos = pos + trimFactor;
 
         moving = true;
         startedMoving = millis();
         int diff = abs(getPosition() - pos);
         //calculate stopped moving time ... add 100ms as grace period
         stopMoving = 100 + startedMoving + (int)(1000.0 * (double)(diff) / (double)rotationalSpeed);
-        if(ADM->isUsingTimer()){
-            ADM->pauseTimer();
-        }
         
         if(!servo.attached()){
-            servo.write(position);
+            //servo.write(position);
             servo.attach(pin); 
         }
         Serial.print("Moving to: "); Serial.println(pos);
         servo.write(pos);
         
         //update position
-        position = pos; 
+        position = pos - trimFactor; 
     }
 
     void ServoController::rotateBy(int increment){

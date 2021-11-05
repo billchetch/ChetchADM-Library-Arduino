@@ -37,8 +37,6 @@ namespace Chetch{
         enable(message->argumentAsBool(argIdx));
         argIdx = getArgumentIndex(message, MessageField::REPORT_INTERVAL); //in millis
         setReportInterval(message->argumentAsInt(argIdx));
-        argIdx = getArgumentIndex(message, MessageField::TIMER_INTERVAL); //in micros
-        setTimerInterval(message->argumentAsULong(argIdx));
         
         
         response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
@@ -102,24 +100,6 @@ namespace Chetch{
     int ArduinoDevice::getReportInterval(){
         return reportInterval;
     }
-
-    void ArduinoDevice::setTimerTicks(int ticks){
-        timerTicks = ticks;
-    }
-
-    int ArduinoDevice::getTimerTicks(){
-        return timerTicks;
-    }
-
-    void ArduinoDevice::setTimerInterval(unsigned long interval){
-        timerInterval = interval;
-    }
-
-    unsigned long ArduinoDevice::getTimerInterval(){
-        return timerInterval;
-    }
-   
-
 
     void ArduinoDevice::receiveMessage(ADMMessage *message, ADMMessage *response){
         response->sender = getID();

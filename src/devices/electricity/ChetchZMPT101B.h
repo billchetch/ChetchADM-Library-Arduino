@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <ChetchArduinoDevice.h>
 #include <ChetchADMMessage.h>
+#include <ChetchISRTimer.h>
 
 namespace Chetch{
     /*
@@ -21,7 +22,7 @@ namespace Chetch{
             };
 
             enum MessageField{
-                PIN = 3,
+                PIN = 2,
                 SAMPLE_SIZE,
                 TARGET,
                 TARGET_VALUE,
@@ -33,16 +34,32 @@ namespace Chetch{
             };
 
             static const byte MESSAGE_ID_ADJUSTMENT = 200;
-            static const byte HISTORY_SIZE = 8;
+            static const byte BUFFER_SIZE = 16;
+            static const byte MAX_INSTANCES = 2;
 
         public: //TODO make private
-            byte voltagePin = A0;
-            volatile long readVoltage = 0;
-            volatile unsigned long sampleCount = 0;
-            volatile unsigned long summedVoltages = 0;
-            volatile unsigned long hzCount = 0;
+            static ISRTimer* timer;
+            static double compareAInterval;
+            static byte instanceIndex;
+            static byte currentInstance; //each time an ISR is fired this updates so as to read the next instance voltage
+            static ZMPT101B* instances[];
+            static unsigned long missedInterrupts;
+            static unsigned long missedReads;
 
-            unsigned long sampleSize = 2000;
+            byte voltagePin = A0;
+            
+            volatile int buffer[BUFFER_SIZE];
+            volatile byte bufferIdx = 0;
+            volatile byte maxBufferIdx = 0;
+            volatile bool sampling = false; //set to true in ISR
+            
+            long readVoltage = 0;
+            unsigned long sampleCount = 0;
+            unsigned long summedVoltages = 0;
+            unsigned long hzCount = 0;
+            
+
+            unsigned long sampleSize = 3000;
            
             int midPoint = 510;
             double scaleWaveform = 1.65;
@@ -61,6 +78,8 @@ namespace Chetch{
             
      
         public: 
+            static ZMPT101B* create(byte id, byte cat, char *dn);
+            static void handleTimerInterrupt();
 
             ZMPT101B(byte id, byte cat, char *dn);
 
@@ -70,8 +89,7 @@ namespace Chetch{
 
             void setTargetParameters(Target t, double tv, double tt = 0.0, double tlb = 0.0, double tub = -1.0);
             void loop() override;
-            void onTimer() override;
-            void onPauseTimer() override;
+            void onAnalogRead(uint16_t v);
             double getVoltage();
             double getHz();
             double getTargetedValue();
