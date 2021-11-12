@@ -34,36 +34,31 @@ namespace Chetch{
             };
 
             static const byte MESSAGE_ID_ADJUSTMENT = 200;
-            static const byte BUFFER_SIZE = 16;
+            static const byte BUFFER_SIZE = 128;
             static const byte MAX_INSTANCES = 2;
 
         public: //TODO make private
             static ISRTimer* timer;
-            static double compareAInterval;
             static byte instanceIndex;
             static byte currentInstance; //each time an ISR is fired this updates so as to read the next instance voltage
             static ZMPT101B* instances[];
-            static unsigned long missedInterrupts;
-            static unsigned long missedReads;
-
+            
             byte voltagePin = A0;
             
             volatile int buffer[BUFFER_SIZE];
             volatile byte bufferIdx = 0;
-            volatile byte maxBufferIdx = 0;
             volatile bool sampling = false; //set to true in ISR
+            volatile byte maxBufferIdx = 0;
             
-            long readVoltage = 0;
             unsigned long sampleCount = 0;
             unsigned long summedVoltages = 0;
             unsigned long hzCount = 0;
             
-
-            unsigned long sampleSize = 3000;
+            unsigned long sampleSize = 2000;
            
-            int midPoint = 510;
-            double scaleWaveform = 1.65;
-            double finalOffset = 2.5;
+            int midPoint = 512;
+            double scaleWaveform = 1.34;
+            double finalOffset = 0; //2.5;
             double voltage = 0;
             double minVoltage = 10; //below which we reduce to 0
             double maxVoltage = 250; //above which we reduce to maxVoltage

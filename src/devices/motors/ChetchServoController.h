@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <ChetchArduinoDevice.h>
 #include <ChetchADMMessage.h>
-#include <Servo.h>
+#include <ChetchServo.h>
 
 namespace Chetch{
     
@@ -12,28 +12,26 @@ namespace Chetch{
         public:
             enum MessageField{
                 PIN = 2,
+                SERVO_MODEL,
                 POSITION,
                 LOWER_BOUND,
                 UPPER_BOUND,
                 TRIM_FACTOR,
-                ROTATIONAL_SPEED,
                 INCREMENT,
             };
 
             static const byte MESSAGE_ID_STOPPED_MOVING = 200;
             
         private: 
-            Servo servo; 
+            Servo* servo = NULL; 
             byte pin = 0;
             int position = 90;
             int lowerBound = 0;
-            int upperBound = 180; //set to -1 for continuous
+            int upperBound = 180; 
             int trimFactor = 0;
             unsigned int rotationalSpeed = 0; //degrees per second (assumes servo rotates at same speed in either direction)
 
             bool moving = false;
-            unsigned long startedMoving = 0;
-            unsigned long stopMoving = 0;
             
         public: 
             

@@ -6,6 +6,8 @@
 #include "ChetchMessageFrame.h"
 #include "ChetchADMMessage.h"
 #include "ChetchArduinoDevice.h"
+#include "ChetchADC.h"
+
 
 #if defined(ARDUINO_AVR_UNO)
 	//Uno specific code
@@ -65,7 +67,7 @@ namespace Chetch{
             enum class AttachmentMode{
                 NOT_SET,
                 MASTER_SLAVE,
-                STANDALONE,
+                OBSERVER_OBSERVED,
             };
 
             enum class MessageField{
@@ -77,6 +79,7 @@ namespace Chetch{
                 DEVICE_CATEGORY,
                 ATTACH_MODE,
                 TOTAL_DEVICES,
+                ANALOG_REFERENCE,
             };
     
             
@@ -88,20 +91,7 @@ namespace Chetch{
             static byte statusIndicatorPin;
 
         private:
-            //char* id;
-            StreamFlowController *stream = NULL;
-            ArduinoDevice *devices[MAX_DEVICES];
             
-            //set in initialise by remote ADM
-            AttachmentMode attachMode = AttachmentMode::NOT_SET;
-            byte totalDevices = 0; //device count should reach this value indicating end of device initi+config process
-
-            byte deviceCount = 0;
-            byte currentDevice = 0;
-            bool initialised = false;
-            bool configured = false;
-            unsigned long unixTime = 0; //TODO: set in initialisation
-            unsigned long ledMillis = 0;
             
             static ArduinoDeviceManager *ADM;
             static ADMMessage inMessage;
@@ -121,14 +111,30 @@ namespace Chetch{
             static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
             static void send(StreamFlowController *stream, ADMMessage *message);
             static int getMaxFrameSize();
+        
+        private:
+            StreamFlowController *stream = NULL;
+            ArduinoDevice *devices[MAX_DEVICES];
             
+            //set in initialise by remote ADM
+            AttachmentMode attachMode = AttachmentMode::NOT_SET;
+            byte totalDevices = 0; //device count should reach this value indicating end of device initi+config process
+            CADC::AnalogReference aref = CADC::AnalogReference::AREF_DEFAULT;
 
+            byte deviceCount = 0;
+            byte currentDevice = 0;
+            bool initialised = false;
+            bool configured = false;
+            unsigned long unixTime = 0; //TODO: set in initialisation
+            unsigned long ledMillis = 0;
+
+        public:
             ArduinoDeviceManager(StreamFlowController *stream);
             ~ArduinoDeviceManager();
             bool setup();
 
             void reset();
-            virtual void initialise(AttachmentMode attachMode, byte totalDevices);
+            virtual void initialise(AttachmentMode attachMode, byte totalDevices, CADC::AnalogReference aref);
             void initialise(ADMMessage *message, ADMMessage *response);
             virtual void configure();
             void configure(ADMMessage *message, ADMMessage *response);

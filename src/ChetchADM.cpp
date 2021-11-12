@@ -261,17 +261,24 @@ namespace Chetch{
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
         initialise(
                 (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE)),
-                message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES))
+                message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES)),
+                (CADC::AnalogReference)message->argumentAsByte(getArgumentIndex(message, MessageField::ANALOG_REFERENCE))
             );
 
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
         response->addString(BOARD_NAME);
         response->addByte(MAX_DEVICES);
+
+        //we add this data incase the attachment mode is 
+        response->addByte((byte)attachMode);
+        response->addByte(totalDevices);
+        response->addByte((byte)aref);
     }
 
-    void ArduinoDeviceManager::initialise(AttachmentMode attachMode, byte totalDevices){
+    void ArduinoDeviceManager::initialise(AttachmentMode attachMode, byte totalDevices, CADC::AnalogReference aref){
         this->attachMode = attachMode;
         this->totalDevices = totalDevices;
+        this->aref = aref;
 
         if(this->attachMode == AttachmentMode::MASTER_SLAVE){
             for(int i = 0; i < deviceCount; i++){
@@ -326,7 +333,7 @@ namespace Chetch{
 #endif
 #if (INCLUDE_DEVICES & ELECTRICITY_MEASURING_DEVICES) == ELECTRICITY_MEASURING_DEVICES
 	        case 2:
-                device = new ZMPT101B(id, category, dname);
+                device = ZMPT101B::create(id, category, dname); //use factory method because ZMPT101B uses ISR so instances need to be regulated
 		        break;
 #endif
 #if (INCLUDE_DEVICES & DISPLAY_DEVICES) == DISPLAY_DEVICES
@@ -460,7 +467,6 @@ namespace Chetch{
                     response->addBool(initialised);
                     response->addBool(configured);
                     response->addByte(deviceCount);
-                    
                     break;
             
                 case ADMMessage::MessageType::TYPE_ECHO:
@@ -550,6 +556,8 @@ namespace Chetch{
                 return 0;
             case MessageField::TOTAL_DEVICES:
                 return 1;
+            case MessageField::ANALOG_REFERENCE:
+                return 2;
 
             default:
                 return (int)field;
@@ -558,7 +566,7 @@ namespace Chetch{
 
 
     bool ArduinoDeviceManager::isReady(){
-        return stream->hasBegun() && (attachMode == AttachmentMode::STANDALONE || stream->isReady()) && initialised && configured;
+        return stream->hasBegun() && (attachMode == AttachmentMode::OBSERVER_OBSERVED || stream->isReady()) && initialised && configured;
     }
 
 } //end namespace

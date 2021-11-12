@@ -9,10 +9,9 @@ namespace Chetch{
     }
 
     ServoController::~ServoController(){
-        if(servo.attached()){
-            servo.detach();
+        if(servo->attached()){
+            servo->detach();
         }
-        
     }
 
     int ServoController::getArgumentIndex(ADMMessage *message, MessageField field){
@@ -32,11 +31,19 @@ namespace Chetch{
         ArduinoDevice::configure(message, response);
         
         pin = message->argumentAsByte(getArgumentIndex(message, MessageField::PIN));
-        position = message->argumentAsInt(getArgumentIndex(message, MessageField::POSITION));
+        byte model = message->argumentAsByte(getArgumentIndex(message, MessageField::SERVO_MODEL));
+        int pos = message->argumentAsInt(getArgumentIndex(message, MessageField::POSITION));
         lowerBound = message->argumentAsInt(getArgumentIndex(message, MessageField::LOWER_BOUND));
         upperBound = message->argumentAsInt(getArgumentIndex(message, MessageField::UPPER_BOUND));
         trimFactor = message->argumentAsInt(getArgumentIndex(message, MessageField::TRIM_FACTOR));
-        rotationalSpeed = message->argumentAsUInt(getArgumentIndex(message, MessageField::ROTATIONAL_SPEED)); //in degrees per second
+
+        servo = Servo::create((Servo::ServoModel)model);
+        if(servo != NULL){
+            servo->setTrim(trimFactor);
+            moveTo(pos);
+        } else {
+            //TODO: add error info
+        }
     }
 
     void ServoController::createMessageToSend(byte messageID, ADMMessage* message){
@@ -54,7 +61,8 @@ namespace Chetch{
 	void ServoController::loop(){
         ArduinoDevice::loop();
         
-        if(moving && millis() >= stopMoving){
+        //it's important to regularly call isMoving to prevent against a rare overflow problem (see Servo header class for more info)
+        if(servo != NULL && moving && !servo->isMoving()){
             //Serial.println("Stopped!");
             moving = false;
             enqueueMessageToSend(MESSAGE_ID_STOPPED_MOVING);
@@ -89,7 +97,7 @@ namespace Chetch{
     }
 
     void ServoController::moveTo(int pos){
-        if(moving)return;
+        if(servo == NULL)return;
 
         if(upperBound > lowerBound){
             if(pos < lowerBound){
@@ -98,23 +106,15 @@ namespace Chetch{
                 pos = upperBound;
             }
         }
-        pos = pos + trimFactor;
-
+        
         moving = true;
-        startedMoving = millis();
-        int diff = abs(getPosition() - pos);
-        //calculate stopped moving time ... add 100ms as grace period
-        stopMoving = 100 + startedMoving + (int)(1000.0 * (double)(diff) / (double)rotationalSpeed);
         
-        if(!servo.attached()){
+        if(!servo->attached()){
             //servo.write(position);
-            servo.attach(pin); 
+            servo->attach(pin); 
         }
-        Serial.print("Moving to: "); Serial.println(pos);
-        servo.write(pos);
-        
-        //update position
-        position = pos - trimFactor; 
+        Serial.print("Attempting to move to: "); Serial.println(pos);
+        position = servo->write(pos);
     }
 
     void ServoController::rotateBy(int increment){

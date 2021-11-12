@@ -15,13 +15,10 @@ namespace Chetch{
 #endif
 
     ISRTimer* ZMPT101B::timer = NULL;
-    double ZMPT101B::compareAInterval = 0.0; //in seconds
     byte ZMPT101B::instanceIndex = 0;
     byte ZMPT101B::currentInstance = 0; //current instance for reading ISR
     ZMPT101B* ZMPT101B::instances[ZMPT101B::MAX_INSTANCES];
-    unsigned long ZMPT101B::missedInterrupts = 0;
-    unsigned long ZMPT101B::missedReads = 0;
-
+    
     ZMPT101B* ZMPT101B::create(byte id, byte cat, char *dn){
         if(instanceIndex >= MAX_INSTANCES){
             return NULL;
@@ -30,7 +27,6 @@ namespace Chetch{
                 cli();
                 timer = ISRTimer::create(TIMER_NUMBER, TIMER_PRESCALER, ISRTimer::TimerMode::COMPARE);
                 timer->setCompareA(0, TIMER_COMPARE_A);
-                compareAInterval = (double)timer->ticksToMicros(TIMER_COMPARE_A + 1) / 500000.0;
                 sei();
             }
 
@@ -41,18 +37,15 @@ namespace Chetch{
     }
 
     void ZMPT101B::handleTimerInterrupt(){
-        ZMPT101B* zmpt = instances[currentInstance];
-        if(zmpt->sampling){
-            if(!CADC::isReading()){
-                zmpt->onAnalogRead(CADC::readResult());
-                currentInstance = (currentInstance + 1) % instanceIndex;
-            } else {
-                missedReads++;
-            }
+        static ZMPT101B* zmpt = instances[currentInstance];
+        if(zmpt->sampling && !CADC::isReading()){
+            zmpt->onAnalogRead(CADC::readResult());
+            currentInstance = (currentInstance + 1) % instanceIndex; 
         } else {
             zmpt->sampling = true;
         }
         CADC::startRead(zmpt->voltagePin);
+        //zmpt->onAnalogRead(analogRead(zmpt->voltagePin));
     }
 
 
@@ -127,49 +120,43 @@ namespace Chetch{
     
         if(timer == NULL || !timer->isEnabled())return;
 
+        static unsigned long hzStarted = 0;
+        static unsigned long hzFinished = 0;
+        static long readVoltage = 0;
+        
         //read data from buffer
         for(byte i = 0; i < BUFFER_SIZE; i++){
             if(buffer[i] == 0)break;
             long v = buffer[i] - midPoint;
             summedVoltages += (v * v);
-            sampleCount++;
-        
             if((readVoltage < 0 && v >= 0) || (readVoltage > 0 && v <= 0)){
+                if(hzCount == 0)hzStarted = micros();
+                hzFinished = micros();
                 hzCount++;
             }
+
+            sampleCount++;
             readVoltage = v;
             buffer[i] = 0;
-            
         }
+        
         bufferIdx = 0;
 
         //now if we have enough samples generate a RMS voltage
         if(sampleCount >= sampleSize){
-            //Serial.println(sampleCount);
-            //Serial.println(hzCount);
-            //Serial.println("------");
+            
             double sv = (double)summedVoltages;
             double sc = (double)sampleCount;
-            double v = (sqrt(sv/sc) * scaleWaveform) + finalOffset;
-            double hc = (double)hzCount;
+            double vt = (sqrt(sv/sc) * scaleWaveform) + finalOffset;
+            voltage = 0.5*voltage + 0.5*vt;
             
-            if(voltage > 0){
-                voltage = (v + voltage) / 2.0;
-            } else {
-                voltage = v;
-            }
-      
-            double sampleDuration = sc * compareAInterval; //replace 250.0 with timer->ticksToMicros(TIMER_COMPARE_A + 1);
-            double h = hc / sampleDuration;
-            if(h == 0){
-                hz = h;
-            } else {
-                hz = (h + hz) / 2.0; 
-            }
-            
+            double sampleDuration = ((double)(hzFinished - hzStarted)); 
+            hz = ((double)(hzCount - 1.0) * 500000.0 / sampleDuration);
             summedVoltages = 0;
             sampleCount = 0; 
             hzCount = 0;
+            hzStarted = 0;
+            readVoltage = 0;
 
             //adjusment
             /*if(target != Target::NONE && adjustBy() != 0){ 
