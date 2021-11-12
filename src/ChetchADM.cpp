@@ -272,7 +272,7 @@ namespace Chetch{
         //we add this data incase the attachment mode is 
         response->addByte((byte)attachMode);
         response->addByte(totalDevices);
-        response->addByte((byte)aref);
+        response->addByte((byte)CADC::aref());
     }
 
     void ArduinoDeviceManager::initialise(AttachmentMode attachMode, byte totalDevices, CADC::AnalogReference aref){
@@ -288,6 +288,8 @@ namespace Chetch{
             configured = false;
             initialised = true;
         }
+
+        CADC::init(aref);
     }
   
     void ArduinoDeviceManager::configure(){
