@@ -259,19 +259,20 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
-        initialise(
-                (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE)),
-                message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES)),
-                (CADC::AnalogReference)message->argumentAsByte(getArgumentIndex(message, MessageField::ANALOG_REFERENCE))
-            );
-
+        AttachmentMode amode = (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE));
+        if(amode != AttachmentMode::OBSERVER_OBSERVED){
+            initialise(
+                    amode,
+                    message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES)),
+                    (CADC::AnalogReference)message->argumentAsByte(getArgumentIndex(message, MessageField::ANALOG_REFERENCE))
+                );
+        }
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
         response->addString(BOARD_NAME);
         response->addByte(MAX_DEVICES);
 
-        //we add this data incase the attachment mode is 
+        //we add this data incase the attachment mode is not MASTER_SLAVE
         response->addByte((byte)attachMode);
-        response->addByte(totalDevices);
         response->addByte((byte)CADC::aref());
     }
 
@@ -510,7 +511,7 @@ namespace Chetch{
              }
 
              if(device != NULL){
-                //Let device proces the message
+                //Let device process the message
                 device->receiveMessage(message, response);
 
                 //If the device responds with a configure response then see if it is the last one and if it is

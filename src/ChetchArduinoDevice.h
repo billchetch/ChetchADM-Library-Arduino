@@ -91,11 +91,12 @@ namespace Chetch{
             char *getName();
             void enable(bool enable);
             bool isReady(); //initialised AND configured
+            void setAsReady(); //set initialised and configured to true (used if attachment mode is OBSERVER_OBSERVED if creating and configur)
             bool isActive(); //isReady AND enabled
             void setReportInterval(int interval);
             int getReportInterval();
             bool hasMessageToSend(); //if there is a message in the queue or not
-            virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
+            void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
             virtual void createMessageToSend(byte messageID, ADMMessage *message);
             bool enqueueMessageToSend(byte messageID);
@@ -104,9 +105,10 @@ namespace Chetch{
             void sendMessage(ADMMessage *message);
             int getArgumentIndex(ADMMessage *message, MessageField field);
             virtual void loop();
-            virtual void onTimer();
+
+            /*virtual void onTimer();
             virtual void onPauseTimer();
-            virtual void onResumeTimer();
+            virtual void onResumeTimer();*/
     };
 
 } //end namespace

@@ -34,8 +34,4 @@ namespace Chetch{
         }
     }
 
-    void Test01::onTimer(){
-        count++;
-    }
-	
 } //end namespace

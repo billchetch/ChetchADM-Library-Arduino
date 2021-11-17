@@ -21,7 +21,7 @@ namespace Chetch{
             void configure(ADMMessage* message, ADMMessage* response) override;
             void createMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
-            void onTimer() override;
+            
 
     }; //end class
 } //end namespae

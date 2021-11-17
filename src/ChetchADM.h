@@ -119,7 +119,7 @@ namespace Chetch{
             //set in initialise by remote ADM
             AttachmentMode attachMode = AttachmentMode::NOT_SET;
             byte totalDevices = 0; //device count should reach this value indicating end of device initi+config process
-            CADC::AnalogReference aref = CADC::AnalogReference::AREF_DEFAULT;
+            CADC::AnalogReference aref = CADC::AnalogReference::AREF_INTERNAL;
 
             byte deviceCount = 0;
             byte currentDevice = 0;

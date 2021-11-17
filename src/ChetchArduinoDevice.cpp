@@ -76,6 +76,11 @@ namespace Chetch{
     bool ArduinoDevice::isReady(){
         return initialised && configured;
     }
+    
+    void ArduinoDevice::setAsReady(){
+        initialised = true;
+        configured = true;
+    }
 
     bool ArduinoDevice::isActive(){
         return enabled && isReady();
@@ -213,7 +218,7 @@ namespace Chetch{
         }
     }
 
-    void ArduinoDevice::onTimer(){
+    /*void ArduinoDevice::onTimer(){
         //a hook
     }
 
@@ -223,6 +228,6 @@ namespace Chetch{
 
     void ArduinoDevice::onResumeTimer(){
         //a hook
-    }
+    }*/
 
 } //end namespace
