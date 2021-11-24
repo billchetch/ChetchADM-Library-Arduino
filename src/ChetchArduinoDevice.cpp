@@ -44,6 +44,12 @@ namespace Chetch{
         response->addInt(reportInterval);
     }
 
+    void ArduinoDevice::status(ADMMessage *message, ADMMessage *response){
+        response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
+        response->addBool(enabled);
+        response->addInt(reportInterval);
+    }
+
     ArduinoDevice::DeviceCommand ArduinoDevice::executeCommand(ADMMessage *message, ADMMessage *response){
         int argIdx = getArgumentIndex(message, MessageField::DEVICE_COMMAND);
         DeviceCommand deviceCommand = (DeviceCommand)message->argumentAsByte(argIdx);
@@ -115,14 +121,12 @@ namespace Chetch{
                 initialise(message, response);
                 break;
 
-                case ADMMessage::MessageType::TYPE_CONFIGURE:
+            case ADMMessage::MessageType::TYPE_CONFIGURE:
                 configure(message, response);
                 break;
 
-                case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
-                response->type = ADMMessage::TYPE_STATUS_RESPONSE;
-                response->addBool(enabled);
-                response->addInt(reportInterval);
+            case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
+                status(message, response);
                 break;
 
                 case ADMMessage::MessageType::TYPE_COMMAND:

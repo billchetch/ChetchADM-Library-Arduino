@@ -86,6 +86,7 @@ namespace Chetch{
 
             virtual void initialise(ADMMessage *message, ADMMessage *response);
             virtual void configure(ADMMessage *message, ADMMessage *response);
+            virtual void status(ADMMessage *message, ADMMessage *response);
             virtual DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response);
             byte getID();
             char *getName();

@@ -259,14 +259,16 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
-        AttachmentMode amode = (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE));
-        if(amode != AttachmentMode::OBSERVER_OBSERVED){
+        if(attachMode != AttachmentMode::OBSERVER_OBSERVED){
             initialise(
-                    amode,
+                    (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE)),
                     message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES)),
                     (CADC::AnalogReference)message->argumentAsByte(getArgumentIndex(message, MessageField::ANALOG_REFERENCE))
                 );
         }
+
+        if(!initialised)return;
+
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
         response->addString(BOARD_NAME);
         response->addByte(MAX_DEVICES);
@@ -281,15 +283,13 @@ namespace Chetch{
         this->totalDevices = totalDevices;
         this->aref = aref;
 
-        if(this->attachMode == AttachmentMode::MASTER_SLAVE){
-            for(int i = 0; i < deviceCount; i++){
-                delete devices[i];
-            }
-            deviceCount = 0;
-            configured = false;
-            initialised = true;
+        for(int i = 0; i < deviceCount; i++){
+            delete devices[i];
         }
-
+        deviceCount = 0;
+        configured = false;
+        initialised = true;
+        
         CADC::init(aref);
     }
   
@@ -457,6 +457,7 @@ namespace Chetch{
 
                 case ADMMessage::MessageType::TYPE_INITIALISE:
                     initialise(message, response);
+                    if(!initialised)error = ErrorCode::ADM_FAILED_TO_INITIALISE;
                     break;
 
                  case ADMMessage::MessageType::TYPE_CONFIGURE:

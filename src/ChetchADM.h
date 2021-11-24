@@ -55,6 +55,7 @@ namespace Chetch{
                 MESSAGE_FRAME_ERROR = 10, //To indicate this is a Frame error
                 ADM_MESSAGE_ERROR = 11,
                 ADM_MESSAGE_IS_EMPTY= 12,
+                ADM_FAILED_TO_INITIALISE = 13,
                 NO_DEVICE_ID = 20,
                 DEVICE_LIMIT_REACHED = 21,
                 DEVICE_ID_ALREADY_USED = 22,
