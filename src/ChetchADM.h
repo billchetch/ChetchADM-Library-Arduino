@@ -118,7 +118,7 @@ namespace Chetch{
             ArduinoDevice *devices[MAX_DEVICES];
             
             //set in initialise by remote ADM
-            AttachmentMode attachMode = AttachmentMode::NOT_SET;
+            AttachmentMode attachMode = AttachmentMode::MASTER_SLAVE;
             byte totalDevices = 0; //device count should reach this value indicating end of device initi+config process
             CADC::AnalogReference aref = CADC::AnalogReference::AREF_INTERNAL;
 

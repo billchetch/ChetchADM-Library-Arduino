@@ -259,9 +259,12 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
+        AttachmentMode amode = (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE));
+        if(amode != attachMode)return;
+
         if(attachMode != AttachmentMode::OBSERVER_OBSERVED){
             initialise(
-                    (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE)),
+                    attachMode,
                     message->argumentAsByte(getArgumentIndex(message, MessageField::TOTAL_DEVICES)),
                     (CADC::AnalogReference)message->argumentAsByte(getArgumentIndex(message, MessageField::ANALOG_REFERENCE))
                 );
