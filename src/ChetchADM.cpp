@@ -301,7 +301,12 @@ namespace Chetch{
     }
         
     void ArduinoDeviceManager::configure(ADMMessage *message, ADMMessage *response){
-        configure();
+        if(attachMode != AttachmentMode::OBSERVER_OBSERVED){
+            configure();
+        }
+
+        if(!configured)return;
+
         response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
     }
 
@@ -465,6 +470,7 @@ namespace Chetch{
 
                  case ADMMessage::MessageType::TYPE_CONFIGURE:
                     configure(message, response);
+                    if(!configured)error = ErrorCode::ADM_FAILED_TO_CONFIUGRE;
                     break;
 
                 case ADMMessage::MessageType::TYPE_STATUS_REQUEST:

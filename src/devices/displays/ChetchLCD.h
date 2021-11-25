@@ -44,6 +44,8 @@ namespace Chetch{
 
             int getArgumentIndex(ADMMessage *message, MessageField field);
 
+            void setPins(DataPinSequence dataPinSequence, byte enablePin, byte registerSelectPin);
+            void setDimensions(DisplayDimensions dimensions);
             void configure(ADMMessage* message, ADMMessage* response) override;
             void createMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;

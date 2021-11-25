@@ -28,6 +28,8 @@ namespace Chetch{
                 timer = ISRTimer::create(TIMER_NUMBER, TIMER_PRESCALER, ISRTimer::TimerMode::COMPARE);
                 timer->setCompareA(0, TIMER_COMPARE_A);
                 sei();
+
+                CADC::init(false); //turn off trigger interrupt
             }
 
             ZMPT101B* instance = new ZMPT101B(id, cat, dn);
@@ -55,12 +57,16 @@ namespace Chetch{
         }
     }
 
+    void ZMPT101B::setVoltagePin(byte pin){
+        voltagePin = pin;
+        pinMode(voltagePin, INPUT);
+    }
 
     void ZMPT101B::configure(ADMMessage* message, ADMMessage* response){
         ArduinoDevice::configure(message, response);
 
         int argIdx = getArgumentIndex(message, MessageField::PIN);
-        voltagePin = message->argumentAsByte(argIdx);
+        setVoltagePin( message->argumentAsByte(argIdx));
 
         argIdx = getArgumentIndex(message, MessageField::SAMPLE_SIZE);
         sampleSize = message->argumentAsInt(argIdx);
@@ -76,14 +82,15 @@ namespace Chetch{
                 );
         }
 
-        pinMode(voltagePin, INPUT);
-
-        if(!timer->isEnabled()){
-            timer->enable();
-        }
-
+        
         response->addByte(target);
         response->addDouble(targetValue);
+    }
+
+    void ZMPT101B::status(ADMMessage *message, ADMMessage *response){
+        ArduinoDevice::status(message, response);
+
+        response->addByte(voltagePin);
     }
 
     int ZMPT101B::getArgumentIndex(ADMMessage *message, ZMPT101B::MessageField field){
@@ -118,7 +125,13 @@ namespace Chetch{
     void ZMPT101B::loop(){
         ArduinoDevice::loop(); 
     
-        if(timer == NULL || !timer->isEnabled())return;
+        return;
+
+        if(timer == NULL)return;
+        if(!timer->isEnabled() && isReady()){
+            Serial.println("Enabling timer...");
+            timer->enable();
+        }
 
         static unsigned long hzStarted = 0;
         static unsigned long hzFinished = 0;

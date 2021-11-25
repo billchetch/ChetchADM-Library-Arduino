@@ -29,44 +29,53 @@ namespace Chetch{
         }
     }
 
-   void LCD::configure(ADMMessage* message, ADMMessage* response){
-        ArduinoDevice::configure(message, response);
-        
-        int argIdx = getArgumentIndex(message, MessageField::DATA_PINS);
-        dataPins = (DataPinSequence)message->argumentAsByte(argIdx);
-        argIdx = getArgumentIndex(message, MessageField::ENABLE_PIN);
-        enablePin = message->argumentAsByte(argIdx);
-        argIdx = getArgumentIndex(message, MessageField::REGISTER_SELECT_PIN);
-        registerSelectPin = message->argumentAsByte(argIdx);
-        argIdx = getArgumentIndex(message, MessageField::DISPLAY_DIMENSIONS);
-        dimensions = (DisplayDimensions)message->argumentAsByte(argIdx);
+    void LCD::setPins(DataPinSequence dataPins, byte enablePin, byte registerSelectPin){
+        this->dataPins = dataPins;
+        this->enablePin = enablePin;
+        this->registerSelectPin = registerSelectPin;
 
         switch(dataPins){
             case DataPinSequence::Pins_5_2:
                 lcd = new LiquidCrystal(registerSelectPin, enablePin, 5, 4, 3, 2);
-                response->addByte(99);
                 break;
 
             case DataPinSequence::Pins_2_5:
                 lcd = new LiquidCrystal(registerSelectPin, enablePin, 2, 3, 4, 5);
-                response->addByte(100);
                 break;
 
             default:
-                //TODO: add error
+                lcd = NULL;
                 break;
         }
+    }
 
-        //lcd = new LiquidCrystal(registerSelectPin, enablePin, 5, 4, 3, 2);
+    void LCD::setDimensions(DisplayDimensions dimensions){
+        this->dimensions = dimensions;
+
         if(lcd != NULL){
             switch(dimensions){
                 case DisplayDimensions::D16x2:
                     lcd->begin(16, 2);
                     break;
             }        
-        } else {
+        }
+    }
+
+    void LCD::configure(ADMMessage* message, ADMMessage* response){
+        ArduinoDevice::configure(message, response);
+        
+        setPins(
+            (DataPinSequence)message->argumentAsByte(getArgumentIndex(message, MessageField::DATA_PINS)),
+            message->argumentAsByte(getArgumentIndex(message, MessageField::ENABLE_PIN)),
+            message->argumentAsByte(getArgumentIndex(message, MessageField::REGISTER_SELECT_PIN))
+        );
+
+        if(lcd == NULL){
             //TODO: add error
         }
+
+        setDimensions((DisplayDimensions)message->argumentAsByte(getArgumentIndex(message, MessageField::DISPLAY_DIMENSIONS)));
+
 
         response->addByte((byte)dataPins);
         response->addByte(enablePin);

@@ -22,6 +22,7 @@ namespace Chetch{
                 SWITCH = 9,
                 SERVO = 10,
                 MOTOR = 11,
+                LCD = 12,
             };
 
             enum MessageField{

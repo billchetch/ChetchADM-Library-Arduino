@@ -56,6 +56,7 @@ namespace Chetch{
                 ADM_MESSAGE_ERROR = 11,
                 ADM_MESSAGE_IS_EMPTY= 12,
                 ADM_FAILED_TO_INITIALISE = 13,
+                ADM_FAILED_TO_CONFIUGRE = 14,
                 NO_DEVICE_ID = 20,
                 DEVICE_LIMIT_REACHED = 21,
                 DEVICE_ID_ALREADY_USED = 22,
