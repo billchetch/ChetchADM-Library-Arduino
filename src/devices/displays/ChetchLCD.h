@@ -36,6 +36,8 @@ namespace Chetch{
             byte enablePin = 0;
             byte registerSelectPin = 0;
             DisplayDimensions dimensions;
+            byte columns = 0;
+            byte rows = 0;
             
         public: 
             
@@ -50,6 +52,7 @@ namespace Chetch{
             void createMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
+            void printLine(char* s, byte line = 0, bool pad = true);
 
     }; //end class
 } //end namespae

@@ -54,6 +54,8 @@ namespace Chetch{
 
             enum class ErrorCode{
                 INVALID_COMMAND = 1,
+                FAILED_TO_INITIALISE = 2,
+                FAILED_TO_CONFIGURE = 3,
             };
 
 

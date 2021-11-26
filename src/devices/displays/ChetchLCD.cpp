@@ -55,9 +55,13 @@ namespace Chetch{
         if(lcd != NULL){
             switch(dimensions){
                 case DisplayDimensions::D16x2:
-                    lcd->begin(16, 2);
+                    columns = 16;
+                    rows = 2;
                     break;
-            }        
+            }       
+            
+            lcd->begin(columns, rows);
+                    
         }
     }
 
@@ -71,7 +75,8 @@ namespace Chetch{
         );
 
         if(lcd == NULL){
-            //TODO: add error
+            addErrorInfo(response, ErrorCode::FAILED_TO_CONFIGURE, message);
+            return;
         }
 
         setDimensions((DisplayDimensions)message->argumentAsByte(getArgumentIndex(message, MessageField::DISPLAY_DIMENSIONS)));
@@ -119,4 +124,14 @@ namespace Chetch{
                 
         return deviceCommand;
     } 
+
+    void LCD::printLine(char* s, byte line, bool pad){
+        lcd->setCursor(0, line);
+        lcd->print(s);
+        if(pad){
+            for(byte i = strlen(s); i < columns; i++){
+                lcd->print(" ");
+            }
+        }
+    }
 } //end namespace
