@@ -107,15 +107,15 @@ namespace Chetch{
         switch(deviceCommand){
             case PRINT:
                 message->argumentAsCharArray(getArgumentIndex(message, MessageField::TEXT_TO_PRINT), output);
-                lcd->print(output);
+                print(output);
                 break;
 
             case CLEAR:
-                lcd->clear();
+                clear();
                 break;
 
              case SET_CURSOR:
-                lcd->setCursor(
+                setCursor(
                         message->argumentAsInt(getArgumentIndex(message, MessageField::CURSOR_POS_X)),
                         message->argumentAsInt(getArgumentIndex(message, MessageField::CURSOR_POS_Y))
                     );
@@ -125,13 +125,50 @@ namespace Chetch{
         return deviceCommand;
     } 
 
+    void LCD::clear(){
+        if(canUpdate()){
+            lcd->clear();
+        }
+    }
+
+    void LCD::setCursor(int x, int y){
+        lcd->setCursor(x, y);
+    }
+
+    void LCD::print(char *s){
+        if(canUpdate()){
+            lcd->print(s);
+        }
+    }
+
     void LCD::printLine(char* s, byte line, bool pad){
+        if(!canUpdate())return;
+
         lcd->setCursor(0, line);
         lcd->print(s);
         if(pad){
             for(byte i = strlen(s); i < columns; i++){
                 lcd->print(" ");
             }
+        }
+    }
+
+    void LCD::pauseUpdates(unsigned int duration){
+        pauseDuration = duration;
+        if(pauseDuration > 0){
+            startedPause = millis();
+        } else {
+            startedPause = 0;
+        }
+    }
+
+    bool LCD::canUpdate(){
+        if(pauseDuration > 0){
+            bool update = (millis() - startedPause > pauseDuration);
+            if(update)pauseDuration = 0; //reset if can update
+            return update;
+        } else {
+            return true;
         }
     }
 } //end namespace

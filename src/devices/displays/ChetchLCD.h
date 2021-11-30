@@ -38,6 +38,11 @@ namespace Chetch{
             DisplayDimensions dimensions;
             byte columns = 0;
             byte rows = 0;
+            unsigned long startedPause = 0;
+            unsigned int pauseDuration = 0;
+
+        private:
+            bool canUpdate();
             
         public: 
             
@@ -52,8 +57,11 @@ namespace Chetch{
             void createMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
+            void clear();
+            void setCursor(int x, int y);
+            void print(char *s);
             void printLine(char* s, byte line = 0, bool pad = true);
-
+            void pauseUpdates(unsigned int duration);
     }; //end class
 } //end namespae
 #endif
