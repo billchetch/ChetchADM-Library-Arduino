@@ -410,6 +410,10 @@ namespace Chetch{
         return NULL;
     }
 
+    byte ArduinoDeviceManager::getDeviceCount(){
+        return deviceCount;
+    }
+
     void ArduinoDeviceManager::flashLED(int interval, int diff, int blinkTime, int ledPin){
         if(diff >= interval + blinkTime){
             digitalWrite(ledPin, LOW);
@@ -579,7 +583,11 @@ namespace Chetch{
 
 
     bool ArduinoDeviceManager::isReady(){
-        return stream->hasBegun() && (attachMode == AttachmentMode::OBSERVER_OBSERVED || stream->isReady()) && initialised && configured;
+        if(attachMode == AttachmentMode::OBSERVER_OBSERVED){
+            return initialised && configured;
+        } else {
+            return stream->isReady() && initialised && configured;
+        }
     }
 
 } //end namespace

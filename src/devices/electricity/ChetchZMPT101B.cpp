@@ -47,7 +47,6 @@ namespace Chetch{
             zmpt->sampling = true;
         }
         CADC::startRead(zmpt->voltagePin);
-        //zmpt->onAnalogRead(analogRead(zmpt->voltagePin));
     }
 
 
@@ -124,13 +123,10 @@ namespace Chetch{
     
     void ZMPT101B::loop(){
         ArduinoDevice::loop(); 
-    
-        return;
-
         if(timer == NULL)return;
         if(!timer->isEnabled() && isReady()){
-            Serial.println("Enabling timer...");
             timer->enable();
+            return;
         }
 
         static unsigned long hzStarted = 0;
@@ -157,7 +153,6 @@ namespace Chetch{
 
         //now if we have enough samples generate a RMS voltage
         if(sampleCount >= sampleSize){
-            
             double sv = (double)summedVoltages;
             double sc = (double)sampleCount;
             double vt = (sqrt(sv/sc) * scaleWaveform) + finalOffset;

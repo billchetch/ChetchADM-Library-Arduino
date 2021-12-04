@@ -145,6 +145,7 @@ namespace Chetch{
             ArduinoDevice *addDevice(byte id, byte category, char *dname);
             ArduinoDevice *addDevice(ADMMessage *message);
             ArduinoDevice* getDevice(byte deviceID);
+            byte getDeviceCount();
             void loop();
             virtual void receiveMessage(ADMMessage* message, ADMMessage* response);
             void sendMessage(ADMMessage* message);
