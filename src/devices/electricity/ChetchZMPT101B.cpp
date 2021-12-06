@@ -61,8 +61,8 @@ namespace Chetch{
         pinMode(voltagePin, INPUT);
     }
 
-    void ZMPT101B::configure(ADMMessage* message, ADMMessage* response){
-        ArduinoDevice::configure(message, response);
+    bool ZMPT101B::configure(ADMMessage* message, ADMMessage* response){
+        if(!ArduinoDevice::configure(message, response))return false;
 
         int argIdx = getArgumentIndex(message, MessageField::PIN);
         setVoltagePin( message->argumentAsByte(argIdx));
@@ -84,6 +84,8 @@ namespace Chetch{
         
         response->addByte(target);
         response->addDouble(targetValue);
+
+        return true;
     }
 
     void ZMPT101B::status(ADMMessage *message, ADMMessage *response){
@@ -157,9 +159,15 @@ namespace Chetch{
             double sc = (double)sampleCount;
             double vt = (sqrt(sv/sc) * scaleWaveform) + finalOffset;
             voltage = 0.5*voltage + 0.5*vt;
+            if(voltage < minVoltage)voltage = 0;
+            if(voltage > maxVoltage)voltage = maxVoltage;
             
-            double sampleDuration = ((double)(hzFinished - hzStarted)); 
-            hz = ((double)(hzCount - 1.0) * 500000.0 / sampleDuration);
+            if(voltage > 0){
+                double sampleDuration = ((double)(hzFinished - hzStarted)); 
+                hz = ((double)(hzCount - 1.0) * 500000.0 / sampleDuration);
+            } else {
+                hz = 0;
+            }
             summedVoltages = 0;
             sampleCount = 0; 
             hzCount = 0;
@@ -186,6 +194,16 @@ namespace Chetch{
 
     double ZMPT101B::getHz(){
         return hz;
+    }
+
+    char *ZMPT101B::getSummary(){
+        static char strv[6];
+        static char strh[6];
+        static char summary[16];
+        dtostrf(getVoltage(), 3, 1, strv);
+        dtostrf(getHz(), 3, 1, strh);
+        sprintf(summary, "%sV %sHz", strv, strh);
+        return summary;
     }
 
     double ZMPT101B::getTargetedValue(){

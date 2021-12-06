@@ -25,13 +25,10 @@ namespace Chetch{
         private: 
             Servo* servo = NULL; 
             byte pin = 0;
-            int position = 90;
             int lowerBound = 0;
             int upperBound = 180; 
-            int trimFactor = 0;
-            unsigned int rotationalSpeed = 0; //degrees per second (assumes servo rotates at same speed in either direction)
-
-            bool moving = false;
+            
+            bool moving = false; //flag for sending stopped moving event message
             
         public: 
             
@@ -40,7 +37,10 @@ namespace Chetch{
 
             int getArgumentIndex(ADMMessage *message, MessageField field);
 
-            void configure(ADMMessage* message, ADMMessage* response) override;
+            void setPin(byte pin);
+            void setBounds(int lowerBound, int upperBound);
+            void createServo(Servo::ServoModel, int pos, int trimFactor);
+            bool configure(ADMMessage* message, ADMMessage* response) override;
             void createMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
@@ -48,9 +48,6 @@ namespace Chetch{
             int getPosition();
             void moveTo(int angle);
             void rotateBy(int increment);
-
-            bool isMoving();
-
     }; //end class
 } //end namespae
 #endif

@@ -23,15 +23,17 @@ namespace Chetch{
         //empty ... to allow for polymorphic destructors
     }
 
-    void ArduinoDevice::initialise(ADMMessage *message, ADMMessage *response){
+    bool ArduinoDevice::initialise(ADMMessage *message, ADMMessage *response){
         initialised = true;
         
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
         response->addByte(category);
         response->addString(this->name);
+
+        return initialised;
     }
 
-    void ArduinoDevice::configure(ADMMessage *message, ADMMessage *response){
+    bool ArduinoDevice::configure(ADMMessage *message, ADMMessage *response){
         configured = true;
         int argIdx = getArgumentIndex(message, MessageField::ENABLED);
         enable(message->argumentAsBool(argIdx));
@@ -42,6 +44,8 @@ namespace Chetch{
         response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
         response->addBool(enabled);
         response->addInt(reportInterval);
+
+        return configured;
     }
 
     void ArduinoDevice::status(ADMMessage *message, ADMMessage *response){
@@ -118,11 +122,15 @@ namespace Chetch{
                 
         switch ((ADMMessage::MessageType)message->type) {
             case ADMMessage::MessageType::TYPE_INITIALISE:
-                initialise(message, response);
+                if(!initialise(message, response)){
+                    addErrorInfo(response, ErrorCode::FAILED_TO_INITIALISE, message);
+                }
                 break;
 
             case ADMMessage::MessageType::TYPE_CONFIGURE:
-                configure(message, response);
+                if(!configure(message, response)){
+                    addErrorInfo(response, ErrorCode::FAILED_TO_CONFIGURE, message);
+                }
                 break;
 
             case ADMMessage::MessageType::TYPE_STATUS_REQUEST:

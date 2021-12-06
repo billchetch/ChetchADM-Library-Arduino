@@ -15,8 +15,8 @@ namespace Chetch{
         }
     }
 
-   void SwitchDevice::configure(ADMMessage* message, ADMMessage* response){
-        ArduinoDevice::configure(message, response);
+   bool SwitchDevice::configure(ADMMessage* message, ADMMessage* response){
+        if(!ArduinoDevice::configure(message, response))return false;
         
         int argIdx = getArgumentIndex(message, MessageField::MODE);
         mode = (SwitchMode)message->argumentAsByte(argIdx);
@@ -42,6 +42,8 @@ namespace Chetch{
                 break;
                 
         }
+
+        return true;
     }
 
     void SwitchDevice::createMessageToSend(byte messageID, ADMMessage* message){

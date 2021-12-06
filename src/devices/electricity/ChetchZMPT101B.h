@@ -79,7 +79,7 @@ namespace Chetch{
             ZMPT101B(byte id, byte cat, char *dn);
 
             int getArgumentIndex(ADMMessage *message, MessageField field);
-            void configure(ADMMessage* message, ADMMessage* response) override;
+            bool configure(ADMMessage* message, ADMMessage* response) override;
             void status(ADMMessage* message, ADMMessage* response) override;
             void createMessageToSend(byte messageID, ADMMessage* message) override;
             void setVoltagePin(byte pin);
@@ -88,6 +88,7 @@ namespace Chetch{
             void onAnalogRead(uint16_t v);
             double getVoltage();
             double getHz();
+            char *getSummary();
             double getTargetedValue();
             bool isTargetedValueInRange();
             double adjustBy(); 

@@ -27,25 +27,42 @@ namespace Chetch{
         }
     }
 
-   void ServoController::configure(ADMMessage* message, ADMMessage* response){
-        ArduinoDevice::configure(message, response);
-        
-        pin = message->argumentAsByte(getArgumentIndex(message, MessageField::PIN));
-        byte model = message->argumentAsByte(getArgumentIndex(message, MessageField::SERVO_MODEL));
-        int pos = message->argumentAsInt(getArgumentIndex(message, MessageField::POSITION));
-        lowerBound = message->argumentAsInt(getArgumentIndex(message, MessageField::LOWER_BOUND));
-        upperBound = message->argumentAsInt(getArgumentIndex(message, MessageField::UPPER_BOUND));
-        trimFactor = message->argumentAsInt(getArgumentIndex(message, MessageField::TRIM_FACTOR));
+    void ServoController::setPin(byte pin){
+        this->pin = pin;
+    }
 
-        servo = Servo::create((Servo::ServoModel)model);
+    void ServoController::createServo(Servo::ServoModel model, int pos, int trimFactor){
+       servo = Servo::create(model);
         if(servo != NULL){
             servo->setTrim(trimFactor);
             moveTo(pos);
-        } else {
-            //TODO: add error info
         }
     }
 
+    void ServoController::setBounds(int lowerBound, int upperBound){
+        this->lowerBound = lowerBound;
+        this->upperBound = upperBound;
+    }
+
+    bool ServoController::configure(ADMMessage* message, ADMMessage* response){
+        if(!ArduinoDevice::configure(message, response))return false;
+        
+        setPin(message->argumentAsByte(getArgumentIndex(message, MessageField::PIN)));
+        byte model = message->argumentAsByte(getArgumentIndex(message, MessageField::SERVO_MODEL));
+        int pos = message->argumentAsInt(getArgumentIndex(message, MessageField::POSITION));
+        setBounds(
+            message->argumentAsInt(getArgumentIndex(message, MessageField::LOWER_BOUND)),
+            message->argumentAsInt(getArgumentIndex(message, MessageField::UPPER_BOUND))
+        );
+        int trimFactor = message->argumentAsInt(getArgumentIndex(message, MessageField::TRIM_FACTOR));
+
+        createServo((Servo::ServoModel)model, pos, trimFactor);
+        if(servo == NULL)return false;
+
+        return true;
+    }
+
+    
     void ServoController::createMessageToSend(byte messageID, ADMMessage* message){
         ArduinoDevice::createMessageToSend(messageID, message);
 
@@ -93,7 +110,7 @@ namespace Chetch{
 
 
     int ServoController::getPosition(){
-        return position;
+        return servo == NULL ? -1 : servo->read();
     }
 
     void ServoController::moveTo(int pos){
@@ -114,7 +131,7 @@ namespace Chetch{
             servo->attach(pin); 
         }
         Serial.print("Attempting to move to: "); Serial.println(pos);
-        position = servo->write(pos);
+        servo->write(pos);
     }
 
     void ServoController::rotateBy(int increment){

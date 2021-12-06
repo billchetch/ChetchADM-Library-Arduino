@@ -87,8 +87,8 @@ namespace Chetch{
             ArduinoDevice(byte id, byte category, char* dname);
             virtual ~ArduinoDevice(); //to allow for polymorphic deletion
 
-            virtual void initialise(ADMMessage *message, ADMMessage *response);
-            virtual void configure(ADMMessage *message, ADMMessage *response);
+            virtual bool initialise(ADMMessage *message, ADMMessage *response);
+            virtual bool configure(ADMMessage *message, ADMMessage *response);
             virtual void status(ADMMessage *message, ADMMessage *response);
             virtual DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response);
             byte getID();

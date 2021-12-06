@@ -60,13 +60,12 @@ namespace Chetch{
                     break;
             }       
             
-            lcd->begin(columns, rows);
-                    
+            lcd->begin(columns, rows);        
         }
     }
 
-    void LCD::configure(ADMMessage* message, ADMMessage* response){
-        ArduinoDevice::configure(message, response);
+    bool LCD::configure(ADMMessage* message, ADMMessage* response){
+        if(!ArduinoDevice::configure(message, response))return false;
         
         setPins(
             (DataPinSequence)message->argumentAsByte(getArgumentIndex(message, MessageField::DATA_PINS)),
@@ -74,10 +73,7 @@ namespace Chetch{
             message->argumentAsByte(getArgumentIndex(message, MessageField::REGISTER_SELECT_PIN))
         );
 
-        if(lcd == NULL){
-            addErrorInfo(response, ErrorCode::FAILED_TO_CONFIGURE, message);
-            return;
-        }
+        if(lcd == NULL)return false;
 
         setDimensions((DisplayDimensions)message->argumentAsByte(getArgumentIndex(message, MessageField::DISPLAY_DIMENSIONS)));
 
@@ -86,6 +82,8 @@ namespace Chetch{
         response->addByte(enablePin);
         response->addBool(registerSelectPin);
         response->addInt((byte)dimensions);
+
+        return true;
     }
 
     void LCD::createMessageToSend(byte messageID, ADMMessage* message){
@@ -119,14 +117,28 @@ namespace Chetch{
                         message->argumentAsInt(getArgumentIndex(message, MessageField::CURSOR_POS_X)),
                         message->argumentAsInt(getArgumentIndex(message, MessageField::CURSOR_POS_Y))
                     );
+
+             case RESET:
+                reset();
+                break;
                     
         }
                 
         return deviceCommand;
     } 
 
+
+    void LCD::reset(){
+        if(columns > 0 && rows > 0){
+            lcd->begin(columns, rows);
+            startedPause = 0;
+            pauseDuration = 0;
+        }
+    }
+
     void LCD::clear(){
         if(canUpdate()){
+            //NOTE: beware of this as the library function introduces a delay of 2000 microseconds
             lcd->clear();
         }
     }

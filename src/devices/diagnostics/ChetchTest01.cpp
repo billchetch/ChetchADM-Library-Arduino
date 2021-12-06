@@ -8,9 +8,10 @@ namespace Chetch{
     }
 
 
-    void Test01::configure(ADMMessage* message, ADMMessage* response){
-        ArduinoDevice::configure(message, response);
+    bool Test01::configure(ADMMessage* message, ADMMessage* response){
+        if(!ArduinoDevice::configure(message, response))return false;
         response->addInt(34);
+        return true;
     }
 
     void Test01::createMessageToSend(byte messageID, ADMMessage* message){
