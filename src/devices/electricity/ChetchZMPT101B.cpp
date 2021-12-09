@@ -164,7 +164,7 @@ namespace Chetch{
             
             if(voltage > 0){
                 double sampleDuration = ((double)(hzFinished - hzStarted)); 
-                hz = ((double)(hzCount - 1.0) * 500000.0 / sampleDuration);
+                hz = sampleDuration > 0 ? ((double)(hzCount - 1.0) * 500000.0 / sampleDuration) : 0;
             } else {
                 hz = 0;
             }

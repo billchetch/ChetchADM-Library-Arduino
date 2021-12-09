@@ -130,8 +130,7 @@ namespace Chetch{
             //servo.write(position);
             servo->attach(pin); 
         }
-        Serial.print("Attempting to move to: "); Serial.println(pos);
-        servo->write(pos);
+       servo->write(pos);
     }
 
     void ServoController::rotateBy(int increment){
