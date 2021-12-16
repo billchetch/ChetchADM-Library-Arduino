@@ -8,7 +8,7 @@
 
 
 #if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
-#include "devices/ChetchDS18B20Array.h"
+#include "devices/temperature/ChetchDS18B20Array.h"
 #endif
 
 #if (INCLUDE_DEVICES & RANGE_FINDER_DEVICES) == RANGE_FINDER_DEVICES
