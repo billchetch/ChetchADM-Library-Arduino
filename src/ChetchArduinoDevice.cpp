@@ -137,7 +137,7 @@ namespace Chetch{
                 status(message, response);
                 break;
 
-                case ADMMessage::MessageType::TYPE_COMMAND:
+            case ADMMessage::MessageType::TYPE_COMMAND:
                 executeCommand(message, response);
                 break;
         }
@@ -151,9 +151,7 @@ namespace Chetch{
 
     void ArduinoDevice::addErrorInfo(ADMMessage * message, ErrorCode errorCode, ADMMessage *originalMessage){
         message->clear();
-        message->type = ADMMessage::MessageType::TYPE_ERROR;
-        message->target = getID();
-        message->sender = getID();
+        createMessage(ADMMessage::MessageType::TYPE_ERROR, message);
         message->addByte((byte)ArduinoDeviceManager::ErrorCode::DEVICE_ERROR);
         message->addByte((byte)errorCode);
         if(originalMessage != NULL){

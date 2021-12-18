@@ -18,10 +18,12 @@ namespace Chetch{
         private:
             byte oneWirePin = 0;
             byte numberOfSensors = 0;
+            bool readTemperatures = false;
 
             OneWire* oneWire = NULL;
             DallasTemperature* dallasTemp = NULL;
             uint8_t** deviceAddresses = NULL;
+            float* temperatures = NULL;
 
         public: 
             DS18B20Array(byte id, byte cat, char* dn);
