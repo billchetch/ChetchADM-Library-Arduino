@@ -26,22 +26,24 @@ namespace Chetch{
                 INTERRUPT_MODE,
             };
 
-            static const byte MAX_INSTANCES = 4;
+            byte pin = 0;
 
         private:
-            static byte instanceIndex;
-            static byte currentInstance; //each time an ISR is fired this updates so as to read the next instance voltage
-            static Counter* instances[];
+            static const byte MAX_INSTANCES = 4;
+            static byte instanceCount;
+            static Counter* instances[MAX_INSTANCES];
             
-            byte pin = 0;
             InterruptMode interruptMode = InterruptMode::IM_NONE;
             unsigned long count = 0;
             
      
         public: 
+            static void handleInterrupt(uint8_t pin);
             static Counter* create(byte id, byte cat, char *dn);
             
+
             Counter(byte id, byte cat, char *dn);
+            ~Counter() override;
 
             int getArgumentIndex(ADMMessage *message, MessageField field);
             bool configure(ADMMessage* message, ADMMessage* response) override;
