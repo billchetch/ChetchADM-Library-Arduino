@@ -38,7 +38,7 @@ namespace Chetch{
             
      
         public: 
-            static void handleInterrupt(uint8_t pin);
+            static void handleInterrupt(uint8_t pin, uint8_t tag);
             static Counter* create(byte id, byte cat, char *dn);
             
 

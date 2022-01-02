@@ -6,7 +6,7 @@
 namespace Chetch{
     byte Counter::instanceCount = 0;
     
-    void Counter::handleInterrupt(uint8_t pin) {
+    void Counter::handleInterrupt(uint8_t pin, uint8_t tag) {
         if (instances[0] != NULL && instances[0]->pin == pin) {
             instances[0]->onInterrupt();
         }
@@ -58,7 +58,7 @@ namespace Chetch{
         interruptMode = (InterruptMode)message->argumentAsByte(argIdx);
 
         if (interruptMode != InterruptMode::IM_NONE) {
-            CInterrupt::addInterrupt(pin, handleInterrupt, (uint8_t)interruptMode);
+            CInterrupt::addInterrupt(pin, 0, handleInterrupt, (uint8_t)interruptMode);
         }
 
         return true;
