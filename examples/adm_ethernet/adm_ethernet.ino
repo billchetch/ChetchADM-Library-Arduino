@@ -10,8 +10,7 @@
 #define NETWORK_SERVICE_SERVER_IP "192.168.2.180"
 #define NETWORK_SERVICE_SERVER_PORT 8001
 
-
-//SFC values (these values are for UNO)
+//SFC values (these values are for Mega)
 #define LOCAL_UART_BUFFER 256
 #define REMOTE_UART_BUFFER 256
 #define RECEIVE_BUFFER 2*LOCAL_UART_BUFFER
@@ -19,6 +18,9 @@
 #define CTS_TIMEOUT 1000
 
 byte mac[] = {  0x00, 0xAD, 0xBE, 0xEF, 0xFE, 0xEF };
+byte ip[] = { 192, 168, 2, 10 };    
+byte router[] = { 192, 168, 2, 2 };
+byte subnet[] = { 255, 255, 255, 0 };
 
 EthernetServer server(PORT);
 EthernetClient client;
@@ -34,7 +36,7 @@ void setup() {
   EthernetManager::trace = TRACE;
   NetworkAPI::trace = TRACE;
 
-  if(EthernetManager::begin(mac)){
+  if(EthernetManager::begin(mac, ip, router, subnet)){
     int statusCode = NetworkAPI::registerService(client, NETWORK_SERVICE_SERVER_IP, NETWORK_SERVICE_SERVER_PORT, HOSTNAME, PORT);
     if(TRACE){
       Serial.println(statusCode == 200 ? "Successfully registered service" : "Failed to register service");
