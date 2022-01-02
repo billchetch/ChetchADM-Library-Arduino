@@ -480,7 +480,7 @@ namespace Chetch{
                 case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
                     response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
                     response->addULong(millis());
-                    response->addInt(freeMemory());
+                    response->addInt(getFreeMemory());
                     response->addBool(initialised);
                     response->addBool(configured);
                     response->addByte(deviceCount);
