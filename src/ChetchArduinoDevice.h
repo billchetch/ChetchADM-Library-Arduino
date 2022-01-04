@@ -93,7 +93,7 @@ namespace Chetch{
             virtual DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response);
             byte getID();
             char *getName();
-            void enable(bool enable = true);
+            virtual void enable(bool enable = true);
             bool isReady(); //initialised AND configured
             void setAsReady(); //set initialised and configured to true (used if attachment mode is OBSERVER_OBSERVED if creating and configur)
             bool isActive(); //isReady AND enabled

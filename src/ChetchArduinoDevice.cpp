@@ -64,12 +64,12 @@ namespace Chetch{
         switch(deviceCommand){
             case ENABLE:
                 argIdx = getArgumentIndex(message, MessageField::ENABLED);
-                enabled = message->argumentAsBool(argIdx);
+                enable(message->argumentAsBool(argIdx));
                 response->addBool(enabled);
                 break;
 
             case DISABLE:
-                enabled = false;
+                enable(false);
                 response->addBool(enabled);
                 break;
 
@@ -227,17 +227,4 @@ namespace Chetch{
             enqueueMessageToSend(MESSAGE_ID_REPORT);
         }
     }
-
-    /*void ArduinoDevice::onTimer(){
-        //a hook
-    }
-
-    void ArduinoDevice::onPauseTimer(){
-        //a hook
-    }
-
-    void ArduinoDevice::onResumeTimer(){
-        //a hook
-    }*/
-
 } //end namespace

@@ -7,17 +7,8 @@ namespace Chetch{
     byte Counter::instanceCount = 0;
     
     void Counter::handleInterrupt(uint8_t pin, uint8_t tag) {
-        if (instances[0] != NULL && instances[0]->pin == pin) {
-            instances[0]->onInterrupt();
-        }
-        else if (instances[1] != NULL && instances[1]->pin == pin) {
-            instances[1]->onInterrupt();
-        }
-        else if (instances[2] != NULL && instances[2]->pin == pin) {
-            instances[2]->onInterrupt();
-        }
-        else if (instances[3] != NULL && instances[3]->pin == pin) {
-            instances[3]->onInterrupt();
+        if(instanceCount > tag){
+            instances[tag]->onInterrupt();
         }
     }
 
@@ -32,6 +23,7 @@ namespace Chetch{
                 }
             }
             Counter* instance = new Counter(id, cat, dn);
+            instance->setInstanceIndex(instanceCount);
             instances[instanceCount] = instance;
             instanceCount++;
             return instance;
@@ -43,9 +35,13 @@ namespace Chetch{
     }
 
     Counter::~Counter() {
-        if (interruptMode != InterruptMode::IM_NONE) {
+        if (interruptMode != 0) {
             CInterrupt::removeInterrupt(pin);
         }
+    }
+
+    void Counter::setInstanceIndex(byte idx){
+        instanceIndex = idx;
     }
 
     bool Counter::configure(ADMMessage* message, ADMMessage* response){
@@ -55,10 +51,10 @@ namespace Chetch{
         pin = message->argumentAsByte(argIdx);
 
         argIdx = getArgumentIndex(message, MessageField::INTERRUPT_MODE);
-        interruptMode = (InterruptMode)message->argumentAsByte(argIdx);
+        interruptMode = message->argumentAsByte(argIdx);
 
-        if (interruptMode != InterruptMode::IM_NONE) {
-            CInterrupt::addInterrupt(pin, 0, handleInterrupt, (uint8_t)interruptMode);
+        if (interruptMode != 0) {
+            CInterrupt::addInterrupt(pin, instanceIndex, handleInterrupt, interruptMode);
         }
 
         return true;
@@ -82,17 +78,36 @@ namespace Chetch{
         ArduinoDevice::createMessageToSend(messageID, message);
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
-            
+            message->addULong(count);
+            unsigned long duration = micros() - countStartedOn;
+            message->addULong(duration);
+
+            count = 0;
+            countStartedOn = micros();
         }
     }
+
+    void Counter::enable(bool enable){
+        ArduinoDevice::enable(enable);
+        if(!enable){
+            count = 0;
+            countStarted = false;
+        }
+    }
+
 
     void Counter::loop(){
         ArduinoDevice::loop(); 
         
+        if(!countStarted){
+            countStarted = true;
+            countStartedOn = micros();
+            count = 0;
+        }
     }
 
     void Counter::onInterrupt(){
-        
+        if(countStarted)count++;
     }
 
     
