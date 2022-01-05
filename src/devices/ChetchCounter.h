@@ -17,9 +17,11 @@ namespace Chetch{
             enum MessageField{
                 PIN = 2,
                 INTERRUPT_MODE,
+                TOLERANCE,
             };
 
-            
+            static volatile unsigned long handleInterruptCount;
+
         private:
             static const byte MAX_INSTANCES = 4;
             static byte instanceCount;
@@ -28,9 +30,11 @@ namespace Chetch{
             byte instanceIndex = 0; //passed to interrupt
             byte pin = 0;
             byte interruptMode = 0; //can be RISING, FALLING, CHANGE (0 for no interrupt)
+            unsigned long tolerance = 0; //in millis
             bool countStarted = false;
             unsigned long countStartedOn = 0; //in micros as when count started
             volatile unsigned long count = 0;
+            volatile unsigned long countedOn = 0;
             
      
         public: 
@@ -42,13 +46,17 @@ namespace Chetch{
             ~Counter() override;
 
             void setInstanceIndex(byte idx);
+            void setPin(byte pin);
+            bool setInterruptMode(byte mode);
             int getArgumentIndex(ADMMessage *message, MessageField field);
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void status(ADMMessage* message, ADMMessage* response) override;
             void enable(bool enable = true) override;
             void createMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
+            
             void onInterrupt();
+            unsigned long getCount();
     }; //end class
 } //end namespae
 #endif

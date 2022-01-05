@@ -5,8 +5,11 @@
 
 namespace Chetch{
     byte Counter::instanceCount = 0;
-    
+    Counter* Counter::instances[];
+    volatile unsigned long Counter::handleInterruptCount = 0;
+
     void Counter::handleInterrupt(uint8_t pin, uint8_t tag) {
+        //handleInterruptCount++;
         if(instanceCount > tag){
             instances[tag]->onInterrupt();
         }
@@ -15,8 +18,7 @@ namespace Chetch{
     Counter* Counter::create(byte id, byte cat, char* dn) {
         if (instanceCount >= MAX_INSTANCES) {
             return NULL;
-        }
-        else {
+        } else {
             if (instanceCount == 0) {
                 for (byte i = 0; i < MAX_INSTANCES; i++) {
                     instances[i] = NULL;
@@ -44,18 +46,32 @@ namespace Chetch{
         instanceIndex = idx;
     }
 
+    void Counter::setPin(byte pin){
+        this->pin = pin;
+    }
+
+    bool Counter::setInterruptMode(byte mode){
+        if (mode != 0 && interruptMode == 0) { //one time set
+            interruptMode = mode;
+            return CInterrupt::addInterrupt(pin, instanceIndex, handleInterrupt, interruptMode);
+        }
+        return true;
+    }
+
     bool Counter::configure(ADMMessage* message, ADMMessage* response){
         if(!ArduinoDevice::configure(message, response))return false;
 
         int argIdx = getArgumentIndex(message, MessageField::PIN);
-        pin = message->argumentAsByte(argIdx);
+        setPin(message->argumentAsByte(argIdx));
 
         argIdx = getArgumentIndex(message, MessageField::INTERRUPT_MODE);
-        interruptMode = message->argumentAsByte(argIdx);
+        setInterruptMode(message->argumentAsByte(argIdx));
 
-        if (interruptMode != 0) {
-            CInterrupt::addInterrupt(pin, instanceIndex, handleInterrupt, interruptMode);
-        }
+        argIdx = getArgumentIndex(message, MessageField::TOLERANCE);
+        tolerance = message->argumentAsULong(argIdx);
+
+        response->addByte(pin);
+        response->addByte(interruptMode);
 
         return true;
     }
@@ -107,7 +123,14 @@ namespace Chetch{
     }
 
     void Counter::onInterrupt(){
-        if(countStarted)count++;
+        if(countStarted && (tolerance == 0 || count == 0 || (micros() - countedOn >= tolerance))){
+            count++;
+            countedOn = micros();
+        }
+    }
+
+    unsigned long Counter::getCount(){
+        return count;
     }
 
     

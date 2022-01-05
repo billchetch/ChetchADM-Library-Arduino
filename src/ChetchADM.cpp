@@ -5,7 +5,7 @@
 
 //Generic devices to always include here
 #include "devices/ChetchSwitchDevice.h"
-
+#include "devices/ChetchCounter.h"
 
 #if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
 #include "devices/temperature/ChetchDS18B20Array.h"
@@ -375,7 +375,7 @@ namespace Chetch{
                         break;
 #endif
 	                case ArduinoDevice::COUNTER:
-		                //device = new Counter(id, category, dname);
+		                device = Counter::create(id, category, dname);
 		                break;
 
                     case ArduinoDevice::SWITCH:
