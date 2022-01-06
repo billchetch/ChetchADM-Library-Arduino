@@ -39,10 +39,11 @@ namespace Chetch{
 
         public: //TODO make private
             static ISRTimer* timer;
-            static byte instanceIndex;
+            static byte instanceCount;
             static byte currentInstance; //each time an ISR is fired this updates so as to read the next instance voltage
             static ZMPT101B* instances[];
             
+            byte instanceIndex = 0;
             byte voltagePin = A0;
             
             volatile int buffer[BUFFER_SIZE];
@@ -77,7 +78,9 @@ namespace Chetch{
             static void handleTimerInterrupt();
 
             ZMPT101B(byte id, byte cat, char *dn);
+            ~ZMPT101B() override;
 
+            void setInstanceIndex(byte idx);
             int getArgumentIndex(ADMMessage *message, MessageField field);
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void status(ADMMessage* message, ADMMessage* response) override;

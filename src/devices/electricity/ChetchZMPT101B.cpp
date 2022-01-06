@@ -15,25 +15,39 @@ namespace Chetch{
 #endif
 
     ISRTimer* ZMPT101B::timer = NULL;
-    byte ZMPT101B::instanceIndex = 0;
+    byte ZMPT101B::instanceCount = 0;
     byte ZMPT101B::currentInstance = 0; //current instance for reading ISR
     ZMPT101B* ZMPT101B::instances[ZMPT101B::MAX_INSTANCES];
     
     ZMPT101B* ZMPT101B::create(byte id, byte cat, char *dn){
-        if(instanceIndex >= MAX_INSTANCES){
+        if(instanceCount >= MAX_INSTANCES){
             return NULL;
         } else {
-            if(instanceIndex == 0){
+            if(instanceCount == 0){
                 cli();
                 timer = ISRTimer::create(TIMER_NUMBER, TIMER_PRESCALER, ISRTimer::TimerMode::COMPARE);
                 timer->setCompareA(0, TIMER_COMPARE_A);
                 sei();
 
                 CADC::init(false); //turn off trigger interrupt
+
+                for(byte i = 0; i < MAX_INSTANCES; i++){
+                    instances[i] = NULL;
+                }
+            }
+
+            byte idx = 0;
+            for(byte i = 0; i < MAX_INSTANCES; i++){
+                if(instances[i] == NULL){
+                    idx = i;
+                    break;
+                }
             }
 
             ZMPT101B* instance = new ZMPT101B(id, cat, dn);
-            instances[instanceIndex++] = instance;
+            instance->setInstanceIndex(idx);
+            instances[idx] = instance;
+            instanceCount++;
             return instance;
         }
     }
@@ -42,7 +56,7 @@ namespace Chetch{
         static ZMPT101B* zmpt = instances[currentInstance];
         if(zmpt->sampling && !CADC::isReading()){
             zmpt->onAnalogRead(CADC::readResult());
-            currentInstance = (currentInstance + 1) % instanceIndex; 
+            currentInstance = (currentInstance + 1) % instanceCount; 
         } else {
             zmpt->sampling = true;
         }
@@ -54,6 +68,15 @@ namespace Chetch{
         for(byte i = 0; i < BUFFER_SIZE; i++){
             buffer[i] = 0;
         }
+    }
+
+    ZMPT101B::~ZMPT101B(){
+        instances[instanceIndex] = NULL;
+        instanceCount--;
+    }
+
+    void ZMPT101B::setInstanceIndex(byte idx){
+        instanceIndex = idx;
     }
 
     void ZMPT101B::setVoltagePin(byte pin){
