@@ -25,8 +25,15 @@ namespace Chetch{
                 }
             }
             Counter* instance = new Counter(id, cat, dn);
-            instance->setInstanceIndex(instanceCount);
-            instances[instanceCount] = instance;
+            byte idx = 0;
+            for (byte i = 0; i < MAX_INSTANCES; i++) {
+                if(instances[i] == NULL){
+                    idx = i;
+                    break;
+                }
+            }
+            instance->setInstanceIndex(idx);
+            instances[idx] = instance;
             instanceCount++;
             return instance;
         }
@@ -40,6 +47,8 @@ namespace Chetch{
         if (interruptMode != 0) {
             CInterrupt::removeInterrupt(pin);
         }
+        instances[instanceIndex] = NULL;
+        instanceCount--;
     }
 
     void Counter::setInstanceIndex(byte idx){
