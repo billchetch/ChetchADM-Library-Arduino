@@ -15,11 +15,13 @@ namespace Chetch{
                 SENSOR_RESOLUTION = 3,
             };
 
+            
         private:
             byte oneWirePin = 0;
             byte numberOfSensors = 0;
-            bool readTemperatures = false;
-
+            bool temperatureHasChanged = false; //if at least one temperature has changed since last read
+            bool requestTemperatures = false;
+            
             OneWire* oneWire = NULL;
             DallasTemperature* dallasTemp = NULL;
             uint8_t** deviceAddresses = NULL;
@@ -29,9 +31,14 @@ namespace Chetch{
             DS18B20Array(byte id, byte cat, char* dn);
             ~DS18B20Array() override;
 
+            bool createDallasTemperature(byte owPin, byte resolution, bool waitForConversion);
             int getArgumentIndex(ADMMessage* message, MessageField field);
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void createMessageToSend(byte messageID, ADMMessage* message) override;
+
+            byte getNumberOfSensors();
+            float* getTemperatures();
+            void readTemperatures();
             void loop() override;
             
 
