@@ -50,6 +50,7 @@ namespace Chetch{
                 SET_CURSOR,
                 DIZPLAY, //changed S to Z to avoid a define constant name clash
                 CLEAR,
+                SILENCE,
             };
 
             enum class ErrorCode{

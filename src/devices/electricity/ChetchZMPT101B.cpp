@@ -2,9 +2,16 @@
 #include "ChetchADC.h"
 #include "ChetchZMPT101B.h"
 
-#define TIMER_NUMBER 4
-#define TIMER_PRESCALER 8
-#define TIMER_COMPARE_A 499 //calculate micros from this and8 prescaler
+#if defined(ARDUINO_AVR_MEGA2560)
+    #define TIMER_NUMBER 4
+    #define TIMER_PRESCALER 8
+    #define TIMER_COMPARE_A 499 //calculate micros from this and8 prescaler
+#else
+    #define TIMER_NUMBER 0
+    #define TIMER_PRESCALER 0
+    #define TIMER_COMPARE_A 0 //calculate micros from this and8 prescaler
+#endif
+
 
 namespace Chetch{
 
@@ -20,7 +27,7 @@ namespace Chetch{
     ZMPT101B* ZMPT101B::instances[ZMPT101B::MAX_INSTANCES];
     
     ZMPT101B* ZMPT101B::create(byte id, byte cat, char *dn){
-        if(instanceCount >= MAX_INSTANCES){
+        if(instanceCount >= MAX_INSTANCES || TIMER_NUMBER <= 0){
             return NULL;
         } else {
             if(instanceCount == 0){
