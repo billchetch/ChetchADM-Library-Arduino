@@ -155,6 +155,8 @@ namespace Chetch{
 
             void indicateStatus();
             void flashLED(int interval, int diff, int blinkTime, int ledPin);
+
+            int getFreeMemory();
     }; //end class
 } //end namespace
 

@@ -435,6 +435,10 @@ namespace Chetch{
         }
     }
 
+    int ArduinoDeviceManager::getFreeMemory() {
+        return freeMemory();
+    }
+
     void ArduinoDeviceManager::loop(){
         //led for status
         indicateStatus();
@@ -492,7 +496,7 @@ namespace Chetch{
                     break;
 
                 case ADMMessage::MessageType::TYPE_PING:
-                    response->TYPE_COMMAND = ADMMessage::MessageType::TYPE_PING_RESPONSE;
+                    response->type = ADMMessage::MessageType::TYPE_PING_RESPONSE;
                     response->addULong(millis());
                     response->addInt(getFreeMemory());
                     break;
