@@ -490,6 +490,12 @@ namespace Chetch{
                     response->copy(message);
                     response->type = ADMMessage::MessageType::TYPE_ECHO_RESPONSE;
                     break;
+
+                case ADMMessage::MessageType::TYPE_PING:
+                    response->TYPE_COMMAND = ADMMessage::MessageType::TYPE_PING_RESPONSE;
+                    response->addULong(millis());
+                    response->addInt(getFreeMemory());
+                    break;
             }
         } else if (message->target == STREAM_TARGET_ID){ //targetting stream
             response->sender = STREAM_TARGET_ID;
