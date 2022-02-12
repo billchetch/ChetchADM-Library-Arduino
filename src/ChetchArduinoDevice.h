@@ -51,6 +51,11 @@ namespace Chetch{
                 DIZPLAY, //changed S to Z to avoid a define constant name clash
                 CLEAR,
                 SILENCE,
+                SEND,
+                TRANSMIT,
+                SAVE,
+                ACTIVATE,
+                DEACTIVATE,
             };
 
             enum class ErrorCode{
@@ -110,10 +115,6 @@ namespace Chetch{
             void sendMessage(ADMMessage *message);
             int getArgumentIndex(ADMMessage *message, MessageField field);
             virtual void loop();
-
-            /*virtual void onTimer();
-            virtual void onPauseTimer();
-            virtual void onResumeTimer();*/
     };
 
 } //end namespace
