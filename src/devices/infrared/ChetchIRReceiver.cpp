@@ -29,6 +29,8 @@ namespace Chetch{
 		irReceiver->enableIRIn();
 		recording = false;
 
+		response->addByte(receivePin);
+
 		return true;
 	}
 

@@ -47,7 +47,7 @@ namespace Chetch{
 		response->addInt(SEND_PIN); //defined by the IRremote library
 
 		//this is the repeat command
-		int commandIdx = message->argumentAsInt(getArgumentIndex(message, REPEAT_COMMAND));
+		/*int commandIdx = message->argumentAsInt(getArgumentIndex(message, REPEAT_COMMAND));
 		if (commandIdx >= 0) {
 			unsigned int raw[8];
 			switch (commandIdx) { //we have to hard code the indices as the data is taken from progmem
@@ -60,7 +60,7 @@ namespace Chetch{
 			for (int i = 0; i < repeatLength; i++) {
 				repeatCommand[i] = raw[i];
 			}
-		}
+		}*/
 	}
 
 	ArduinoDevice::DeviceCommand IRTransmitter::executeCommand(ADMMessage* message, ADMMessage* response) {
@@ -90,12 +90,12 @@ namespace Chetch{
 						break;
 
 					case UNKNOWN: //we send as raw
-						switch ((int)ircommand) {
+						/*switch ((int)ircommand) {
 						case 0:
 							irSender->sendRaw(repeatCommand, repeatLength, 38); break;
 						default:
 							break;
-						}
+						}*/
 						break;
 				} //end protocol switch
 				break;

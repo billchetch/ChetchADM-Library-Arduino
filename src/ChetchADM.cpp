@@ -16,8 +16,8 @@
 #endif
 
 #if (INCLUDE_DEVICES & IR_DEVICES) == IR_DEVICES
-#include "devices/ChetchIRReceiver.h"
-#include "devices/ChetchIRTransmitter.h"
+#include "devices/infrared/ChetchIRReceiver.h"
+#include "devices/infrared/ChetchIRTransmitter.h"
 #endif
 
 #if (INCLUDE_DEVICES & ELECTRICITY_MEASURING_DEVICES) == ELECTRICITY_MEASURING_DEVICES
