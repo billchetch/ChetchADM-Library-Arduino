@@ -40,14 +40,33 @@ namespace Chetch{
 
 		switch (deviceCommand) {
 			case START:
+				irReceiver->enableIRIn();
+				irReceiver->resume();
+				recording = true;
+				response->addBool(recording);
 				break;
 
 			case STOP:
+				irReceiver->resume();
+				recording = false;
+				response->addBool(recording);
 				break;
 		}
 
 		return deviceCommand;
 	}
+
+	void IRReceiver::populateMessageToSend(byte messageID, ADMMessage* message) {
+		ArduinoDevice::populateMessageToSend(messageID, message);
+
+		if (messageID == MESSAGE_ID_IRCODERECEIVED) {
+			populateMessage(ADMMessage::MessageType::TYPE_DATA, message);
+			message->addLong(irReceiverResults.value); //Code
+			message->addInt(irReceiverResults.decode_type); //Protocol
+			message->addInt(irReceiverResults.bits); //Bits
+			irReceiver->resume(); //ready for next result	
+		}
+	} 
 
 	/*bool IRReceiver::handleCommand(ADMMessage* message, ADMMessage* response) {
 		switch ((ADMMessage::CommandType)message->command) {
@@ -72,19 +91,13 @@ namespace Chetch{
 	}*/
 
 	void IRReceiver::loop() {
-		if (irReceiver == NULL || !recording)return NULL;
+		if (irReceiver == NULL || !recording)return;
 
 		static unsigned long elapsed = 0;
 		if ((millis() - elapsed > 100) && irReceiver->decode(&irReceiverResults)) {
 			elapsed = millis();
 			
-			ADMMessage *message = new ADMMessage(4);
-			message->type = (byte)ADMMessage::TYPE_DATA;
-			message->addLong(irReceiverResults.value); //Code
-			message->addInt(irReceiverResults.decode_type); //Protocol
-			message->addInt(irReceiverResults.bits); //Bits
-
-			irReceiver->resume(); //ready for next result	
+			enqueueMessageToSend(MESSAGE_ID_IRCODERECEIVED);
 		}
 	}
 

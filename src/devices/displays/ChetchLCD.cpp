@@ -86,8 +86,8 @@ namespace Chetch{
         return true;
     }
 
-    void LCD::createMessageToSend(byte messageID, ADMMessage* message){
-        ArduinoDevice::createMessageToSend(messageID, message);
+    void LCD::populateMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::populateMessageToSend(messageID, message);
 
         
     }

@@ -131,8 +131,8 @@ namespace Chetch{
         }
     }
 
-    void ZMPT101B::createMessageToSend(byte messageID, ADMMessage* message){
-        ArduinoDevice::createMessageToSend(messageID, message);
+    void ZMPT101B::populateMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::populateMessageToSend(messageID, message);
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
             message->addDouble(getVoltage());
@@ -140,7 +140,7 @@ namespace Chetch{
         }
 
         if(messageID == MESSAGE_ID_ADJUSTMENT){
-            createMessage(ADMMessage::MessageType::TYPE_WARNING, message);
+            populateMessage(ADMMessage::MessageType::TYPE_WARNING, message);
             message->addDouble(adjustBy());
         }
     }

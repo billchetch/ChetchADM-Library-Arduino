@@ -41,7 +41,7 @@ namespace Chetch{
             void setBounds(int lowerBound, int upperBound);
             void createServo(Servo::ServoModel, int pos, int trimFactor);
             bool configure(ADMMessage* message, ADMMessage* response) override;
-            void createMessageToSend(byte messageID, ADMMessage* message) override;
+            void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
 

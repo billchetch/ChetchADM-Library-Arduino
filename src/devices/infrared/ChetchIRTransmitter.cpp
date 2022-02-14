@@ -41,6 +41,10 @@ namespace Chetch{
 		if (!ArduinoDevice::configure(message, response))return false;
 
 		activatePin = message->argumentAsByte(getArgumentIndex(message, MessageField::ACTIVATE_PIN));
+		if (activatePin > 0) {
+			pinMode(activatePin, OUTPUT);
+			digitalWrite(activatePin, LOW); 
+		}
 		transmitPin = message->argumentAsByte(getArgumentIndex(message, MessageField::TRANSMIT_PIN));
 
 		irSender = new IRsend();
@@ -98,12 +102,15 @@ namespace Chetch{
 						}*/
 						break;
 				} //end protocol switch
+				response->addULong(ircommand);
 				break;
 
 			case ACTIVATE:
+				digitalWrite(activatePin, HIGH);
 				break;
 
 			case DEACTIVATE:
+				digitalWrite(activatePin, LOW);
 				break;
 		} //end command  switch
 			

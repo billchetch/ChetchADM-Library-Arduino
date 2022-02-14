@@ -34,7 +34,7 @@ namespace Chetch{
             bool createDallasTemperature(byte owPin, byte resolution, bool waitForConversion);
             int getArgumentIndex(ADMMessage* message, MessageField field);
             bool configure(ADMMessage* message, ADMMessage* response) override;
-            void createMessageToSend(byte messageID, ADMMessage* message) override;
+            void populateMessageToSend(byte messageID, ADMMessage* message) override;
 
             byte getNumberOfSensors();
             float* getTemperatures();

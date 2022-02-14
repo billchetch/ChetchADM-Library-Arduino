@@ -19,7 +19,7 @@ namespace Chetch{
             Test01(byte id, byte cat, char *dn);
 
             bool configure(ADMMessage* message, ADMMessage* response) override;
-            void createMessageToSend(byte messageID, ADMMessage* message) override;
+            void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             
 

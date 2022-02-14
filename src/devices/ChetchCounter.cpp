@@ -99,8 +99,8 @@ namespace Chetch{
         }
     }
 
-    void Counter::createMessageToSend(byte messageID, ADMMessage* message){
-        ArduinoDevice::createMessageToSend(messageID, message);
+    void Counter::populateMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::populateMessageToSend(messageID, message);
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
             message->addULong(count);

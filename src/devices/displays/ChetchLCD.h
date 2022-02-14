@@ -54,7 +54,7 @@ namespace Chetch{
             void setPins(DataPinSequence dataPinSequence, byte enablePin, byte registerSelectPin);
             void setDimensions(DisplayDimensions dimensions);
             bool configure(ADMMessage* message, ADMMessage* response) override;
-            void createMessageToSend(byte messageID, ADMMessage* message) override;
+            void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
             void reset();

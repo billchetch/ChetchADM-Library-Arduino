@@ -46,15 +46,15 @@ namespace Chetch{
         return true;
     }
 
-    void SwitchDevice::createMessageToSend(byte messageID, ADMMessage* message){
-        ArduinoDevice::createMessageToSend(messageID, message);
+    void SwitchDevice::populateMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::populateMessageToSend(messageID, message);
 
         if(messageID == MESSAGE_ID_TRIGGERED){
             if(mode == SwitchMode::PASSIVE){
-                createMessage(ADMMessage::MessageType::TYPE_DATA, message);
+                populateMessage(ADMMessage::MessageType::TYPE_DATA, message);
                 message->addBool(pinState);             
             } else {
-                createMessage(ADMMessage::MessageType::TYPE_COMMAND_RESPONSE, message);
+                populateMessage(ADMMessage::MessageType::TYPE_COMMAND_RESPONSE, message);
                 message->addByte(pinState ? DeviceCommand::ON : DeviceCommand::OFF);
                 message->addBool(pinState);
             }

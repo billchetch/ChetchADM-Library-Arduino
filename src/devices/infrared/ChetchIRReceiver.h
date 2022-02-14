@@ -11,6 +11,8 @@ namespace Chetch{
 				RECEIVE_PIN = 2,
 			};
 
+			static const byte MESSAGE_ID_IRCODERECEIVED = 200;
+
 		private:
 			byte receivePin;
 			IRrecv *irReceiver = NULL;
@@ -25,6 +27,7 @@ namespace Chetch{
 
 			bool configure(ADMMessage* message, ADMMessage* response) override;
 			DeviceCommand executeCommand(ADMMessage* message, ADMMessage* response) override;
+			void populateMessageToSend(byte messageID, ADMMessage* message) override;
 			void loop() override;
   };
 } //end namespace	

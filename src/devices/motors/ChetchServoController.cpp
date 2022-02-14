@@ -63,8 +63,8 @@ namespace Chetch{
     }
 
     
-    void ServoController::createMessageToSend(byte messageID, ADMMessage* message){
-        ArduinoDevice::createMessageToSend(messageID, message);
+    void ServoController::populateMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::populateMessageToSend(messageID, message);
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
             //message->addInt(position);

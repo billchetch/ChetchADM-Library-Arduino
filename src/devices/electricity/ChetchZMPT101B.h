@@ -84,7 +84,7 @@ namespace Chetch{
             int getArgumentIndex(ADMMessage *message, MessageField field);
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void status(ADMMessage* message, ADMMessage* response) override;
-            void createMessageToSend(byte messageID, ADMMessage* message) override;
+            void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void setVoltagePin(byte pin);
             void setTargetParameters(Target t, double tv, double tt = 0.0, double tlb = 0.0, double tub = -1.0);
             void loop() override;

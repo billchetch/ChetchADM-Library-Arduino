@@ -143,7 +143,7 @@ namespace Chetch{
         }
     }
 
-    void ArduinoDevice::createMessage(ADMMessage::MessageType messageType, ADMMessage *message){
+    void ArduinoDevice::populateMessage(ADMMessage::MessageType messageType, ADMMessage *message){
         message->type = messageType;
         message->target = getID();
         message->sender = getID();
@@ -151,7 +151,7 @@ namespace Chetch{
 
     void ArduinoDevice::addErrorInfo(ADMMessage * message, ErrorCode errorCode, ADMMessage *originalMessage){
         message->clear();
-        createMessage(ADMMessage::MessageType::TYPE_ERROR, message);
+        populateMessage(ADMMessage::MessageType::TYPE_ERROR, message);
         message->addByte((byte)ArduinoDeviceManager::ErrorCode::DEVICE_ERROR);
         message->addByte((byte)errorCode);
         if(originalMessage != NULL){
@@ -190,17 +190,17 @@ namespace Chetch{
     }
 
     //Note: if you do not wish the message to be sent then you should clear it'
-    void ArduinoDevice::createMessageToSend(byte messageID, ADMMessage *message){
+    void ArduinoDevice::populateMessageToSend(byte messageID, ADMMessage *message){
         switch(messageID){
             case MESSAGE_ID_REPORT:
-                createMessage(ADMMessage::MessageType::TYPE_DATA, message);
+                populateMessage(ADMMessage::MessageType::TYPE_DATA, message);
                 break;
         }
     }
 
     void ArduinoDevice::sendMessage(ADMMessage *message){     
         if(hasMessageToSend()){
-            createMessageToSend(dequeueMessageToSend(), message);
+            populateMessageToSend(dequeueMessageToSend(), message);
         }
     }
 

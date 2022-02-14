@@ -52,7 +52,7 @@ namespace Chetch{
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void status(ADMMessage* message, ADMMessage* response) override;
             void enable(bool enable = true) override;
-            void createMessageToSend(byte messageID, ADMMessage* message) override;
+            void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             
             void onInterrupt();

@@ -71,8 +71,8 @@ namespace Chetch{
         return true;
     }
 
-    void DS18B20Array::createMessageToSend(byte messageID, ADMMessage* message){
-        ArduinoDevice::createMessageToSend(messageID, message);
+    void DS18B20Array::populateMessageToSend(byte messageID, ADMMessage* message){
+        ArduinoDevice::populateMessageToSend(messageID, message);
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
             requestTemperatures = true; //request again

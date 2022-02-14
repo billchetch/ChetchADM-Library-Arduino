@@ -107,8 +107,8 @@ namespace Chetch{
             int getReportInterval();
             bool hasMessageToSend(); //if there is a message in the queue or not
             void receiveMessage(ADMMessage *message, ADMMessage *response);
-            virtual void createMessage(ADMMessage::MessageType messageType, ADMMessage *message);
-            virtual void createMessageToSend(byte messageID, ADMMessage *message);
+            virtual void populateMessage(ADMMessage::MessageType messageType, ADMMessage *message);
+            virtual void populateMessageToSend(byte messageID, ADMMessage *message);
             bool enqueueMessageToSend(byte messageID);
             byte dequeueMessageToSend();
             void addErrorInfo(ADMMessage *message, ErrorCode errorCode, ADMMessage *originalMessage = NULL);
