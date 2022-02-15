@@ -56,6 +56,7 @@ namespace Chetch{
                 SAVE,
                 ACTIVATE,
                 DEACTIVATE,
+                RESUME,
             };
 
             enum class ErrorCode{

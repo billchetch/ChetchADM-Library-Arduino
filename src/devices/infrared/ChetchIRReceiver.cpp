@@ -51,6 +51,11 @@ namespace Chetch{
 				recording = false;
 				response->addBool(recording);
 				break;
+
+			case RESUME:
+				irReceiver->enableIRIn();
+				irReceiver->resume();
+				break;
 		}
 
 		return deviceCommand;
@@ -91,7 +96,7 @@ namespace Chetch{
 	}*/
 
 	void IRReceiver::loop() {
-		if (irReceiver == NULL || !recording)return;
+		if (irReceiver == NULL)return;
 
 		static unsigned long elapsed = 0;
 		if ((millis() - elapsed > 100) && irReceiver->decode(&irReceiverResults)) {
