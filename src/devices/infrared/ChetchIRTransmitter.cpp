@@ -106,11 +106,11 @@ namespace Chetch{
 				break;
 
 			case ACTIVATE:
-				digitalWrite(activatePin, HIGH);
+				digitalWrite(activatePin, LOW);
 				break;
 
 			case DEACTIVATE:
-				digitalWrite(activatePin, LOW);
+				digitalWrite(activatePin, HIGH);
 				break;
 		} //end command  switch
 			

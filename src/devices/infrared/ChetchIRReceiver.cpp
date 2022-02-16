@@ -69,6 +69,13 @@ namespace Chetch{
 			message->addLong(irReceiverResults.value); //Code
 			message->addInt(irReceiverResults.decode_type); //Protocol
 			message->addInt(irReceiverResults.bits); //Bits
+			if (irReceiverResults.decode_type == UNKNOWN && irReceiverResults.rawlen < 10) {
+				message->addInt(irReceiverResults.rawlen); //raw length
+				message->addBytes((byte*)irReceiverResults.rawbuf, sizeof(int) * irReceiverResults.rawlen);
+			}
+			else {
+				message->addInt(0);
+			}
 			irReceiver->resume(); //ready for next result	
 		}
 	} 
