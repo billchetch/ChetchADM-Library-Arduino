@@ -32,6 +32,12 @@ namespace Chetch{
 		case PROTOCOL:
 			return 3;
 
+		case RAW_LENGTH:
+			return 4;
+
+		case RAW:
+			return 5;
+
 		default:
 			return (int)field;
 		}
@@ -75,7 +81,8 @@ namespace Chetch{
 		unsigned long ircommand;
 		int bits;
 		int protocol; 
-
+		unsigned int rawLength;
+		unsigned int* raw;
 		switch (deviceCommand) {
 			case SEND:
 				ircommand = message->argumentAsULong(getArgumentIndex(message, MessageField::IR_COMMAND)); //
@@ -94,12 +101,11 @@ namespace Chetch{
 						break;
 
 					case UNKNOWN: //we send as raw
-						/*switch ((int)ircommand) {
-						case 0:
-							irSender->sendRaw(repeatCommand, repeatLength, 38); break;
-						default:
-							break;
-						}*/
+						rawLength = message->argumentAsUInt(getArgumentIndex(message, MessageField::RAW_LENGTH));
+						if (rawLength > 0) {
+							raw = (unsigned int*)message->getArgument(getArgumentIndex(message, MessageField::RAW));
+							irSender->sendRaw(raw, rawLength, 38);
+						}
 						break;
 				} //end protocol switch
 				response->addULong(ircommand);

@@ -14,6 +14,8 @@ namespace Chetch{
 			IR_COMMAND,
 			BITS,
 			PROTOCOL,
+			RAW_LENGTH,
+			RAW,
 		};
 
 	private:
