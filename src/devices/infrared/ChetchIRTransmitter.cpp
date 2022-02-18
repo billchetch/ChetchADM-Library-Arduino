@@ -81,7 +81,7 @@ namespace Chetch{
 		unsigned long ircommand;
 		int bits;
 		int protocol; 
-		unsigned int rawLength;
+		unsigned int rawLength = 0;
 		unsigned int* raw;
 		switch (deviceCommand) {
 			case SEND:
@@ -109,6 +109,8 @@ namespace Chetch{
 						break;
 				} //end protocol switch
 				response->addULong(ircommand);
+				response->addInt(protocol);
+				response->addInt(rawLength);
 				break;
 
 			case ACTIVATE:
