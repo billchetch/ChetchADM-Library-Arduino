@@ -83,6 +83,7 @@ namespace Chetch{
 		int protocol; 
 		unsigned int rawLength = 0;
 		unsigned int* raw;
+
 		switch (deviceCommand) {
 			case SEND:
 				ircommand = message->argumentAsULong(getArgumentIndex(message, MessageField::IR_COMMAND)); //
@@ -105,8 +106,16 @@ namespace Chetch{
 						if (rawLength > 0) {
 							raw = (unsigned int*)message->getArgument(getArgumentIndex(message, MessageField::RAW));
 							irSender->sendRaw(raw, rawLength, 38);
+						} else {
+							addErrorInfo(response, ErrorCode::INVALID_COMMAND, 9, message);
+							return deviceCommand;
 						}
 						break;
+
+					default:
+						addErrorInfo(response, ErrorCode::INVALID_COMMAND, 10, message);
+						return deviceCommand;
+
 				} //end protocol switch
 				response->addULong(ircommand);
 				response->addInt(protocol);

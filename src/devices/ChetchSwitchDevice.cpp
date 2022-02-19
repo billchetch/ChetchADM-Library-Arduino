@@ -103,7 +103,7 @@ namespace Chetch{
                     }
                     response->clear(); //clear so we don't send a response immediately (we will use the trigger method to send the response)'
                 } else {
-                    addErrorInfo(response, ErrorCode::INVALID_COMMAND, message);
+                    addErrorInfo(response, ErrorCode::INVALID_COMMAND, 0, message);
                 }
                 break;
         }

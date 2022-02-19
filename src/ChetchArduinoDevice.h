@@ -112,7 +112,7 @@ namespace Chetch{
             virtual void populateMessageToSend(byte messageID, ADMMessage *message);
             bool enqueueMessageToSend(byte messageID);
             byte dequeueMessageToSend();
-            void addErrorInfo(ADMMessage *message, ErrorCode errorCode, ADMMessage *originalMessage = NULL);
+            void addErrorInfo(ADMMessage *message, ErrorCode errorCode, int subCode = 0, ADMMessage *originalMessage = NULL);
             void sendMessage(ADMMessage *message);
             int getArgumentIndex(ADMMessage *message, MessageField field);
             virtual void loop();

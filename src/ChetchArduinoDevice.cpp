@@ -123,13 +123,13 @@ namespace Chetch{
         switch ((ADMMessage::MessageType)message->type) {
             case ADMMessage::MessageType::TYPE_INITIALISE:
                 if(!initialise(message, response)){
-                    addErrorInfo(response, ErrorCode::FAILED_TO_INITIALISE, message);
+                    addErrorInfo(response, ErrorCode::FAILED_TO_INITIALISE, 0, message);
                 }
                 break;
 
             case ADMMessage::MessageType::TYPE_CONFIGURE:
                 if(!configure(message, response)){
-                    addErrorInfo(response, ErrorCode::FAILED_TO_CONFIGURE, message);
+                    addErrorInfo(response, ErrorCode::FAILED_TO_CONFIGURE, 0, message);
                 }
                 break;
 
@@ -149,11 +149,12 @@ namespace Chetch{
         message->sender = getID();
     }
 
-    void ArduinoDevice::addErrorInfo(ADMMessage * message, ErrorCode errorCode, ADMMessage *originalMessage){
+    void ArduinoDevice::addErrorInfo(ADMMessage * message, ErrorCode errorCode, int subCode, ADMMessage *originalMessage){
         message->clear();
         populateMessage(ADMMessage::MessageType::TYPE_ERROR, message);
         message->addByte((byte)ArduinoDeviceManager::ErrorCode::DEVICE_ERROR);
         message->addByte((byte)errorCode);
+        message->addInt(subCode);
         if(originalMessage != NULL){
             message->addByte(originalMessage->type);
             message->addByte(originalMessage->target);
