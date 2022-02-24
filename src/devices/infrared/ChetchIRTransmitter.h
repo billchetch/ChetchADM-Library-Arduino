@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <IRremote.h>
-#include <IRremoteInt.h>
+#define USE_IRREMOTE_HPP_AS_PLAIN_INCLUDE
+#include <IRremote.hpp>
 #include <ChetchArduinoDevice.h>
 #include <ChetchADMMessage.h>
 
@@ -8,22 +8,17 @@ namespace Chetch{
 	class IRTransmitter : public ArduinoDevice {
 	public:
 		enum MessageField {
-			ACTIVATE_PIN = 2,
 			TRANSMIT_PIN,
-			REPEAT_COMMAND,
-			IR_COMMAND,
-			BITS,
 			PROTOCOL,
-			RAW_LENGTH,
-			RAW,
+			ADDRESS,
+			COMMAND,
+			REPEATS,
+			REPEAT_COMMAND,
 		};
 
 	private:
-		IRsend *irSender = NULL;
-		unsigned int repeatLength = 0;
-		unsigned int *repeatCommand = NULL;
-		byte activatePin = 0;
-		byte transmitPin = 0; //Redundant for IRremote.h libraries < 3.0
+		IRsend irSender;
+		byte transmitPin = 0; 
 
 	public:
 		IRTransmitter(byte tgt, byte cat, char *dn);

@@ -1,5 +1,6 @@
 #include <ChetchEthernetManager.h>
 #include <ChetchNetworkAPI.h>
+#include <ChetchADMConfig.h>
 #include <ChetchADM.h>
 
 

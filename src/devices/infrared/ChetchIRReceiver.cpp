@@ -1,6 +1,7 @@
 #include "ChetchUtils.h"
 #include "ChetchIRReceiver.h"
 
+
 namespace Chetch{
 
 	IRReceiver::IRReceiver(byte tgt, byte cat, char *dn) : ArduinoDevice(tgt, cat, dn) {
@@ -9,7 +10,7 @@ namespace Chetch{
 	}
 
 	IRReceiver::~IRReceiver(){
-		if(irReceiver != NULL)delete irReceiver;
+		//empty
 	}
 
 	int IRReceiver::getArgumentIndex(ADMMessage* message, MessageField field) {
@@ -25,8 +26,7 @@ namespace Chetch{
 		if (!ArduinoDevice::configure(message, response))return false;
 
 		receivePin = message->argumentAsByte(getArgumentIndex(message, MessageField::RECEIVE_PIN));
-		irReceiver = new IRrecv(receivePin);
-		irReceiver->enableIRIn();
+		irReceiver.begin(receivePin);
 		recording = false;
 
 		response->addByte(receivePin);
@@ -40,21 +40,15 @@ namespace Chetch{
 
 		switch (deviceCommand) {
 			case START:
-				irReceiver->enableIRIn();
-				irReceiver->resume();
+				irReceiver.resume();
 				recording = true;
 				response->addBool(recording);
 				break;
 
 			case STOP:
-				irReceiver->resume();
+				irReceiver.resume();
 				recording = false;
 				response->addBool(recording);
-				break;
-
-			case RESUME:
-				irReceiver->enableIRIn();
-				irReceiver->resume();
 				break;
 		}
 
@@ -66,47 +60,21 @@ namespace Chetch{
 
 		if (messageID == MESSAGE_ID_IRCODERECEIVED) {
 			populateMessage(ADMMessage::MessageType::TYPE_DATA, message);
-			message->addLong(irReceiverResults.value); //Code
-			message->addInt(irReceiverResults.decode_type); //Protocol
-			message->addInt(irReceiverResults.bits); //Bits
-			if (irReceiverResults.decode_type == UNKNOWN && irReceiverResults.rawlen < 10) {
-				message->addInt(irReceiverResults.rawlen); //raw length
-				message->addBytes((byte*)irReceiverResults.rawbuf, sizeof(int) * irReceiverResults.rawlen);
-			}
-			else {
-				message->addInt(0);
-			}
-			irReceiver->resume(); //ready for next result	
+
+			message->addUInt(irReceiver.decodedIRData.protocol); //Protocol
+			message->addUInt(irReceiver.decodedIRData.address); //Address
+			message->addUInt(irReceiver.decodedIRData.command); //Command
+			
+			irReceiver.resume(); //ready for next result	
 		}
 	} 
 
-	/*bool IRReceiver::handleCommand(ADMMessage* message, ADMMessage* response) {
-		switch ((ADMMessage::CommandType)message->command) {
-			case ADMMessage::COMMAND_TYPE_START:
-				irReceiver->enableIRIn();
-				irReceiver->resume();
-				recording = true;
-				response->type = (byte)ADMMessage::TYPE_INFO;
-				response->addByte(1);
-				return true;
-
-			case ADMMessage::COMMAND_TYPE_STOP:
-				irReceiver->resume();
-				recording = false;
-				response->type = (byte)ADMMessage::TYPE_INFO;
-				response->addByte(0);
-				return true;
-
-			default:
-				return false;
-		}
-	}*/
+	
 
 	void IRReceiver::loop() {
-		if (irReceiver == NULL)return;
-
+		
 		static unsigned long elapsed = 0;
-		if ((millis() - elapsed > 100) && irReceiver->decode(&irReceiverResults)) {
+		if ((millis() - elapsed > 100) && irReceiver.decode()) {
 			elapsed = millis();
 			
 			enqueueMessageToSend(MESSAGE_ID_IRCODERECEIVED);

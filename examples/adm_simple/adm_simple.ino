@@ -1,3 +1,4 @@
+#include <ChetchADMConfig.h>
 #include <ChetchADM.h>
 
 //SFC values (these values are for UNO)

@@ -1,13 +1,6 @@
 #include "ChetchIRTransmitter.h"
 #include "ChetchUtils.h"
 
-const unsigned int LGHT_REPEAT[] PROGMEM = { 4500,4400,600,1600,600 };
-
-const unsigned int IR_RAW_CODE_LENGTHS[] PROGMEM = { 5 };
-const unsigned int *const IR_RAW_CODES[] PROGMEM = {
-	LGHT_REPEAT
-};
-
 
 namespace Chetch{
 
@@ -17,118 +10,71 @@ namespace Chetch{
 	}
 
 	IRTransmitter::~IRTransmitter(){
-		if(irSender != NULL)delete irSender;
-		if(repeatCommand != NULL)delete[] repeatCommand;
+		//empty
 	}
 
 	int IRTransmitter::getArgumentIndex(ADMMessage* message, MessageField field) {
 		switch (field) {
-		case IR_COMMAND:
-			return 1;
+			case TRANSMIT_PIN:
+				return 2;
 
-		case BITS:
-			return 2;
+			case PROTOCOL:
+				return 1;
 
-		case PROTOCOL:
-			return 3;
+			case ADDRESS:
+				return 2;
 
-		case RAW_LENGTH:
-			return 4;
+			case COMMAND:
+				return 3;
 
-		case RAW:
-			return 5;
+			case REPEATS:
+				return 4;
 
-		default:
-			return (int)field;
+			default:
+				return (int)field;
 		}
 	}
 
 	bool IRTransmitter::configure(ADMMessage *message, ADMMessage *response) {
 		if (!ArduinoDevice::configure(message, response))return false;
 
-		activatePin = message->argumentAsByte(getArgumentIndex(message, MessageField::ACTIVATE_PIN));
-		if (activatePin > 0) {
-			pinMode(activatePin, OUTPUT);
-			digitalWrite(activatePin, LOW); 
-		}
 		transmitPin = message->argumentAsByte(getArgumentIndex(message, MessageField::TRANSMIT_PIN));
+		irSender.begin(transmitPin);
+		response->addInt(transmitPin); 
 
-		irSender = new IRsend();
-		response->addInt(SEND_PIN); //defined by the IRremote library
-
-		//this is the repeat command
-		/*int commandIdx = message->argumentAsInt(getArgumentIndex(message, REPEAT_COMMAND));
-		if (commandIdx >= 0) {
-			unsigned int raw[8];
-			switch (commandIdx) { //we have to hard code the indices as the data is taken from progmem
-				case 0:
-					repeatLength = Utils::getUIntArrayFromProgmem(raw, 0, IR_RAW_CODES, IR_RAW_CODE_LENGTHS); break;
-				case 1:
-					repeatLength = Utils::getUIntArrayFromProgmem(raw, 1, IR_RAW_CODES, IR_RAW_CODE_LENGTHS); break;
-			}
-			repeatCommand = new unsigned int[repeatLength];
-			for (int i = 0; i < repeatLength; i++) {
-				repeatCommand[i] = raw[i];
-			}
-		}*/
 	}
 
 	ArduinoDevice::DeviceCommand IRTransmitter::executeCommand(ADMMessage* message, ADMMessage* response) {
 		DeviceCommand deviceCommand = ArduinoDevice::executeCommand(message, response);
 
-		if (irSender == NULL)return deviceCommand;
-
-		unsigned long ircommand;
-		int bits;
-		int protocol; 
-		unsigned int rawLength = 0;
-		unsigned int* raw;
-
+		int protocol;
+		unsigned int address;
+		unsigned int command;
+		unsigned int repeats;
+		
 		switch (deviceCommand) {
 			case SEND:
-				ircommand = message->argumentAsULong(getArgumentIndex(message, MessageField::IR_COMMAND)); //
-				bits = message->argumentAsInt(getArgumentIndex(message, MessageField::BITS));
 				protocol = message->argumentAsInt(getArgumentIndex(message, MessageField::PROTOCOL));
+				address = message->argumentAsULong(getArgumentIndex(message, MessageField::ADDRESS)); //
+				command = message->argumentAsULong(getArgumentIndex(message, MessageField::COMMAND)); //
+				repeats = message->argumentAsInt(getArgumentIndex(message, MessageField::REPEATS));
+				
 
 				switch (protocol) {
 					case SAMSUNG: //7
-						irSender->sendSAMSUNG(ircommand, bits);
+						//irSender.sendSamsung(address, command, repeats);
 						break;
-					case LG: //10
-						irSender->sendLG(ircommand, bits);
-						break;
-					case NEC: //3
-						irSender->sendNEC(ircommand, bits);
-						break;
-
-					case UNKNOWN: //we send as raw
-						rawLength = message->argumentAsUInt(getArgumentIndex(message, MessageField::RAW_LENGTH));
-						if (rawLength > 0) {
-							raw = (unsigned int*)message->getArgument(getArgumentIndex(message, MessageField::RAW));
-							irSender->sendRaw(raw, rawLength, 38);
-						} else {
-							addErrorInfo(response, ErrorCode::INVALID_COMMAND, 9, message);
-							return deviceCommand;
-						}
-						break;
-
+					
 					default:
-						addErrorInfo(response, ErrorCode::INVALID_COMMAND, 10, message);
+						addErrorInfo(response, ErrorCode::INVALID_COMMAND, 1, message);
 						return deviceCommand;
 
 				} //end protocol switch
-				response->addULong(ircommand);
 				response->addInt(protocol);
-				response->addInt(rawLength);
+				response->addInt(address);
+				response->addInt(command);
 				break;
 
-			case ACTIVATE:
-				digitalWrite(activatePin, LOW);
-				break;
-
-			case DEACTIVATE:
-				digitalWrite(activatePin, HIGH);
-				break;
 		} //end command  switch
 			
 		return deviceCommand;

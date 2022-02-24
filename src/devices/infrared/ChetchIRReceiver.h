@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <IRremote.h>
-#include <IRremoteInt.h>
+#define USE_IRREMOTE_HPP_AS_PLAIN_INCLUDE
+#include <IRremote.hpp>
 #include <ChetchArduinoDevice.h>
 #include <ChetchADMMessage.h>
 
@@ -15,8 +15,7 @@ namespace Chetch{
 
 		private:
 			byte receivePin;
-			IRrecv *irReceiver = NULL;
-			decode_results irReceiverResults;
+			IRrecv irReceiver;
 			bool recording = false;
 		
 		public:
