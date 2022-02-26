@@ -9,6 +9,7 @@ namespace Chetch{
 	public:
 		enum MessageField {
 			TRANSMIT_PIN,
+			REPEAT_THRESHOLD,
 			PROTOCOL,
 			ADDRESS,
 			COMMAND,
@@ -19,6 +20,11 @@ namespace Chetch{
 	private:
 		IRsend irSender;
 		byte transmitPin = 0; 
+		unsigned int repeatThreshold = 100; //in millis ... if the same command is sent shorter than this interval then assume it is a repeat
+		unsigned int lastProtocol = 0;
+		unsigned int lastAddress = 0;
+		unsigned int lastCommand = 0;
+		unsigned int lastSend = 0;
 
 	public:
 		IRTransmitter(byte tgt, byte cat, char *dn);

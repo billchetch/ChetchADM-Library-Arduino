@@ -18,6 +18,9 @@ namespace Chetch{
 			case TRANSMIT_PIN:
 				return 2;
 
+			case REPEAT_THRESHOLD:
+				return 3;
+
 			case PROTOCOL:
 				return 1;
 
@@ -36,10 +39,17 @@ namespace Chetch{
 	}
 
 	bool IRTransmitter::configure(ADMMessage *message, ADMMessage *response) {
+		//configure base
 		if (!ArduinoDevice::configure(message, response))return false;
 
+		//configure
 		transmitPin = message->argumentAsByte(getArgumentIndex(message, MessageField::TRANSMIT_PIN));
+		repeatThreshold = message->argumentAsByte(getArgumentIndex(message, MessageField::REPEAT_THRESHOLD));
+
+		//fire things up
 		irSender.begin(transmitPin);
+
+		//respond
 		response->addInt(transmitPin); 
 
 	}
@@ -47,22 +57,31 @@ namespace Chetch{
 	ArduinoDevice::DeviceCommand IRTransmitter::executeCommand(ADMMessage* message, ADMMessage* response) {
 		DeviceCommand deviceCommand = ArduinoDevice::executeCommand(message, response);
 
-		int protocol;
+		unsigned int protocol;
 		unsigned int address;
 		unsigned int command;
 		unsigned int repeats;
+		bool usedRepeat = false;
+		unsigned int millisSinceLastSend = 0;
 		
 		switch (deviceCommand) {
 			case SEND:
-				protocol = message->argumentAsInt(getArgumentIndex(message, MessageField::PROTOCOL));
-				address = message->argumentAsULong(getArgumentIndex(message, MessageField::ADDRESS)); //
-				command = message->argumentAsULong(getArgumentIndex(message, MessageField::COMMAND)); //
-				repeats = message->argumentAsInt(getArgumentIndex(message, MessageField::REPEATS));
-				
+				protocol = message->argumentAsUInt(getArgumentIndex(message, MessageField::PROTOCOL));
+				address = message->argumentAsUInt(getArgumentIndex(message, MessageField::ADDRESS));
+				command = message->argumentAsUInt(getArgumentIndex(message, MessageField::COMMAND)); 
+				repeats = message->argumentAsUInt(getArgumentIndex(message, MessageField::REPEATS));
+				millisSinceLastSend = millis() - lastSend;
 
 				switch (protocol) {
-					case SAMSUNG: //7
-						//irSender.sendSamsung(address, command, repeats);
+					case SAMSUNG: //17
+						if (lastProtocol == protocol && lastAddress == address && lastCommand == command && millisSinceLastSend < repeatThreshold) {
+							if (millisSinceLastSend < repeatThreshold)delay(repeatThreshold - millisSinceLastSend);
+							irSender.sendSamsungRepeat();
+							usedRepeat = true;
+						}
+						else {
+							irSender.sendSamsung(address, command, repeats);
+						}
 						break;
 					
 					default:
@@ -70,9 +89,18 @@ namespace Chetch{
 						return deviceCommand;
 
 				} //end protocol switch
-				response->addInt(protocol);
-				response->addInt(address);
-				response->addInt(command);
+
+				lastProtocol = protocol;
+				lastAddress = address;
+				lastCommand = command;
+				lastSend = millis();
+
+
+				response->addUInt(protocol);
+				response->addUInt(address);
+				response->addUInt(command);
+				response->addBool(usedRepeat);
+				response->addUInt(millisSinceLastSend);
 				break;
 
 		} //end command  switch
