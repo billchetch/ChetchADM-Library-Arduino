@@ -96,7 +96,9 @@ namespace Chetch{
 			switch (protocol) {
 				case SAMSUNG: //17
 					if (lastProtocol == protocol && lastAddress == address && lastCommand == command && millisSinceLastSend < repeatThresholdUpper) {
-						if (millisSinceLastSend < repeatThresholdLower)return;
+						if (millisSinceLastSend < repeatThresholdLower) {
+							return;
+						}
 
 						irSender.sendSamsungRepeat();
 					}
