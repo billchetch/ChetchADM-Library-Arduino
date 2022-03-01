@@ -31,7 +31,7 @@ namespace Chetch{
                 DEVICE_COMMAND,
             };
 
-            enum  DeviceCommand{
+            enum DeviceCommand{
                 NONE = 0,
                 COMPOUND,
                 TEST,
@@ -57,7 +57,6 @@ namespace Chetch{
                 ACTIVATE,
                 DEACTIVATE,
                 RESUME,
-                REPEAT,
             };
 
             enum class ErrorCode{

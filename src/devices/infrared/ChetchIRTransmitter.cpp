@@ -18,12 +18,6 @@ namespace Chetch{
 			case TRANSMIT_PIN:
 				return 2;
 
-			case REPEAT_THRESHOLD_LOWER:
-				return 3;
-
-			case REPEAT_THRESHOLD_UPPER:
-				return 4;
-
 			case PROTOCOL:
 				return 1;
 
@@ -33,7 +27,7 @@ namespace Chetch{
 			case COMMAND:
 				return 3;
 
-			case REPEATS:
+			case USE_REPEAT:
 				return 4;
 
 			default:
@@ -47,9 +41,7 @@ namespace Chetch{
 
 		//configure
 		transmitPin = message->argumentAsByte(getArgumentIndex(message, MessageField::TRANSMIT_PIN));
-		repeatThresholdLower = message->argumentAsByte(getArgumentIndex(message, MessageField::REPEAT_THRESHOLD_LOWER));
-		repeatThresholdUpper = message->argumentAsByte(getArgumentIndex(message, MessageField::REPEAT_THRESHOLD_UPPER));
-
+		
 		//fire things up
 		irSender.begin(transmitPin);
 
@@ -66,21 +58,27 @@ namespace Chetch{
 				protocol = message->argumentAsUInt(getArgumentIndex(message, MessageField::PROTOCOL));
 				address = message->argumentAsUInt(getArgumentIndex(message, MessageField::ADDRESS));
 				command = message->argumentAsUInt(getArgumentIndex(message, MessageField::COMMAND)); 
-				//repeats = message->argumentAsUInt(getArgumentIndex(message, MessageField::REPEATS));
+				bool repeat = message->argumentAsBool(getArgumentIndex(message, MessageField::USE_REPEAT));
 
-				switch (protocol) {
-				case SAMSUNG: //17
-					sendFlag = true;
-					break;
+				if (!repeatFlag) {
+					switch (protocol) {
+						case SAMSUNG: //17
+							sendFlag = true;
+							break;
 
-				default:
-					addErrorInfo(response, ErrorCode::INVALID_COMMAND, 1, message);
-					return deviceCommand;
+						default:
+							addErrorInfo(response, ErrorCode::INVALID_COMMAND, 1, message);
+							return deviceCommand;
+					}
 				}
+				repeatFlag = repeat;
+				repeatCount = 0;
 				
 				response->addUInt(protocol);
 				response->addUInt(address);
 				response->addUInt(command);
+				response->addBool(sendFlag);
+				response->addBool(repeatFlag);
 				break;
 
 		} //end command  switch
@@ -92,19 +90,9 @@ namespace Chetch{
 		ArduinoDevice::loop();
 
 		if (sendFlag) {
-			unsigned int millisSinceLastSend = millis() - lastSend;
 			switch (protocol) {
 				case SAMSUNG: //17
-					if (lastProtocol == protocol && lastAddress == address && lastCommand == command && millisSinceLastSend < repeatThresholdUpper) {
-						if (millisSinceLastSend < repeatThresholdLower) {
-							return;
-						}
-
-						irSender.sendSamsungRepeat();
-					}
-					else {
-						irSender.sendSamsung(address, command, 0);
-					}
+					irSender.sendSamsung(address, command, 0);
 					break;
 
 				default:
@@ -112,12 +100,27 @@ namespace Chetch{
 
 			} //end protocol switch
 
-			lastProtocol = protocol;
-			lastAddress = address;
-			lastCommand = command;
-			lastSend = millis();
-
 			sendFlag = false;
+			lastSend = millis();
+		}
+		else if (repeatFlag) {
+			bool sendRepeat = true;
+			switch (protocol) {
+				case SAMSUNG: //17
+					/*if (repeatCount == 0 && millis() - lastSend >= 55) {
+						sendRepeat = true;
+					}
+					else if (repeatCount > 0 && millis() - lastSend >= 110) {
+						sendRepeat = true;
+					}*/
+					if (sendRepeat) {
+						lastSend = millis();
+						delay(110);
+						irSender.sendSamsungRepeat();
+						repeatCount++;
+					}
+					break;
+			}
 		}
 	}
 } //end namespace
