@@ -15,6 +15,9 @@ namespace Chetch{
 			USE_REPEAT,
 		};
 
+		//in millis the time allowed between sends ... a shorter period send is ignored as the ADM should call and set repeat flag
+		static const unsigned int SEND_INTERVAL_THRESHOLD = 250; 
+
 	private:
 		IRsend irSender;
 		byte transmitPin = 0; 

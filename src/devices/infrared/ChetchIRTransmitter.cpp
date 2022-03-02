@@ -59,20 +59,22 @@ namespace Chetch{
 				address = message->argumentAsUInt(getArgumentIndex(message, MessageField::ADDRESS));
 				command = message->argumentAsUInt(getArgumentIndex(message, MessageField::COMMAND)); 
 				bool repeat = message->argumentAsBool(getArgumentIndex(message, MessageField::USE_REPEAT));
-
-				if (!repeatFlag) {
-					switch (protocol) {
-						case SAMSUNG: //17
-							sendFlag = true;
-							break;
-
-						default:
-							addErrorInfo(response, ErrorCode::INVALID_COMMAND, 1, message);
-							return deviceCommand;
-					}
+				if (repeatFlag && !repeat) { //so this is an end to repeating so we just set flags to false
+					sendFlag = false;
+					repeatFlag = false;
 				}
-				repeatFlag = repeat;
-				repeatCount = 0;
+				else { //otherwise here is a normal send or a send with repeat
+					switch (protocol) {
+					case SAMSUNG: //17
+						sendFlag = true;
+						break;
+
+					default:
+						addErrorInfo(response, ErrorCode::INVALID_COMMAND, 1, message);
+						return deviceCommand;
+					}
+					repeatFlag = repeat;
+				}
 				
 				response->addUInt(protocol);
 				response->addUInt(address);
@@ -90,6 +92,8 @@ namespace Chetch{
 		ArduinoDevice::loop();
 
 		if (sendFlag) {
+			if (millis() - lastSend < SEND_INTERVAL_THRESHOLD)return;
+
 			switch (protocol) {
 				case SAMSUNG: //17
 					irSender.sendSamsung(address, command, 0);
@@ -103,21 +107,13 @@ namespace Chetch{
 			sendFlag = false;
 			lastSend = millis();
 		}
-		else if (repeatFlag) {
-			bool sendRepeat = true;
+		
+		if (repeatFlag) {
 			switch (protocol) {
 				case SAMSUNG: //17
-					/*if (repeatCount == 0 && millis() - lastSend >= 55) {
-						sendRepeat = true;
-					}
-					else if (repeatCount > 0 && millis() - lastSend >= 110) {
-						sendRepeat = true;
-					}*/
-					if (sendRepeat) {
-						lastSend = millis();
-						delay(110);
+					if ( millis() - lastSend >= 60) {
 						irSender.sendSamsungRepeat();
-						repeatCount++;
+						lastSend = millis();
 					}
 					break;
 			}
