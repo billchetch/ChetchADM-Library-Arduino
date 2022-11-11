@@ -112,7 +112,8 @@ namespace Chetch{
 			switch (protocol) {
 				case SAMSUNG: //17
 					if ( millis() - lastSend >= 60) {
-						irSender.sendSamsungRepeat();
+						//irSender.sendSamsungRepeat();
+						irSender.sendSamsungLGRepeat(); //As of version 3.9.0
 						lastSend = millis();
 					}
 					break;
