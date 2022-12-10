@@ -36,10 +36,15 @@
 #include "devices/displays/ChetchLCD.h"
 #endif
 
+#if (INCLUDE_DEVICES & WEIGHT_MEASURING_DEVICES) == WEIGHT_MEASURING_DEVICES
+#include "devices/weight/ChetchLoadCell.h"
+#endif
+
 const char DS18B20[] PROGMEM = "DS18B20";
 const char JSN_SR04T[] PROGMEM = "JSN-SR04T";
 const char ZMPT101B[] PROGMEM = "ZMPT101B";
 const char LCD[] PROGMEM = "LCD";
+const char LOADCELL[] PROGMEM = "LOADCELL";
 const char TEST01[] PROGMEM = "TEST01";
 const char TEST02[] PROGMEM = "TEST02";
 
@@ -48,11 +53,12 @@ const char *const DEVICES_TABLE[] PROGMEM = {
 	JSN_SR04T,
     ZMPT101B,
     LCD,
+    LOADCELL,
     TEST01,
     TEST02
 };
 
-#define DEVICE_TABLE_SIZE 5
+#define DEVICE_TABLE_SIZE 7
 
 namespace Chetch{
     ArduinoDeviceManager *ArduinoDeviceManager::ADM = NULL;
@@ -352,8 +358,14 @@ namespace Chetch{
                 device = new LCD(id, category, dname);
                 break;
 #endif
-#if (INCLUDE_DEVICES & DIAGNOSTIC_DEVICES) == DIAGNOSTIC_DEVICES
+#if (INCLUDE_DEVICES & WEIGHT_MEASURING_DEVICES) == WEIGHT_MEASURING_DEVICES
             case 4:
+                device = new LoadCell(id, category, dname);
+                //device = new Test01(id, 1, dname);
+                break;
+#endif
+#if (INCLUDE_DEVICES & DIAGNOSTIC_DEVICES) == DIAGNOSTIC_DEVICES
+            case 5:
                 device = new Test01(id, category, dname);
                 break;
 #endif

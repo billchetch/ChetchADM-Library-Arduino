@@ -23,6 +23,7 @@ namespace Chetch{
                 SERVO = 10,
                 MOTOR = 11,
                 LCD = 12,
+                WEIGHT_SENSOR = 13,
             };
 
             enum MessageField{
