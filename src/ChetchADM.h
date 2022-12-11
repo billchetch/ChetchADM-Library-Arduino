@@ -94,6 +94,7 @@ namespace Chetch{
             bool configured = false;
             unsigned long unixTime = 0; //TODO: set in initialisation
             unsigned long ledMillis = 0;
+            unsigned long loopDuration = 0; //the duration in micros of the last loop
 
         public:
             ArduinoDeviceManager(StreamFlowController *stream);

@@ -452,6 +452,8 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::loop(){
+        unsigned long mcs = micros();
+
         //led for status
         indicateStatus();
         
@@ -469,6 +471,8 @@ namespace Chetch{
         if(stream->hasBegun()){
             stream->loop();
         }
+
+        loopDuration = micros() - mcs;
     }
 
     void ArduinoDeviceManager::receiveMessage(ADMMessage* message, ADMMessage* response){
@@ -500,6 +504,7 @@ namespace Chetch{
                     response->addBool(initialised);
                     response->addBool(configured);
                     response->addByte(deviceCount);
+                    response->addULong(loopDuration);
                     break;
             
                 case ADMMessage::MessageType::TYPE_ECHO:

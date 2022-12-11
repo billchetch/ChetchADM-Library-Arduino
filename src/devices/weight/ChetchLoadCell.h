@@ -24,9 +24,9 @@ class LoadCell : public ArduinoDevice{
 		long sampleSum = 0;
 		long sampleCount = 0;
 		long sampleSize = 1; // how many reads to do before updating the average
-		unsigned long readInterval = 500; //in millis so read every half second by default
+		unsigned long readInterval = 500; //in millis so read every half second by default (less than 100 and the device will often fail to be ready)
 		unsigned long lastRead = 0;
-
+		
 	public:
 		LoadCell(byte tgt, byte cat, char *dn);
 		~LoadCell() override;

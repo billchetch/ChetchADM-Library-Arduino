@@ -58,6 +58,8 @@ namespace Chetch{
 		//respond
 		response->addInt(doutPin); 
 		response->addInt(sckPin);
+		response->addULong(readInterval);
+		response->addLong(sampleSize);
 
 		return true;
 	}
@@ -79,7 +81,7 @@ namespace Chetch{
 	void LoadCell::loop() {
 		ArduinoDevice::loop();
 
-		if(readInterval > 0 && millis() - lastRead >= readInterval){
+		if(readInterval > 0 &&  millis() - lastRead >= readInterval && hx711.is_ready()){
             long v = hx711.read();
 			sampleCount++;
 			sampleSum += v;
