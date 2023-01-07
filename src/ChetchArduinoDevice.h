@@ -58,6 +58,7 @@ namespace Chetch{
                 ACTIVATE,
                 DEACTIVATE,
                 RESUME,
+                ZERO,
             };
 
             enum class ErrorCode{

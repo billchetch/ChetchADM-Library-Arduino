@@ -119,17 +119,20 @@ namespace Chetch{
     void ArduinoDevice::receiveMessage(ADMMessage *message, ADMMessage *response){
         response->sender = getID();
         response->target = getID();
-                
+            
+        int subCode = 0;
         switch ((ADMMessage::MessageType)message->type) {
             case ADMMessage::MessageType::TYPE_INITIALISE:
                 if(!initialise(message, response)){
+                    subCode = response->hasArgument(0) ? response->argumentAsInt(0) : 0;
                     addErrorInfo(response, ErrorCode::FAILED_TO_INITIALISE, 0, message);
                 }
                 break;
 
             case ADMMessage::MessageType::TYPE_CONFIGURE:
                 if(!configure(message, response)){
-                    addErrorInfo(response, ErrorCode::FAILED_TO_CONFIGURE, 0, message);
+                    subCode = response->hasArgument(0) ? response->argumentAsInt(0) : 0;
+                    addErrorInfo(response, ErrorCode::FAILED_TO_CONFIGURE, subCode, message);
                 }
                 break;
 

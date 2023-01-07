@@ -40,18 +40,15 @@ namespace Chetch{
 		sckPin = message->argumentAsByte(getArgumentIndex(message, MessageField::SCK_PIN));
 		readInterval = message->argumentAsULong(getArgumentIndex(message, MessageField::READ_INTERVAL));
 		sampleSize = message->argumentAsLong(getArgumentIndex(message, MessageField::SAMPLE_SIZE));
-		if(scale <= 0)return false;
-
 		
 		//fire things up
 		hx711.begin(doutPin, sckPin);
 
 		if(hx711.wait_ready_timeout(1000)){
-			response->addLong(hx711.read_average(20));
 			hx711.set_offset(offset);
 			hx711.set_scale(scale);
-			
 		} else {
+			response->addInt(1);
 			return false;
 		}
 
@@ -73,8 +70,10 @@ namespace Chetch{
 	void LoadCell::populateMessageToSend(byte messageID, ADMMessage* message){
         ArduinoDevice::populateMessageToSend(messageID, message);
 
-        if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
-            message->addLong(readValue);
+        switch(messageID){
+			case ArduinoDevice::MESSAGE_ID_REPORT:
+				message->addLong(readValue);
+				break;
         }
     }
 
@@ -92,5 +91,6 @@ namespace Chetch{
 			}
 			lastRead = millis();
         }
+
 	}
 }

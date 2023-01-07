@@ -18,6 +18,7 @@ class LoadCell : public ArduinoDevice{
 		HX711 hx711;
 		byte doutPin;
 		byte sckPin;
+		
 		long offset = 1;
 		float scale = 1.0f;
 		long readValue = 0; //the averaged value
@@ -26,6 +27,7 @@ class LoadCell : public ArduinoDevice{
 		long sampleSize = 1; // how many reads to do before updating the average
 		unsigned long readInterval = 500; //in millis so read every half second by default (less than 100 and the device will often fail to be ready)
 		unsigned long lastRead = 0;
+		
 		
 	public:
 		LoadCell(byte tgt, byte cat, char *dn);
