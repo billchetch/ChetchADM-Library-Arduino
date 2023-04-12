@@ -437,9 +437,17 @@ namespace Chetch{
     void ArduinoDeviceManager::indicateStatus(){
         if(statusIndicatorPin > 0){
             unsigned long diff = millis() - ledMillis;
+            
+            //1. Long flash to mark start ... this shows that ADM has been created and we are looping
             flashLED(0, diff, 500, statusIndicatorPin);
+            
+            //2. If no stream object or the stream is not ready then this will flash
             if(stream == NULL || !stream->isReady())flashLED(750, diff, 100, statusIndicatorPin);
+
+            //3. if the ADM is not initialised then this will flash
             if(!initialised)flashLED(1500, diff, 100, statusIndicatorPin);
+
+            //4. If the ADM is not configured then this will flash
             if(!configured)flashLED(2250, diff, 100, statusIndicatorPin);
             if(diff > 5000){
                 ledMillis = millis();
