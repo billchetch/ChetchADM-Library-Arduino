@@ -6,6 +6,7 @@
 //Generic devices to always include here
 #include "devices/ChetchSwitchDevice.h"
 #include "devices/ChetchCounter.h"
+#include "devices/ChetchTicker.h"
 
 #if (INCLUDE_DEVICES & TEMPERATURE_DEVICES) == TEMPERATURE_DEVICES
 #include "devices/temperature/ChetchDS18B20Array.h"
@@ -26,6 +27,7 @@
 
 #if (INCLUDE_DEVICES & DIAGNOSTIC_DEVICES) == DIAGNOSTIC_DEVICES
 #include "devices/diagnostics/ChetchTest01.h"
+#include "devices/diagnostics/ChetchTestBandwidth.h"
 #endif
 
 #if (INCLUDE_DEVICES & MOTOR_DEVICES) == MOTOR_DEVICES
@@ -46,7 +48,7 @@ const char ZMPT101B[] PROGMEM = "ZMPT101B";
 const char LCD[] PROGMEM = "LCD";
 const char LOADCELL[] PROGMEM = "LOADCELL";
 const char TEST01[] PROGMEM = "TEST01";
-const char TEST02[] PROGMEM = "TEST02";
+const char TESTBW[] PROGMEM = "TESTBW";
 
 const char *const DEVICES_TABLE[] PROGMEM = {
 	DS18B20,
@@ -54,8 +56,8 @@ const char *const DEVICES_TABLE[] PROGMEM = {
     ZMPT101B,
     LCD,
     LOADCELL,
-    TEST01,
-    TEST02
+    TEST01, //test report interval etc.
+    TESTBW, //test bandwidth
 };
 
 #define DEVICE_TABLE_SIZE 7
@@ -154,12 +156,8 @@ namespace Chetch{
         }
     }
 
-    bool ArduinoDeviceManager::handleStreamReadyToReceive(StreamFlowController *stream, bool request4cts){
-        if(request4cts){
-            return stream->canReceive(StreamFlowController::UART_LOCAL_BUFFER_SIZE);
-        } else {
-            return stream->bytesToRead() == 0 && stream->canSend(frame.getMaxSize());
-        }
+    bool ArduinoDeviceManager::handleStreamReadyToReceive(StreamFlowController *stream){
+        return stream->canReceive(frame.getMaxSize()); //StreamFlowController::UART_LOCAL_BUFFER_SIZE);
     }
 
     void ArduinoDeviceManager::handleStreamReceive(StreamFlowController *stream, int bytesToRead){
@@ -368,6 +366,10 @@ namespace Chetch{
             case 5:
                 device = new Test01(id, category, dname);
                 break;
+
+            case 6:
+                device = new TestBandwidth(id, category, dname);
+                break;
 #endif
 
             default:
@@ -392,6 +394,10 @@ namespace Chetch{
 
                     case ArduinoDevice::SWITCH:
 		                device = new SwitchDevice(id, category, dname);
+		                break;
+
+                    case ArduinoDevice::TICKER:
+		                device = new Ticker(id, category, dname);
 		                break;
 
                     default:
@@ -459,6 +465,22 @@ namespace Chetch{
         return freeMemory();
     }
 
+    unsigned long ArduinoDeviceManager::getBytesReceived(){
+        return stream->getBytesReceived();
+    }
+
+    unsigned long ArduinoDeviceManager::getBytesSent(){
+        return stream->getBytesSent();
+    }
+
+    unsigned long ArduinoDeviceManager::getMessagesReceived(){
+        return messagesReceived;
+    }
+
+    unsigned long ArduinoDeviceManager::getMessagesSent(){
+        return messagesSent;
+    }
+
     void ArduinoDeviceManager::loop(){
         unsigned long mcs = micros();
 
@@ -484,6 +506,8 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::receiveMessage(ADMMessage* message, ADMMessage* response){
+        messagesReceived++;
+                
         //find the device targeted by the message
         ErrorCode error = ErrorCode::NO_ERROR;
       
@@ -513,6 +537,10 @@ namespace Chetch{
                     response->addBool(configured);
                     response->addByte(deviceCount);
                     response->addULong(loopDuration);
+                    response->addULong(getBytesReceived());
+                    response->addULong(getBytesSent());
+                    response->addULong(getMessagesReceived());
+                    response->addULong(getMessagesSent());
                     break;
             
                 case ADMMessage::MessageType::TYPE_ECHO:
@@ -541,8 +569,8 @@ namespace Chetch{
                     response->addInt(stream->receiveBuffer->getMarkerCount());
                     response->addInt(stream->sendBuffer->remaining());
                     response->addInt(stream->sendBuffer->getMarkerCount());
-                    response->addBool(stream->localRequestedCTS);
-                    response->addBool(stream->remoteRequestedCTS);
+                    response->addBool(stream->sentCTSTimeout);
+                    response->addBool(stream->receivedCTSTimeout);
                     break;
             }
         } else { //targetting device
@@ -592,6 +620,7 @@ namespace Chetch{
         if(deviceCount > 0){
             ArduinoDevice *dev = devices[currentDevice];
             if(dev->isReady() && dev->hasMessageToSend()){
+                messagesSent++;
                 dev->sendMessage(message); 
             }
             currentDevice = (currentDevice + 1) % deviceCount;

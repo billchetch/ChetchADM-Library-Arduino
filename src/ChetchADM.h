@@ -72,7 +72,7 @@ namespace Chetch{
             static void handleStreamCommand(StreamFlowController *stream, byte cmd);
             static bool handleStreamLocalEvent(StreamFlowController *stream, byte cmd);
             static void handleStreamRemoteEvent(StreamFlowController *stream, byte cmd);
-            static bool handleStreamReadyToReceive(StreamFlowController *stream, bool request4cts);
+            static bool handleStreamReadyToReceive(StreamFlowController *stream);
             static void handleStreamReceive(StreamFlowController *stream, int bytesToRead);
             static void handleStreamSend(StreamFlowController *stream, int sendBufferRemaining);
             static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
@@ -95,6 +95,9 @@ namespace Chetch{
             unsigned long unixTime = 0; //TODO: set in initialisation
             unsigned long ledMillis = 0;
             unsigned long loopDuration = 0; //the duration in micros of the last loop
+
+            unsigned long messagesReceived = 0;
+            unsigned long messagesSent = 0;
 
         public:
             ArduinoDeviceManager(StreamFlowController *stream);
@@ -123,6 +126,12 @@ namespace Chetch{
             void flashLED(int interval, int diff, int blinkTime, int ledPin);
 
             int getFreeMemory();
+
+            unsigned long getBytesReceived();
+            unsigned long getBytesSent();
+
+            unsigned long getMessagesReceived();
+            unsigned long getMessagesSent();
     }; //end class
 } //end namespace
 

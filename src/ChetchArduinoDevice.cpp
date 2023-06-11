@@ -29,7 +29,7 @@ namespace Chetch{
         response->type = ADMMessage::MessageType::TYPE_INITIALISE_RESPONSE;
         response->addByte(category);
         response->addString(this->name);
-
+        
         return initialised;
     }
 
@@ -138,6 +138,18 @@ namespace Chetch{
 
             case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
                 status(message, response);
+                break;
+
+            case ADMMessage::MessageType::TYPE_PING:
+                response->type = ADMMessage::MessageType::TYPE_PING_RESPONSE;
+                response->addBool(enabled);
+                break;
+
+            case ADMMessage::MessageType::TYPE_ECHO:
+                response->copy(message);
+                response->sender = getID();
+                response->target = getID();
+                response->type = ADMMessage::MessageType::TYPE_ECHO_RESPONSE;
                 break;
 
             case ADMMessage::MessageType::TYPE_COMMAND:

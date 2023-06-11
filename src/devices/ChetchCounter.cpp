@@ -57,6 +57,7 @@ namespace Chetch{
 
     void Counter::setPin(byte pin){
         this->pin = pin;
+        pinMode(this->pin, INPUT); 
     }
 
     bool Counter::setInterruptMode(byte mode){

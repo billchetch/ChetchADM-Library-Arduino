@@ -24,6 +24,7 @@ namespace Chetch{
                 MOTOR = 11,
                 LCD = 12,
                 WEIGHT_SENSOR = 13,
+                TICKER = 14,
             };
 
             enum MessageField{
@@ -59,6 +60,7 @@ namespace Chetch{
                 DEACTIVATE,
                 RESUME,
                 ZERO,
+                ANALYSE,
             };
 
             enum class ErrorCode{
@@ -109,7 +111,7 @@ namespace Chetch{
             void setReportInterval(int interval);
             int getReportInterval();
             bool hasMessageToSend(); //if there is a message in the queue or not
-            void receiveMessage(ADMMessage *message, ADMMessage *response);
+            virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
             virtual void populateMessage(ADMMessage::MessageType messageType, ADMMessage *message);
             virtual void populateMessageToSend(byte messageID, ADMMessage *message);
             bool enqueueMessageToSend(byte messageID);
