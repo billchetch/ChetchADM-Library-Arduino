@@ -33,6 +33,7 @@ namespace Chetch{
 
             void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void receiveMessage(ADMMessage *message, ADMMessage *response) override;
+            void sendMessage(ADMMessage *message) override;
 
     }; //end class
 } //end namespae

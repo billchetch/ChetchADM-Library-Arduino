@@ -115,9 +115,14 @@ namespace Chetch{
             ArduinoDevice *addDevice(ADMMessage *message);
             ArduinoDevice* getDevice(byte deviceID);
             byte getDeviceCount();
+            
             void loop();
             virtual void receiveMessage(ADMMessage* message, ADMMessage* response);
+            void receivedMessage(ADMMessage* message);
+            
             void sendMessage(ADMMessage* message);
+            void sentMessage(ADMMessage* message);
+
             int getArgumentIndex(ADMMessage* message, MessageField field);
 
             bool isReady(); //connected, initialised and configured
@@ -126,6 +131,8 @@ namespace Chetch{
             void flashLED(int interval, int diff, int blinkTime, int ledPin);
 
             int getFreeMemory();
+
+            StreamFlowController *getStream();
 
             unsigned long getBytesReceived();
             unsigned long getBytesSent();

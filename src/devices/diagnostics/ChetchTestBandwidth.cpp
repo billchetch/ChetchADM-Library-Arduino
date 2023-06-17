@@ -32,12 +32,14 @@ namespace Chetch{
     void TestBandwidth::status(ADMMessage *message, ADMMessage *response){
         ArduinoDevice::status(message, response);
         if(ADM != NULL){
-            response->addULong(ADM->getBytesReceived());
-            response->addULong(ADM->getBytesSent());
-            response->addULong(ADM->getMessagesReceived());
-            response->addULong(ADM->getMessagesSent());
             response->addULong(messagesReceived);
             response->addULong(messagesSent);
+
+            StreamFlowController *sfc = ADM->getStream();
+            response->addBool(sfc->isClearToSend());
+            response->addInt(sfc->receiveBuffer->used());
+            response->addInt(sfc->sendBuffer->used());
+            response->addInt(sfc->bytesToRead());
         }
     }
 
@@ -48,10 +50,6 @@ namespace Chetch{
         messagesSent++;
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
-            message->addULong(ADM->getBytesReceived());
-            message->addULong(ADM->getBytesSent());
-            message->addULong(ADM->getMessagesReceived());
-            message->addULong(ADM->getMessagesSent());
             message->addULong(messagesReceived);
             message->addULong(messagesSent);
         }
@@ -62,6 +60,18 @@ namespace Chetch{
 
         if(activityPin >= 0)activatePin = true;
         messagesReceived++;
+        if(!response->isEmpty()){
+            messagesSent++;
+        }
+    }
+
+    void TestBandwidth::sendMessage(ADMMessage *message){
+        ArduinoDevice::sendMessage(message);
+
+        if(!message->isEmpty()){
+            if(activityPin >= 0)activatePin = true;
+            messagesSent++;
+        }
     }
 
     ArduinoDevice::DeviceCommand TestBandwidth::executeCommand(ADMMessage *message, ADMMessage *response){
@@ -86,7 +96,7 @@ namespace Chetch{
                 pinState = HIGH;
                 digitalWrite(activityPin, pinState);
                 pinActivatedOn = millis();
-            } else if(millis() - pinActivatedOn > 100){
+            } else if(millis() - pinActivatedOn > 50){
                 pinState = LOW;
                 digitalWrite(activityPin, pinState);
                 activatePin = false;

@@ -110,15 +110,21 @@ namespace Chetch{
             bool isActive(); //isReady AND enabled
             void setReportInterval(int interval);
             int getReportInterval();
-            bool hasMessageToSend(); //if there is a message in the queue or not
+            
             virtual void receiveMessage(ADMMessage *message, ADMMessage *response);
-            virtual void populateMessage(ADMMessage::MessageType messageType, ADMMessage *message);
-            virtual void populateMessageToSend(byte messageID, ADMMessage *message);
+            
             bool enqueueMessageToSend(byte messageID);
             byte dequeueMessageToSend();
+            
+            bool hasMessageToSend(); //if there is a message in the queue or not
+            virtual void populateMessage(ADMMessage::MessageType messageType, ADMMessage *message);
+            virtual void populateMessageToSend(byte messageID, ADMMessage *message);
+            
             void addErrorInfo(ADMMessage *message, ErrorCode errorCode, int subCode = 0, ADMMessage *originalMessage = NULL);
-            void sendMessage(ADMMessage *message);
+            virtual void sendMessage(ADMMessage *message);
+            
             int getArgumentIndex(ADMMessage *message, MessageField field);
+            
             virtual void loop();
     };
 

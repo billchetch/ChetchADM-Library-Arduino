@@ -157,7 +157,8 @@ namespace Chetch{
     }
 
     bool ArduinoDeviceManager::handleStreamReadyToReceive(StreamFlowController *stream){
-        return stream->canReceive(frame.getMaxSize()); //StreamFlowController::UART_LOCAL_BUFFER_SIZE);
+        //return stream->canReceive(frame.getMaxSize()); 
+        return stream->canReceive(StreamFlowController::UART_LOCAL_BUFFER_SIZE); // && stream->canSend(frame.getMaxSize()); 
     }
 
     void ArduinoDeviceManager::handleStreamReceive(StreamFlowController *stream, int bytesToRead){
@@ -189,8 +190,16 @@ namespace Chetch{
                 }
             } else {
                 //not valid so return an error...
+                Serial.print("!!!Yikes frame validaton error: ");
+                Serial.print(frame.error);
+                Serial.print(" frame schema ");
+                Serial.println(frame.schema);
+                Serial.print("B2R: ");
+                Serial.println(bytesToRead);
+
                 addErrorInfo(&outMessage, ErrorCode::MESSAGE_FRAME_ERROR, frame.error);
             }
+            ADM->receivedMessage(&inMessage);
 
         } //end check if there is an ADM instance
     }
@@ -210,11 +219,13 @@ namespace Chetch{
 
             if(frame.getSize() <= sendBufferRemaining){
                 stream->write(frame.getBytes(), frame.getSize(), true);
+                ADM->sentMessage(&outMessage);
                 outMessage.clear();
                 frame.reset();
             } else {
-                outMessage.clear();
-                frame.reset();
+                //outMessage.clear();
+                //frame.reset();
+                //Serial.println("ArduinoDeviceManager::handleStreamSend: cannot send message as send buffer remaining issue...");
                 //TODO: something?
             }
         }
@@ -481,6 +492,10 @@ namespace Chetch{
         return messagesSent;
     }
 
+    StreamFlowController *ArduinoDeviceManager::getStream(){
+        return stream;
+    }
+
     void ArduinoDeviceManager::loop(){
         unsigned long mcs = micros();
 
@@ -506,8 +521,6 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::receiveMessage(ADMMessage* message, ADMMessage* response){
-        messagesReceived++;
-                
         //find the device targeted by the message
         ErrorCode error = ErrorCode::NO_ERROR;
       
@@ -570,7 +583,6 @@ namespace Chetch{
                     response->addInt(stream->sendBuffer->remaining());
                     response->addInt(stream->sendBuffer->getMarkerCount());
                     response->addBool(stream->sentCTSTimeout);
-                    response->addBool(stream->receivedCTSTimeout);
                     break;
             }
         } else { //targetting device
@@ -616,15 +628,22 @@ namespace Chetch{
         }
     }
 
+    void ArduinoDeviceManager::receivedMessage(ADMMessage* message){
+        messagesReceived++;
+    }
+
     void ArduinoDeviceManager::sendMessage(ADMMessage* message){
         if(deviceCount > 0){
             ArduinoDevice *dev = devices[currentDevice];
-            if(dev->isReady() && dev->hasMessageToSend()){
-                messagesSent++;
+            if(dev->isReady()){
                 dev->sendMessage(message); 
             }
-            currentDevice = (currentDevice + 1) % deviceCount;
+            currentDevice = (currentDevice + 1) % deviceCount; ///hmmmm one device per loop
         }
+    }
+
+    void ArduinoDeviceManager::sentMessage(ADMMessage* message){
+        messagesSent++;
     }
 
     int ArduinoDeviceManager::getArgumentIndex(ADMMessage* message, MessageField field){
