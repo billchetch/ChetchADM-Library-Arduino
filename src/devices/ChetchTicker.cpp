@@ -37,12 +37,13 @@ namespace Chetch{
     void Ticker::populateMessageToSend(byte messageID, ADMMessage* message){
         ArduinoDevice::populateMessageToSend(messageID, message);
 
-       
+        if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
+            message->addULong(tickCount);
+        }
     }
 
 	void Ticker::loop(){
         ArduinoDevice::loop();
-        
         
 
         if(pinState == LOW && millis() - pinLowStartedOn > pinLowDuration){

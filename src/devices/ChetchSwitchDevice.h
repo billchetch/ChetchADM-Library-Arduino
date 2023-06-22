@@ -37,6 +37,7 @@ namespace Chetch{
             int getArgumentIndex(ADMMessage *message, MessageField field);
 
             bool configure(ADMMessage* message, ADMMessage* response) override;
+            void finalise(ADMMessage *message, ADMMessage *response) override;
             void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;

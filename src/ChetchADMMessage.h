@@ -27,7 +27,8 @@ namespace Chetch{
 	            TYPE_DATA,
 	            TYPE_COMMAND_RESPONSE = 24,
                 TYPE_NOTIFICATION = 26,
-	            TYPE_INITIALISE_RESPONSE = 28
+	            TYPE_INITIALISE_RESPONSE = 28,
+                TYPE_FINALISE = 30,
             };
 	  
             enum ErrorCode {

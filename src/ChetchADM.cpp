@@ -533,6 +533,7 @@ namespace Chetch{
                     break;
 
                 case ADMMessage::MessageType::TYPE_INITIALISE:
+                    //Serial.println("Initialse received...");
                     initialise(message, response);
                     if(!initialised)error = ErrorCode::ADM_FAILED_TO_INITIALISE;
                     break;
@@ -565,6 +566,10 @@ namespace Chetch{
                     response->type = ADMMessage::MessageType::TYPE_PING_RESPONSE;
                     response->addULong(millis());
                     response->addInt(getFreeMemory());
+                    break;
+
+                case ADMMessage::MessageType::TYPE_FINALISE:
+                    //Serial.println("ADM finalise called...");
                     break;
             }
         } else if (message->target == STREAM_TARGET_ID){ //targetting stream

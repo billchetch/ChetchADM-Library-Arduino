@@ -48,6 +48,10 @@ namespace Chetch{
         return configured;
     }
 
+    void ArduinoDevice::finalise(ADMMessage *message, ADMMessage *response){
+        //a hook
+    }
+
     void ArduinoDevice::status(ADMMessage *message, ADMMessage *response){
         response->type = ADMMessage::MessageType::TYPE_STATUS_RESPONSE;
         response->addBool(enabled);
@@ -134,6 +138,11 @@ namespace Chetch{
                     subCode = response->hasArgument(0) ? response->argumentAsInt(0) : 0;
                     addErrorInfo(response, ErrorCode::FAILED_TO_CONFIGURE, subCode, message);
                 }
+                break;
+
+             case ADMMessage::MessageType::TYPE_FINALISE:
+                //Serial.print("ArduinoDevice::finalise");
+                finalise(message, response);
                 break;
 
             case ADMMessage::MessageType::TYPE_STATUS_REQUEST:

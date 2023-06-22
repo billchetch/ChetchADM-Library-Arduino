@@ -34,7 +34,8 @@ namespace Chetch{
 
         switch(mode){
             case SwitchMode::PASSIVE:
-                pinMode(pin, INPUT); break;
+                pinMode(pin, INPUT); 
+                break;
 
             case SwitchMode::ACTIVE:
                 pinMode(pin, OUTPUT); 
@@ -44,6 +45,13 @@ namespace Chetch{
         }
 
         return true;
+    }
+
+    void SwitchDevice::finalise(ADMMessage* message, ADMMessage* response){
+        //Serial.print("SwitchDevice::finalise");
+        digitalWrite(pin, LOW);
+        pinMode(pin, INPUT); 
+        
     }
 
     void SwitchDevice::populateMessageToSend(byte messageID, ADMMessage* message){

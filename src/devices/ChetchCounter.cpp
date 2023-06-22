@@ -107,9 +107,12 @@ namespace Chetch{
             message->addULong(count);
             unsigned long duration = micros() - countStartedOn;
             message->addULong(duration);
-
-            count = 0;
-            countStartedOn = micros();
+            duration = count > 1 ? lastCountOn - firstCountOn : 0;
+            message->addULong(duration);
+           
+            //reset
+            countStarted = false;
+            
         }
     }
 
@@ -127,15 +130,23 @@ namespace Chetch{
         
         if(!countStarted){
             countStarted = true;
-            countStartedOn = micros();
             count = 0;
+            countStartedOn = micros();
+            firstCountOn = 0;
+            lastCountOn = 0;
         }
     }
 
     void Counter::onInterrupt(){
         if(countStarted && (tolerance == 0 || count == 0 || (micros() - countedOn >= tolerance))){
-            count++;
             countedOn = micros();
+            if(count == 0){
+                firstCountOn = countedOn;
+            } else {
+                lastCountOn = countedOn;
+            }
+            count++;
+            
         }
     }
 
