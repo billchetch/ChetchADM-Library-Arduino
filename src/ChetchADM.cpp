@@ -112,7 +112,6 @@ namespace Chetch{
         } else {
             switch(cmd){
                 case RESET_ADM_COMMAND: //for use by ESP8266
-                    ADM->reset();
                     break;
             }
         }
@@ -260,19 +259,6 @@ namespace Chetch{
         }
     }
 
-    void ArduinoDeviceManager::reset(){
-        for(int i = 0; i < deviceCount; i++){
-            delete devices[i];
-        }
-        totalDevices = 0;
-        deviceCount = 0;
-        configured = false;
-        initialised = false;
-        outMessage.clear();
-        inMessage.clear();
-        stream->end();
-    }
-
     void ArduinoDeviceManager::initialise(ADMMessage *message, ADMMessage *response){
         AttachmentMode amode = (AttachmentMode)message->argumentAsByte(getArgumentIndex(message, MessageField::ATTACH_MODE));
         if(amode != attachMode)return;
@@ -323,6 +309,18 @@ namespace Chetch{
         if(!configured)return;
 
         response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
+    }
+
+    void ArduinoDeviceManager::finalise(ADMMessage *message, ADMMessage *response){
+        for(int i = 0; i < deviceCount; i++){
+            delete devices[i];
+        }
+        totalDevices = 0;
+        deviceCount = 0;
+        configured = false;
+        initialised = false;
+        outMessage.clear();
+        inMessage.clear();
     }
 
     void ArduinoDeviceManager::onDevicesReady(){
@@ -528,19 +526,19 @@ namespace Chetch{
             response->sender = ADM_TARGET_ID;
             response->target = ADM_TARGET_ID;
             switch ((ADMMessage::MessageType)message->type) {
-                case ADMMessage::MessageType::TYPE_RESET:
-                    reset();
-                    break;
-
                 case ADMMessage::MessageType::TYPE_INITIALISE:
                     //Serial.println("Initialse received...");
                     initialise(message, response);
                     if(!initialised)error = ErrorCode::ADM_FAILED_TO_INITIALISE;
                     break;
 
-                 case ADMMessage::MessageType::TYPE_CONFIGURE:
+                case ADMMessage::MessageType::TYPE_CONFIGURE:
                     configure(message, response);
                     if(!configured)error = ErrorCode::ADM_FAILED_TO_CONFIUGRE;
+                    break;
+
+                case ADMMessage::MessageType::TYPE_FINALISE:
+                    finalise(message, response);
                     break;
 
                 case ADMMessage::MessageType::TYPE_STATUS_REQUEST:
@@ -551,8 +549,11 @@ namespace Chetch{
                     response->addBool(configured);
                     response->addByte(deviceCount);
                     response->addULong(loopDuration);
-                    response->addULong(getBytesReceived());
-                    response->addULong(getBytesSent());
+
+                    response->addULong(stream->bytesReceivedSinceCTS);
+                    response->addULong(stream->bytesSentSinceCTS);
+                    //response->addULong(getBytesReceived());
+                    //response->addULong(getBytesSent());
                     response->addULong(getMessagesReceived());
                     response->addULong(getMessagesSent());
                     break;
@@ -568,9 +569,6 @@ namespace Chetch{
                     response->addInt(getFreeMemory());
                     break;
 
-                case ADMMessage::MessageType::TYPE_FINALISE:
-                    //Serial.println("ADM finalise called...");
-                    break;
             }
         } else if (message->target == STREAM_TARGET_ID){ //targetting stream
             response->sender = STREAM_TARGET_ID;

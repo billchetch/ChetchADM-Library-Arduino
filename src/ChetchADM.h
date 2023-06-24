@@ -104,11 +104,11 @@ namespace Chetch{
             ~ArduinoDeviceManager();
             bool setup();
 
-            void reset();
             virtual void initialise(AttachmentMode attachMode, byte totalDevices, CADC::AnalogReference aref);
             void initialise(ADMMessage *message, ADMMessage *response);
             virtual void configure();
             void configure(ADMMessage *message, ADMMessage *response);
+            void finalise(ADMMessage *message, ADMMessage *response);
             void onDevicesReady();
 
             ArduinoDevice *addDevice(byte id, byte category, char *dname);
