@@ -121,6 +121,7 @@ namespace Chetch{
             virtual void populateMessage(ADMMessage::MessageType messageType, ADMMessage *message);
             virtual void populateMessageToSend(byte messageID, ADMMessage *message);
             
+            void addErrorSubCode(ADMMessage *message, int subCode);
             void addErrorInfo(ADMMessage *message, ErrorCode errorCode, int subCode = 0, ADMMessage *originalMessage = NULL);
             virtual void sendMessage(ADMMessage *message);
             

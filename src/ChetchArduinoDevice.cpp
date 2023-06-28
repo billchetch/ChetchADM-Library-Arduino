@@ -173,6 +173,11 @@ namespace Chetch{
         message->sender = getID();
     }
 
+    void ArduinoDevice::addErrorSubCode(ADMMessage *message, int subCode){
+        message->clear();
+        message->addInt(subCode);
+    }
+
     void ArduinoDevice::addErrorInfo(ADMMessage * message, ErrorCode errorCode, int subCode, ADMMessage *originalMessage){
         message->clear();
         populateMessage(ADMMessage::MessageType::TYPE_ERROR, message);

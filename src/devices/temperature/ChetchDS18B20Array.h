@@ -15,7 +15,10 @@ namespace Chetch{
                 SENSOR_RESOLUTION = 3,
             };
 
-            
+            enum class ErrorSubCode{
+                NO_SENSORS_CONNECTED = 101,
+            };
+
         private:
             byte oneWirePin = 0;
             byte numberOfSensors = 0;

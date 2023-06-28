@@ -20,6 +20,10 @@ namespace Chetch{
                 TOLERANCE,
             };
 
+            enum class ErrorSubCode{
+                FAILED_INTTERUPT_MODE = 101, //check pin is interrupt possible pin (see CINterrupt)
+            };
+
             static volatile unsigned long handleInterruptCount;
 
         private:

@@ -36,7 +36,7 @@ namespace Chetch{
         dallasTemp->setWaitForConversion(waitForConversion);
 
         numberOfSensors = dallasTemp->getDeviceCount();
-
+        
         if(numberOfSensors == 0)return false;
 
         deviceAddresses = new uint8_t * [numberOfSensors];
@@ -61,7 +61,10 @@ namespace Chetch{
             message->argumentAsByte(getArgumentIndex(message, MessageField::ONE_WIRE_PIN)),
             message->argumentAsByte(getArgumentIndex(message, MessageField::SENSOR_RESOLUTION)),
             false
-            ))return false;
+            )){
+            addErrorSubCode(response, (int)ErrorSubCode::NO_SENSORS_CONNECTED);
+            return false;
+        }
 
         requestTemperatures = true;
         

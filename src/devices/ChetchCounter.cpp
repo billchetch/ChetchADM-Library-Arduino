@@ -75,7 +75,10 @@ namespace Chetch{
         setPin(message->argumentAsByte(argIdx));
 
         argIdx = getArgumentIndex(message, MessageField::INTERRUPT_MODE);
-        setInterruptMode(message->argumentAsByte(argIdx));
+        if(!setInterruptMode(message->argumentAsByte(argIdx))){
+            addErrorSubCode(response, (int)ErrorSubCode::FAILED_INTTERUPT_MODE);
+            return false;
+        }
 
         argIdx = getArgumentIndex(message, MessageField::TOLERANCE);
         tolerance = message->argumentAsULong(argIdx);
