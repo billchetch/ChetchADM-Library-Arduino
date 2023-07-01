@@ -58,6 +58,10 @@ namespace Chetch{
     void Counter::setPin(byte pin){
         this->pin = pin;
         pinMode(this->pin, INPUT); 
+        
+        bitMask = digitalPinToBitMask(pin);
+        inreg = portInputRegister(digitalPinToPort(pin));
+        pinState = digitalRead(pin);
     }
 
     bool Counter::setInterruptMode(byte mode){
@@ -82,6 +86,9 @@ namespace Chetch{
 
         argIdx = getArgumentIndex(message, MessageField::TOLERANCE);
         tolerance = message->argumentAsULong(argIdx);
+
+        argIdx = getArgumentIndex(message, MessageField::PIN_STATE_TO_COUNT);
+        pinStateToCount = message->argumentAsBool(argIdx);
 
         response->addByte(pin);
         response->addByte(interruptMode);
@@ -138,17 +145,28 @@ namespace Chetch{
             firstCountOn = 0;
             lastCountOn = 0;
         }
+
+        if(interruptMode == 0 && ((bitMask & *inreg) == bitMask) != pinState){ //not using interrupts
+            onInterrupt();
+        } //end no interrupt condition
     }
 
     void Counter::onInterrupt(){
-        if(countStarted && (tolerance == 0 || count == 0 || (micros() - countedOn >= tolerance))){
-            countedOn = micros();
-            if(count == 0){
-                firstCountOn = countedOn;
-            } else {
-                lastCountOn = countedOn;
+        if(countStarted){
+            //TODO: add tolerance
+            unsigned long mcs = micros();
+            if(count > 0 && mcs - countedOn < tolerance)return;
+
+            pinState  = (bitMask & *inreg) == bitMask;
+            if(pinState == pinStateToCount){
+                countedOn = mcs;
+                if(count == 0){
+                    firstCountOn = countedOn;
+                } else {
+                    lastCountOn = countedOn;
+                }
+                count++;
             }
-            count++;
             
         }
     }

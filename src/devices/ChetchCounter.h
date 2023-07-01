@@ -18,6 +18,7 @@ namespace Chetch{
                 PIN = 2,
                 INTERRUPT_MODE,
                 TOLERANCE,
+                PIN_STATE_TO_COUNT,
             };
 
             enum class ErrorSubCode{
@@ -34,6 +35,10 @@ namespace Chetch{
             byte instanceIndex = 0; //passed to interrupt
             byte pin = 0;
             byte interruptMode = 0; //can be RISING, FALLING, CHANGE (0 for no interrupt)
+            volatile uint8_t * inreg;
+            uint8_t bitMask;
+
+            bool pinStateToCount = LOW;
             unsigned long tolerance = 0; //in millis
             bool countStarted = false;
             unsigned long countStartedOn = 0; //in micros as when count started
@@ -41,6 +46,7 @@ namespace Chetch{
             volatile unsigned long lastCountOn = 0; //in micros when the last interrupt fired
             volatile unsigned long count = 0;
             volatile unsigned long countedOn = 0;
+            volatile bool pinState = LOW;
             
      
         public: 
