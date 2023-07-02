@@ -56,6 +56,7 @@ namespace Chetch{
             static const byte RESET_ADM_COMMAND = 201; //for use by ESP8266
             
             static byte statusIndicatorPin;
+            static bool statusIndicatorPinState;
 
         private:
             
@@ -78,6 +79,7 @@ namespace Chetch{
             static void addErrorInfo(ADMMessage *message, ErrorCode errorCode, byte subCode = 0, ADMMessage *originalMessage = NULL);
             static void send(StreamFlowController *stream, ADMMessage *message);
             static int getMaxFrameSize();
+
         
         private:
             StreamFlowController *stream = NULL;
@@ -96,6 +98,7 @@ namespace Chetch{
             unsigned long ledMillis = 0;
             unsigned long loopDuration = 0; //the duration in micros of the last loop
 
+            bool commsActivity = false;
             unsigned long messagesReceived = 0;
             unsigned long messagesSent = 0;
 
@@ -128,7 +131,7 @@ namespace Chetch{
             bool isReady(); //connected, initialised and configured
 
             void indicateStatus();
-            void flashLED(int interval, int diff, int blinkTime, int ledPin);
+            bool flashStatusLED(int interval, int diff, int blinkTime);
 
             int getFreeMemory();
 

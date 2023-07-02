@@ -68,6 +68,7 @@ namespace Chetch{
     ADMMessage ArduinoDeviceManager::inMessage(ADM_MESSAGE_SIZE);
     ADMMessage ArduinoDeviceManager::outMessage(ADM_MESSAGE_SIZE);
     byte ArduinoDeviceManager::statusIndicatorPin = LED_BUILTIN;
+    bool ArduinoDeviceManager::statusIndicatorPinState = false;
 
     int ArduinoDeviceManager::inDevicesTable(char *dname){
         char stBuffer[ArduinoDevice::DEVICE_NAME_LENGTH];
@@ -441,31 +442,47 @@ namespace Chetch{
         return deviceCount;
     }
 
-    void ArduinoDeviceManager::flashLED(int interval, int diff, int blinkTime, int ledPin){
+    //returns true if changed state
+    bool ArduinoDeviceManager::flashStatusLED(int interval, int diff, int blinkTime){
         if(diff >= interval + blinkTime){
-            digitalWrite(ledPin, LOW);
+            statusIndicatorPinState = LOW;
+            digitalWrite(statusIndicatorPin, statusIndicatorPinState);
+            return true;
         } else if(diff >= interval){
-            digitalWrite(ledPin, HIGH);
+            statusIndicatorPinState = HIGH;
+            digitalWrite(statusIndicatorPin, statusIndicatorPinState);
+            return true;
+        } else {
+            return false;
         }
     }
 
     void ArduinoDeviceManager::indicateStatus(){
         if(statusIndicatorPin > 0){
-            unsigned long diff = millis() - ledMillis;
+            if(isReady() && commsActivity){
+                if(statusIndicatorPinState == LOW){
+                    digitalWrite(statusIndicatorPin, HIGH);
+                    statusIndicatorPinState = HIGH;
+                } else {
+                    digitalWrite(statusIndicatorPin, LOW);
+                    statusIndicatorPinState = LOW;
+                    commsActivity = false;
+                }
+            } else {
+                unsigned long diff = millis() - ledMillis;
             
-            //1. Long flash to mark start ... this shows that ADM has been created and we are looping
-            flashLED(0, diff, 500, statusIndicatorPin);
-            
-            //2. If no stream object or the stream is not ready then this will flash
-            if(stream == NULL || !stream->isReady())flashLED(750, diff, 100, statusIndicatorPin);
+                //1. If no stream object or the stream is not ready then this will flash
+                if(stream == NULL || !stream->isReady())flashStatusLED(0, diff, 1000);
 
-            //3. if the ADM is not initialised then this will flash
-            if(!initialised)flashLED(1500, diff, 100, statusIndicatorPin);
+                //2. if the ADM is not initialised then this will flash
+                if(!initialised)flashStatusLED(1500, diff, 500);
 
-            //4. If the ADM is not configured then this will flash
-            if(!configured)flashLED(2250, diff, 100, statusIndicatorPin);
-            if(diff > 5000){
-                ledMillis = millis();
+                //3. If the ADM is not configured then this will flash
+                if(!configured)flashStatusLED(2500, diff, 500);
+
+                if(diff > 5000){
+                    ledMillis = millis();
+                }
             }
         }
     }
@@ -516,6 +533,9 @@ namespace Chetch{
         }
 
         loopDuration = micros() - mcs;
+        /*if(loopDuration > 1000){
+            Serial.print("LD: "); Serial.println(loopDuration);
+        }*/
     }
 
     void ArduinoDeviceManager::receiveMessage(ADMMessage* message, ADMMessage* response){
@@ -632,6 +652,7 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::receivedMessage(ADMMessage* message){
+        commsActivity = true;
         messagesReceived++;
     }
 
@@ -646,6 +667,7 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::sentMessage(ADMMessage* message){
+        commsActivity = true; //set flag to show comms activity to be indicated on indcator led
         messagesSent++;
     }
 
