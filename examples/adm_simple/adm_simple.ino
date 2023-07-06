@@ -4,9 +4,9 @@
 //SFC values (these values are for UNO)
 #define LOCAL_UART_BUFFER 64
 #define REMOTE_UART_BUFFER 64
-#define RECEIVE_BUFFER 2*LOCAL_UART_BUFFER
-#define SEND_BUFFER 2*LOCAL_UART_BUFFER
-#define CTS_TIMEOUT 2000
+#define RECEIVE_BUFFER 128
+#define SEND_BUFFER 128
+#define CTS_TIMEOUT 4000
 
 using namespace Chetch;
 
@@ -17,7 +17,7 @@ void setup() {
   Serial.begin(115200);
   
   stream.setCTSTimeout(CTS_TIMEOUT);
-  stream.begin(&Serial);
+  stream.begin(&Serial, true);
   
   ADM = ArduinoDeviceManager::create(&stream); 
 }
