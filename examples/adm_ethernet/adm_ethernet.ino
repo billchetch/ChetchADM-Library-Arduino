@@ -9,15 +9,13 @@
 */
 
 #define TRACE true 
-#define DEV false //set to false for production values
+#define DEVPIN 12 //set to false for production values
+#define DEVIPCOMPONENT 4
+#define PROIPCOMPONENT 2
 
 #define HOSTNAME "crayfish" //change this per board
 #define PORT 8091 //change this per board
-#if DEV
-  #define NETWORK_SERVICE_SERVER_IP "192.168.4.188"
-#else
-  #define NETWORK_SERVICE_SERVER_IP "192.168.2.188"
-#endif
+//#define NETWORK_SERVICE_SERVER_IP "192.168.0.188"
 
 #define NETWORK_SERVICE_SERVER_PORT 8001
 #define NETWORK_SERVICE_CONNECT_TIMEOUT 20000 //
@@ -29,18 +27,13 @@
 #define SEND_BUFFER 512
 #define CTS_TIMEOUT 4000
 
-//change values below to fit your network
+//change values per board and to below to fit your network
 //NOTE: the Ethernet ENC 28J60works best with a fixed IP
 byte mac[] = {  0x00, 0xAD, 0xBE, 0xEF, 0xFE, 0xEF };
-#if DEV
-byte ip[] = { 192, 168, 4, 10 };    
-byte router[] = { 192, 168, 4, 1};
-#else
-byte ip[] = { 192, 168, 2, 10 };  
-byte router[] = { 192, 168, 2, 1};
-#endif
-
+byte ip[] = { 192, 168, 0, 10 };    
+byte router[] = { 192, 168, 0, 1};
 byte subnet[] = { 255, 255, 255, 0 };
+byte networkServiceServerIP[] = {192, 168, 0, 188};
 
 EthernetServer server(PORT);
 EthernetClient client;
@@ -58,18 +51,33 @@ void setup() {
   EthernetManager::trace = TRACE;
   NetworkAPI::trace = TRACE;
   bool serverStarted = false;
+  
+  pinMode(DEVPIN, INPUT_PULLUP);
+  bool dev = digitalRead(DEVPIN) == LOW;
+  byte ipComponent = dev ? DEVIPCOMPONENT : PROIPCOMPONENT;
+  if(TRACE){
+    Serial.print(dev ? "Dev mode" : "Production mode");
+    Serial.print(" use ip component ");
+    Serial.println(ipComponent);
+  }
+
+  ip[2] = ipComponent;
+  router[2] = ipComponent;
+  networkServiceServerIP[2] = ipComponent;
 
   do{
     digitalWrite(LED_BUILTIN, HIGH); //light stays on until server has started
     if(TRACE){
       Serial.println("Configuring ethernet...");
     }
+    
     if(EthernetManager::begin(mac, ip, router, subnet)){
       //ethernet hardware is setup so try and register service
       if(TRACE){
         Serial.println("Ethernet configured... attemting to register as a service...");
       }
-      int statusCode = NetworkAPI::registerService(client, NETWORK_SERVICE_SERVER_IP, NETWORK_SERVICE_SERVER_PORT, HOSTNAME, PORT, NETWORK_SERVICE_CONNECT_TIMEOUT);
+      
+      int statusCode = NetworkAPI::registerService(client, networkServiceServerIP, NETWORK_SERVICE_SERVER_PORT, HOSTNAME, PORT, NETWORK_SERVICE_CONNECT_TIMEOUT);
       if(statusCode == 200){ 
         //so we have registered this as a service
         if(TRACE){
