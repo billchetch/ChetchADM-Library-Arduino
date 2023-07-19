@@ -458,33 +458,41 @@ namespace Chetch{
     }
 
     void ArduinoDeviceManager::indicateStatus(){
-        if(statusIndicatorPin > 0){
-            if(isReady() && commsActivity){
-                if(statusIndicatorPinState == LOW){
-                    digitalWrite(statusIndicatorPin, HIGH);
-                    statusIndicatorPinState = HIGH;
-                } else {
-                    digitalWrite(statusIndicatorPin, LOW);
-                    statusIndicatorPinState = LOW;
-                    commsActivity = false;
-                }
+        if(statusIndicatorPin == 0)return;
+
+        if(isReady() && commsActivity){
+            if(statusIndicatorPinState == LOW){
+                digitalWrite(statusIndicatorPin, HIGH);
+                statusIndicatorPinState = HIGH;
             } else {
-                unsigned long diff = millis() - ledMillis;
+                digitalWrite(statusIndicatorPin, LOW);
+                statusIndicatorPinState = LOW;
+                commsActivity = false;
+            }
+        } else if(!isReady()) {
+            unsigned long diff = millis() - ledMillis;
             
-                //1. If no stream object or the stream is not ready then this will flash
-                if(stream == NULL || !stream->isReady())flashStatusLED(0, diff, 1000);
+            //1. Sign of life and positioning flash
+            flashStatusLED(0, diff, 1000);
 
-                //2. if the ADM is not initialised then this will flash
-                if(!initialised)flashStatusLED(1500, diff, 500);
+            //2. If no stream or not begun then flash
+            bool condition1 = stream == NULL || !stream->hasBegun(); 
+            if(condition1)flashStatusLED(1500, diff, 250);
 
-                //3. If the ADM is not configured then this will flash
-                if(!configured)flashStatusLED(2500, diff, 500);
+            //3. So there is a stream and it's started but not yet synched with remote
+            bool condition2 = condition1 || !stream->isReady();
+            if(condition2)flashStatusLED(2250, diff, 250);
 
-                if(diff > 5000){
-                    ledMillis = millis();
-                }
+            //4. If stream is ready but the ADM hasn't been configured by remote then flash
+            bool condition3 = condition2 || !stream->isReady();
+            if(condition3)flashStatusLED(3000, diff, 250);
+
+
+            if(diff > 5000){
+                ledMillis = millis();
             }
         }
+        
     }
 
     int ArduinoDeviceManager::getFreeMemory() {
