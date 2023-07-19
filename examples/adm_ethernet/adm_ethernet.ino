@@ -10,11 +10,17 @@
 
 #define TRACE true 
 #define DEVPIN 12 //set to false for production values
+#define RESETPIN 49 //pin to control hardware reset on ethernet
+#define STATUSPIN 48
+#define RESET_IF_NO_CLIENT_TIMEOUT 10000 //how long in millis to wait before trying a reset if client
+
 #define DEVIPCOMPONENT 4
 #define PROIPCOMPONENT 2
 
+#define ETHERNET_BEGIN_TIMEOUT 5000 //this is so we get the opportunity to do an led flash or something 
 #define HOSTNAME "crayfish" //change this per board
 #define PORT 8091 //change this per board
+
 //#define NETWORK_SERVICE_SERVER_IP "192.168.0.188"
 
 #define NETWORK_SERVICE_SERVER_PORT 8001
@@ -43,10 +49,17 @@ using namespace Chetch;
 StreamFlowController stream(LOCAL_UART_BUFFER, REMOTE_UART_BUFFER, RECEIVE_BUFFER, SEND_BUFFER);
 ArduinoDeviceManager* ADM;
 
+bool statusPinState = false;
+void statusPin(bool val){
+  digitalWrite(STATUSPIN, val);
+  statusPinState = val;
+}
+
 void setup() {
   Serial.begin(115200);
 
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(STATUSPIN, OUTPUT);
   
   EthernetManager::trace = TRACE;
   NetworkAPI::trace = TRACE;
@@ -66,15 +79,19 @@ void setup() {
   networkServiceServerIP[2] = ipComponent;
 
   do{
-    digitalWrite(LED_BUILTIN, HIGH); //light stays on until server has started
-    if(TRACE){
-      Serial.println("Configuring ethernet...");
-    }
+    statusPin(HIGH); //light stays on until server has started
+
+    //Peform a hardware reset before trying anything else as this setup may be run as a result of a board or power reset
+    EthernetManager::resetHardware(RESETPIN);
     
-    if(EthernetManager::begin(mac, ip, router, subnet)){
+    //Wait an additional period just to be sure
+    delay(1000);
+
+    //Now try and begin...
+    if(EthernetManager::begin(mac, ip, router, subnet, ETHERNET_BEGIN_TIMEOUT)){
       //ethernet hardware is setup so try and register service
       if(TRACE){
-        Serial.println("Ethernet configured... attemting to register as a service...");
+        Serial.println("Ethernet successfully configured... attemting to register this board as a service...");
       }
       
       int statusCode = NetworkAPI::registerService(client, networkServiceServerIP, NETWORK_SERVICE_SERVER_PORT, HOSTNAME, PORT, NETWORK_SERVICE_CONNECT_TIMEOUT);
@@ -99,58 +116,84 @@ void setup() {
           Serial.println("Server has started ... Now waiting for client connection..."); 
         }
         serverStarted = true;
-        digitalWrite(LED_BUILTIN, LOW);
       } else {
         if(TRACE){
           Serial.println("Failed to register service"); 
-          digitalWrite(LED_BUILTIN, LOW);
           delay(2000);
         }
       }
-    
+      statusPin(LOW);
+      
     } else { //problem with ethernet hardware
       Serial.println("Ethernet Failure!!!");
-      digitalWrite(LED_BUILTIN, LOW);
+      statusPin(LOW);
       delay(2000);
     }
   } while(!serverStarted);
+
 }
 
 
 bool clientConnected = false;
+bool resetHardware = false;
+
 void loop() {
+  static unsigned long lastHardwareReset = millis();
+  if(!clientConnected && millis() - lastHardwareReset > RESET_IF_NO_CLIENT_TIMEOUT){
+    resetHardware = true;
+  }
+
+
+  if(!EthernetManager::isLinked() || EthernetManager::hardwareError() || resetHardware){
+    resetHardware = false;
+    lastHardwareReset = millis();
+
+    statusPin(HIGH);
+
+    if(TRACE && !EthernetManager::isLinked())Serial.println("Ethernet not linked");
+    if(TRACE && EthernetManager::hardwareError())Serial.println("Ethernet hardware error");
+    if(TRACE && resetHardware)Serial.println("Reset hardware requested");
+
+    //stop the server
+    server.end();
+
+    //end stream if client connected flag still open and then to false
+    if(clientConnected){
+      clientConnected = false;
+      if(TRACE)Serial.println("Client still flagged as connected so setting to false and ending stream");
+      stream.end();
+    }
+
+    //perform a hardware reset
+    EthernetManager::resetHardware(RESETPIN);
+
+    //now try and begin ... keep trying begin forever
+    if(EthernetManager::begin(mac, ip, router, subnet, ETHERNET_BEGIN_TIMEOUT)){
+      //ok successful ethernet begin so fire up server
+      if(TRACE)Serial.println("Ethernet begun so firing up server...");
+      server.begin();
+    } else {
+      if(TRACE)Serial.println("Ethernet failed to begin so requesting a hardware reset...");
+      lastHardwareReset = millis() - RESET_IF_NO_CLIENT_TIMEOUT;
+    }
+
+    statusPin(LOW);
+  }
   
-  ADM->loop();
-
-  if(!EthernetManager::isLinked()){
-    if(TRACE)Serial.println("Ethernet not linked");
-    if(clientConnected){
-      clientConnected = false;
-      if(TRACE)Serial.println("Client still flagged as connected so setting to false and ending stream");
-      stream.end();
-    }
-    delay(100);
-    return;
-  }
-
-  if(EthernetManager::hardwareError()){
-    if(TRACE)Serial.println("Hardware error");
-    if(clientConnected){
-      clientConnected = false;
-      if(TRACE)Serial.println("Client still flagged as connected so setting to false and ending stream");
-      stream.end();
-    }
-    delay(100);
-    return;
-  }
+  //will indicate status using built in LED only if the client is connected ... hence no led activity indicates no client connected
+  ADM->loop(); 
 
   if(!clientConnected){
     client = server.available();
     if(client){
       if(TRACE)Serial.println("Client connected");
+      statusPin(HIGH);
       stream.begin(&client);
+      delay(100);
+      statusPin(LOW);
       clientConnected = true;
     } else {
+      statusPin(!statusPinState);
       delay(100);
     }
   } else {
@@ -158,8 +201,13 @@ void loop() {
     clientConnected = client.connected();
     if(!clientConnected){
       if(TRACE)Serial.println("Client disconnected");
+      statusPin(HIGH);
       stream.end();
       delay(100);
+      statusPin(LOW);
+
+      //start counting from here
+      lastHardwareReset = millis();
     }
   }
 }
