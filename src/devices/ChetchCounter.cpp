@@ -114,15 +114,15 @@ namespace Chetch{
         ArduinoDevice::populateMessageToSend(messageID, message);
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
-            message->addULong(count);
+            //setting this to false means the interrupt handler won't assign values to the vars below (single byte no cli/sei needed)
+            countStarted = false;
+
+            //assign to 
+            message->addULong(counted);
             unsigned long duration = micros() - countStartedOn;
             message->addULong(duration);
             duration = count > 1 ? lastCountOn - firstCountOn : 0;
             message->addULong(duration);
-           
-            //reset
-            countStarted = false;
-            
         }
     }
 
@@ -139,11 +139,13 @@ namespace Chetch{
         ArduinoDevice::loop(); 
         
         if(!countStarted){
-            countStarted = true;
             count = 0;
             countStartedOn = micros();
             firstCountOn = 0;
             lastCountOn = 0;
+
+            //make sure this is at the end .. this way we don't need cli/sei
+            countStarted = true;
         }
 
         if(interruptMode == 0 && ((bitMask & *inreg) == bitMask) != pinState){ //not using interrupts
@@ -153,7 +155,6 @@ namespace Chetch{
 
     void Counter::onInterrupt(){
         if(countStarted){
-            //TODO: add tolerance
             unsigned long mcs = micros();
             if(count > 0 && mcs - countedOn < tolerance)return;
 

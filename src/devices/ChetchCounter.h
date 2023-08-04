@@ -40,7 +40,7 @@ namespace Chetch{
 
             bool pinStateToCount = LOW;
             unsigned long tolerance = 0; //in millis
-            bool countStarted = false;
+            volatile bool countStarted = false;
             unsigned long countStartedOn = 0; //in micros as when count started
             volatile unsigned long firstCountOn = 0; //in micros when the first interrupt fired
             volatile unsigned long lastCountOn = 0; //in micros when the last interrupt fired
