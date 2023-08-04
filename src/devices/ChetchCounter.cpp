@@ -118,7 +118,7 @@ namespace Chetch{
             countStarted = false;
 
             //assign to 
-            message->addULong(counted);
+            message->addULong(count);
             unsigned long duration = micros() - countStartedOn;
             message->addULong(duration);
             duration = count > 1 ? lastCountOn - firstCountOn : 0;
