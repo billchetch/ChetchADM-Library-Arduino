@@ -251,7 +251,7 @@ namespace Chetch{
     }
 
     void ArduinoDevice::loop(){
-        if(reportInterval > 0 && isActive() && millis() - lastMillis >= reportInterval){
+        if(reportInterval > 0 && millis() - lastMillis >= reportInterval){
             //Serial.print("Message ready at device "); Serial.print(ID); Serial.print(" after "); Serial.print(millis() - lastMillis); Serial.println("ms");
             lastMillis = millis();
             enqueueMessageToSend(MESSAGE_ID_REPORT);
