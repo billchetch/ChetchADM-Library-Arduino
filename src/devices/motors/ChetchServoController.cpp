@@ -9,8 +9,11 @@ namespace Chetch{
     }
 
     ServoController::~ServoController(){
-        if(servo->attached()){
-            servo->detach();
+        if (servo != NULL) {
+            if (servo->attached()) {
+                servo->detach();
+            }
+            Servo::destroy(servo);
         }
     }
 
