@@ -69,10 +69,12 @@ namespace Chetch{
                 FAILED_TO_CONFIGURE = 3,
             };
 
-
+            typedef bool (*EventListener)(ArduinoDevice*, int);
+            
             static const byte DEVICE_NAME_LENGTH = 10;
             static const byte MESSAGE_QUEUE_LENGTH = 8;
             static const byte MESSAGE_ID_REPORT = 1;
+
 
         private:
             byte ID;
@@ -86,17 +88,21 @@ namespace Chetch{
             
             byte messageQueue[MESSAGE_QUEUE_LENGTH];
             
-
             bool initialised = false;
             bool configured = false;
             bool enabled = false;
 
+            EventListener eventListener = NULL;
+            
         public:
             ArduinoDeviceManager *ADM = NULL;
             byte messageCount = 0;
             
             ArduinoDevice(byte id, byte category, char* dname);
             virtual ~ArduinoDevice(); //to allow for polymorphic deletion
+
+            void addEventListener(EventListener listener);
+            bool raiseEvent(int eventID);
 
             virtual bool initialise(ADMMessage *message, ADMMessage *response);
             virtual bool configure(ADMMessage *message, ADMMessage *response);
@@ -107,7 +113,7 @@ namespace Chetch{
             char *getName();
             virtual void enable(bool enable = true);
             bool isReady(); //initialised AND configured
-            void setAsReady(); //set initialised and configured to true (used if attachment mode is OBSERVER_OBSERVED if creating and configur)
+            void setAsReady(bool enable); //set initialised and configured to true (used if attachment mode is OBSERVER_OBSERVED if creating and configur)
             bool isActive(); //isReady AND enabled
             void setReportInterval(int interval);
             int getReportInterval();

@@ -117,6 +117,7 @@ namespace Chetch{
                         message->argumentAsInt(getArgumentIndex(message, MessageField::CURSOR_POS_X)),
                         message->argumentAsInt(getArgumentIndex(message, MessageField::CURSOR_POS_Y))
                     );
+                break;
 
              case RESET:
                 reset();
@@ -153,13 +154,31 @@ namespace Chetch{
         }
     }
 
+    void LCD::print(double v) {
+        if (canUpdate()) {
+            lcd->print(v);
+        }
+    }
+
     void LCD::printLine(char* s, byte line, bool pad){
         if(!canUpdate())return;
 
         lcd->setCursor(0, line);
         lcd->print(s);
         if(pad){
-            for(byte i = strlen(s); i < columns; i++){
+            this->pad(s);
+        }
+    }
+
+    void LCD::pad(char* s) {
+        if (canUpdate()) {
+            pad(strlen(s));
+        }
+    }
+
+    void LCD::pad(int n) {
+        if (canUpdate()) {
+            for (byte i = n; i < columns; i++) {
                 lcd->print(" ");
             }
         }

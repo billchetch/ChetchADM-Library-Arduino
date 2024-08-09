@@ -303,10 +303,8 @@ namespace Chetch{
     }
         
     void ArduinoDeviceManager::configure(ADMMessage *message, ADMMessage *response){
-        if(attachMode != AttachmentMode::OBSERVER_OBSERVED){
-            configure();
-        }
-
+        configure();
+        
         if(!configured)return;
 
         response->type = ADMMessage::MessageType::TYPE_CONFIGURE_RESPONSE;
@@ -657,6 +655,10 @@ namespace Chetch{
             response->target = ADM_TARGET_ID;
             addErrorInfo(response, error, 0, message);
         }
+
+        if (messageReceivedListener != NULL) {
+            messageReceivedListener(message, response);
+        }
     }
 
     void ArduinoDeviceManager::receivedMessage(ADMMessage* message){
@@ -677,6 +679,10 @@ namespace Chetch{
     void ArduinoDeviceManager::sentMessage(ADMMessage* message){
         commsActivity = true; //set flag to show comms activity to be indicated on indcator led
         messagesSent++;
+    }
+
+    void ArduinoDeviceManager::addMessageReceivedListener(MessageReceivedListener listener) {
+        messageReceivedListener = listener;
     }
 
     int ArduinoDeviceManager::getArgumentIndex(ADMMessage* message, MessageField field){
@@ -703,6 +709,19 @@ namespace Chetch{
             return initialised && configured;
         } else {
             return stream->isReady() && initialised && configured;
+        }
+    }
+
+    bool ArduinoDeviceManager::setAsReady() {
+        if (attachMode == AttachmentMode::OBSERVER_OBSERVED) {
+            if (!initialised) {
+                return false;
+            }
+            configured = true;
+            return true;
+        }
+        else {
+            return false;
         }
     }
 

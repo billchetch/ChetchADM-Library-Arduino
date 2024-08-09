@@ -6,6 +6,15 @@
 #include <ChetchADMMessage.h>
 #include <ChetchISRTimer.h>
 
+#if defined(ARDUINO_AVR_MEGA2560)
+#define TIMER_NUMBER 3
+#define TIMER_PRESCALER 8 //'ticks'every 0.5 microseconds
+#else
+#define TIMER_NUMBER 0
+#define TIMER_PRESCALER 0
+#endif
+
+
 namespace Chetch{
     /*
     * Important:  The ZMPT101B can flatten the top and bottom of the wave form if the adjustment screw gives too high a reading.
@@ -29,13 +38,16 @@ namespace Chetch{
                 TARGET_TOLERANCE,
                 TARGET_LOWER_BOUND,
                 TARGET_UPPER_BOUND,
-                SCALE_WAVEFORM,
-                FINAL_OFFSET,
+                //SCALE_WAVEFORM,
+                //FINAL_OFFSET,
             };
 
             static const byte MESSAGE_ID_ADJUSTMENT = 200;
             static const byte BUFFER_SIZE = 128;
             static const byte MAX_INSTANCES = 2;
+            static const int EVENT_NEW_RESULTS = 1;
+            static const int EVENT_ADJUSTMENT_REQUIRED = 2;
+            static const int EVENT_TARGET_ATTAINED = 3;
 
         public: //TODO make private
             static ISRTimer* timer;
@@ -46,31 +58,28 @@ namespace Chetch{
             byte instanceIndex = 0;
             byte voltagePin = A0;
             
+            bool useTimer = false;
+            bool samplingPaused = false;
             volatile int buffer[BUFFER_SIZE];
-            volatile byte bufferIdx = 0;
-            volatile bool sampling = false; //set to true in ISR
-            volatile byte maxBufferIdx = 0;
-            
-            unsigned long sampleCount = 0;
-            unsigned long summedVoltages = 0;
-            unsigned long hzCount = 0;
-            
-            unsigned long sampleSize = 2000;
-           
-            int midPoint = 512;
-            double scaleWaveform = 1.34;
-            double finalOffset = 0; //2.5;
+            volatile int bufferIdx = 0;
+
+            unsigned long sampleSize = 2000; // BUFFER_SIZE;
+
+            //settings for readings
+            int midPoint = 512; // 512;
+            int hzNoiseThreshold = 50; //number of volts before we consider something above 0 volts
+            //double scaleWaveform = 1.0;
+            //double finalOffset = 0; //2.5;
+
+            //key properties
             double voltage = 0;
-            double minVoltage = 10; //below which we reduce to 0
-            double maxVoltage = 250; //above which we reduce to maxVoltage
             double hz = 0; 
-            
             
             Target target = Target::NONE;
             double targetValue = -1; //if < 0 then no stabalising/adjustment is required
-            double targetTolerance = 0;
-            double targetLowerBound = 0;
-            double targetUpperBound = -1;
+            double targetTolerance = 0; //deviations tolerated from target value before considered requiring adjustment
+            double targetLowerBound = 0; //lower than this we don't consider
+            double targetUpperBound = -1; //higher than this we don't consider
             
      
         public: 
@@ -86,9 +95,11 @@ namespace Chetch{
             void status(ADMMessage* message, ADMMessage* response) override;
             void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void setVoltagePin(byte pin);
-            void setTargetParameters(Target t, double tv, double tt = 0.0, double tlb = 0.0, double tub = -1.0);
+            void setTargetParameters(Target t, double tv, double tt, double tlb = 0.0, double tub = -1.0);
             void loop() override;
             void onAnalogRead(uint16_t v);
+            void pauseSampling(bool pause);
+            void assignResults(double newVoltage, double newHz);
             double getVoltage();
             double getHz();
             char *getSummary();

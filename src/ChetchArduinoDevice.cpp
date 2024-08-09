@@ -91,9 +91,10 @@ namespace Chetch{
         return initialised && configured;
     }
     
-    void ArduinoDevice::setAsReady(){
+    void ArduinoDevice::setAsReady(bool enable){
         initialised = true;
         configured = true;
+        this->enable(enable);
     }
 
     bool ArduinoDevice::isActive(){
@@ -230,8 +231,20 @@ namespace Chetch{
 
     void ArduinoDevice::sendMessage(ADMMessage *message){     
         if(hasMessageToSend()){
-            populateMessageToSend(dequeueMessageToSend(), message);
+            byte m2s = dequeueMessageToSend();
+            populateMessageToSend(m2s, message);
         }
+    }
+
+    void ArduinoDevice::addEventListener(EventListener listener) {
+        eventListener = listener;
+    }
+
+    bool ArduinoDevice::raiseEvent(int eventID) {
+        if (eventListener != NULL) {
+            return eventListener(this, eventID);
+        }
+        return false;
     }
 
     int ArduinoDevice::getArgumentIndex(ADMMessage *message, MessageField field){

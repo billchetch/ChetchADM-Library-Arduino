@@ -10,9 +10,6 @@ namespace Chetch{
 
     ServoController::~ServoController(){
         if (servo != NULL) {
-            if (servo->attached()) {
-                servo->detach();
-            }
             Servo::destroy(servo);
         }
     }
@@ -34,10 +31,11 @@ namespace Chetch{
         this->pin = pin;
     }
 
-    void ServoController::createServo(Servo::ServoModel model, int pos, int trimFactor){
+    void ServoController::createServo(Servo::ServoModel model, int pos, int trimFactor, unsigned int resolution = 1){
        servo = Servo::create(model);
         if(servo != NULL){
             servo->setTrim(trimFactor);
+            servo->setResolution(resolution);
             moveTo(pos);
         }
     }
@@ -58,8 +56,10 @@ namespace Chetch{
             message->argumentAsInt(getArgumentIndex(message, MessageField::UPPER_BOUND))
         );
         int trimFactor = message->argumentAsInt(getArgumentIndex(message, MessageField::TRIM_FACTOR));
-
-        createServo((Servo::ServoModel)model, pos, trimFactor);
+        unsigned int resolution = message->argumentAsUInt(getArgumentIndex(message, MessageField::RESOLUTION));
+        
+        //create the servo
+        createServo((Servo::ServoModel)model, pos, trimFactor, resolution);
         if(servo == NULL)return false;
 
         return true;
@@ -70,11 +70,12 @@ namespace Chetch{
         ArduinoDevice::populateMessageToSend(messageID, message);
 
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
-            //message->addInt(position);
+            message->addInt(getPosition());
         }
 
         if(messageID == MESSAGE_ID_STOPPED_MOVING){
-            //TODO: notification message goes here
+            populateMessage(ADMMessage::MessageType::TYPE_NOTIFICATION, message);
+            message->addInt(getPosition());
         }
     }
 
@@ -133,7 +134,7 @@ namespace Chetch{
             //servo.write(position);
             servo->attach(pin); 
         }
-       servo->write(pos);
+        servo->write(pos);
     }
 
     void ServoController::rotateBy(int increment){

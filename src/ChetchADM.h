@@ -49,7 +49,8 @@ namespace Chetch{
                 ANALOG_REFERENCE,
             };
     
-            
+            typedef void (*MessageReceivedListener)(ADMMessage*, ADMMessage*);
+
             static const byte ADM_MESSAGE_SIZE = 50;
             static const byte ADM_TARGET_ID = 0;
             static const byte STREAM_TARGET_ID = 255;
@@ -102,6 +103,8 @@ namespace Chetch{
             unsigned long messagesReceived = 0;
             unsigned long messagesSent = 0;
 
+            MessageReceivedListener messageReceivedListener = NULL;
+
         public:
             ArduinoDeviceManager(StreamFlowController *stream);
             ~ArduinoDeviceManager();
@@ -126,9 +129,12 @@ namespace Chetch{
             void sendMessage(ADMMessage* message);
             void sentMessage(ADMMessage* message);
 
+            void addMessageReceivedListener(MessageReceivedListener listener);
+
             int getArgumentIndex(ADMMessage* message, MessageField field);
 
             bool isReady(); //connected, initialised and configured
+            bool setAsReady(); //for bypassing stuff if attachment mode is OBSERVER_OBSERVED
 
             void indicateStatus();
             bool flashStatusLED(int interval, int diff, int blinkTime);

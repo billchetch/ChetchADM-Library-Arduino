@@ -61,7 +61,10 @@ namespace Chetch{
             void clear();
             void setCursor(int x, int y);
             void print(char *s);
+            void print(double v);
             void printLine(char* s, byte line = 0, bool pad = true);
+            void pad(int n);
+            void pad(char* s);
             void pauseUpdates(unsigned int duration);
     }; //end class
 } //end namespae

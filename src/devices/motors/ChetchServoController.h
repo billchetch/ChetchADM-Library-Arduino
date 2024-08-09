@@ -17,6 +17,7 @@ namespace Chetch{
                 LOWER_BOUND,
                 UPPER_BOUND,
                 TRIM_FACTOR,
+                RESOLUTION,
                 INCREMENT,
             };
 
@@ -39,7 +40,7 @@ namespace Chetch{
 
             void setPin(byte pin);
             void setBounds(int lowerBound, int upperBound);
-            void createServo(Servo::ServoModel, int pos, int trimFactor);
+            void createServo(Servo::ServoModel, int pos, int trimFactor, unsigned int resolution);
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
