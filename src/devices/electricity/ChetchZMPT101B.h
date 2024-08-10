@@ -30,6 +30,12 @@ namespace Chetch{
                 HZ = 2,
             };
 
+            enum Direction {
+                Stable = 0,
+                Rising = 1,
+                Falling = 2,
+            };
+
             enum MessageField{
                 PIN = 2,
                 SAMPLE_SIZE,
@@ -46,8 +52,9 @@ namespace Chetch{
             static const byte BUFFER_SIZE = 128;
             static const byte MAX_INSTANCES = 2;
             static const int EVENT_NEW_RESULTS = 1;
-            static const int EVENT_ADJUSTMENT_REQUIRED = 2;
-            static const int EVENT_TARGET_ATTAINED = 3;
+            static const int EVENT_TARGET_REACHED = 2;
+            static const int EVENT_TARGET_LOST = 3;
+            static const int EVENT_OUT_OF_TARGET_RANGE = 4;
 
         public: //TODO make private
             static ISRTimer* timer;
@@ -81,31 +88,45 @@ namespace Chetch{
             double targetLowerBound = 0; //lower than this we don't consider
             double targetUpperBound = -1; //higher than this we don't consider
             
-     
+            Direction voltageDirection = Direction::Stable;
+            Direction hzDirection = Direction::Stable;
+
         public: 
             static ZMPT101B* create(byte id, byte cat, char *dn);
             static void handleTimerInterrupt();
 
             ZMPT101B(byte id, byte cat, char *dn);
             ~ZMPT101B() override;
-
             void setInstanceIndex(byte idx);
+            
+            //configure
             int getArgumentIndex(ADMMessage *message, MessageField field);
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void status(ADMMessage* message, ADMMessage* response) override;
             void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void setVoltagePin(byte pin);
             void setTargetParameters(Target t, double tv, double tt, double tlb = 0.0, double tub = -1.0);
+            
             void loop() override;
+
+            //results
             void onAnalogRead(uint16_t v);
             void pauseSampling(bool pause);
             void assignResults(double newVoltage, double newHz);
             double getVoltage();
             double getHz();
             char *getSummary();
-            double getTargetedValue();
-            bool isTargetedValueInRange();
+
+            //monitoring stuff
+            double getCurrentValue();
+            bool inTargetRange();
             double adjustBy(); 
+            Direction getDirection(double newVal, double oldValue, double tolerance = 0.0);
+            Direction getVoltageDirection();
+            Direction getHzDirection();
+            Direction getDesiredDirection();
+            Direction getCurrentDirection();
+
     }; //end class
 } //end namespae
 #endif

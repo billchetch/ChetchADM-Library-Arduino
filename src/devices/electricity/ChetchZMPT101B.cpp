@@ -259,7 +259,34 @@ namespace Chetch{
         samplingPaused = pause;
     }
 
+    ZMPT101B::Direction ZMPT101B::getDirection(double newVal, double oldVal, double tolerance) {
+        double diff = newVal - oldVal;
+        if (abs(diff) <= tolerance) {
+            return Direction::Stable;
+        }
+        else if (diff > 0) {
+            return Direction::Rising;
+        }
+        else {
+            return Direction::Falling;
+        }
+    }
+
+    ZMPT101B::Direction ZMPT101B::getVoltageDirection() {
+        return voltageDirection;
+    }
+
+    ZMPT101B::Direction ZMPT101B::getHzDirection() {
+        return voltageDirection;
+    }
+
     void ZMPT101B::assignResults(double newVoltage, double newHz) {
+        
+
+        //assess direction
+        voltageDirection = getDirection(newVoltage, voltage, 0.0);
+        hzDirection = getDirection(newHz, hz, 0.0);
+
         //assign to key properties
         voltage = newVoltage;
         hz = newHz;
@@ -274,15 +301,27 @@ namespace Chetch{
         //raise some events
         raiseEvent(EVENT_NEW_RESULTS);
 
-        static bool adjustmentRequired = false;
-        double adj = adjustBy();
-        if (adj != 0) {
-            adjustmentRequired = true;
-            raiseEvent(EVENT_ADJUSTMENT_REQUIRED);
+        static bool outOfRange = false;
+        static bool targetLost = false;
+        static bool targetReached = false; //flag to not raise repeated events
+        if (inTargetRange()){
+            outOfRange = false;
+            if (adjustBy() != 0) {
+                targetReached = false;
+                if (!targetLost) { //raise event one time
+                    targetLost = true;
+                    raiseEvent(EVENT_TARGET_LOST);
+                }
+            }
+            else if (!targetReached) {
+                targetReached = true;
+                targetLost = false;
+                raiseEvent(EVENT_TARGET_REACHED);
+            }
         }
-        else if (adjustmentRequired) {
-            adjustmentRequired = false;
-            raiseEvent(EVENT_TARGET_ATTAINED);
+        else if (outOfRange){
+            outOfRange = true;
+            raiseEvent(EVENT_OUT_OF_TARGET_RANGE);
         }
     }
 
@@ -304,7 +343,7 @@ namespace Chetch{
         return summary;
     }
 
-    double ZMPT101B::getTargetedValue(){
+    double ZMPT101B::getCurrentValue(){
         switch(target){
             case Target::HZ:
                 return getHz();
@@ -317,18 +356,37 @@ namespace Chetch{
         }
     }
 
-    bool ZMPT101B::isTargetedValueInRange(){
+    //whether the current value is even worth considering
+    bool ZMPT101B::inTargetRange(){
         if(targetUpperBound <= targetLowerBound)return true;
       
-        double v = getTargetedValue();
+        double v = getCurrentValue();
         return (v >= targetLowerBound && v <= targetUpperBound);
     }
     
     double ZMPT101B::adjustBy(){
-        if(targetValue <= 0 || !isTargetedValueInRange())return 0;
+        if(targetValue <= 0 || !inTargetRange())return 0;
 
-        double v = getTargetedValue();
+        double v = getCurrentValue();
         double adjustment = targetValue - v;
         return abs(adjustment) < targetTolerance ? 0 : adjustment;
     } 
+
+    ZMPT101B::Direction ZMPT101B::getDesiredDirection() {
+        return getDirection(adjustBy(), 0.0, 0.0);
+    }
+
+    ZMPT101B::Direction ZMPT101B::getCurrentDirection() {
+        switch(target) {
+            case Target::HZ:
+                return getHzDirection();
+
+            case Target::VOLTAGE:
+                return getVoltageDirection();
+
+            default:
+                return -1;
+        }
+    }
+
 } //end namespace
