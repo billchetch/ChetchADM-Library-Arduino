@@ -86,6 +86,7 @@ namespace Chetch{
         if(servo != NULL && moving && !servo->isMoving()){
             //Serial.println("Stopped!");
             moving = false;
+            raiseEvent(EVENT_STOPPED_MOVING);
             enqueueMessageToSend(MESSAGE_ID_STOPPED_MOVING);
         }
 
@@ -129,11 +130,13 @@ namespace Chetch{
         }
         
         moving = true;
-        
+        raiseEvent(EVENT_STARTED_MOVING);
+
         if(!servo->attached()){
             //servo.write(position);
             servo->attach(pin); 
         }
+        
         servo->write(pos);
     }
 

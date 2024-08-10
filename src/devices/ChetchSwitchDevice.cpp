@@ -19,32 +19,42 @@ namespace Chetch{
         if(!ArduinoDevice::configure(message, response))return false;
         
         int argIdx = getArgumentIndex(message, MessageField::MODE);
-        mode = (SwitchMode)message->argumentAsByte(argIdx);
+        SwitchMode m = (SwitchMode)message->argumentAsByte(argIdx);
         argIdx = getArgumentIndex(message, MessageField::PIN);
-        pin = message->argumentAsByte(argIdx);
+        byte p = message->argumentAsByte(argIdx);
         argIdx = getArgumentIndex(message, MessageField::PIN_STATE);
-        pinState = message->argumentAsBool(argIdx);
+        bool ps = message->argumentAsBool(argIdx);
         argIdx = getArgumentIndex(message, MessageField::TOLERANCE);
-        tolerance = message->argumentAsInt(argIdx);
+        int tol = message->argumentAsInt(argIdx);
+
+        configure(m, p, tol, ps);
 
         response->addByte((byte)mode);
         response->addByte(pin);
         response->addBool(pinState);
         response->addInt(tolerance);
 
-        switch(mode){
-            case SwitchMode::PASSIVE:
-                pinMode(pin, INPUT); 
-                break;
+        return true;
+    }
 
-            case SwitchMode::ACTIVE:
-                pinMode(pin, OUTPUT); 
-                digitalWrite(pin, pinState);
-                break;
-                
+    void SwitchDevice::configure(SwitchMode mode, byte pin, int tolerance, bool pinState){
+        this->mode = mode;
+        this->pin = pin;
+        this->tolerance = tolerance;
+        this->pinState = pinState;
+
+        switch (mode) {
+        case SwitchMode::PASSIVE:
+            pinMode(pin, INPUT);
+            break;
+
+        case SwitchMode::ACTIVE:
+            pinMode(pin, OUTPUT);
+            digitalWrite(pin, pinState);
+            break;
         }
 
-        return true;
+        on = pinState == HIGH;
     }
 
     void SwitchDevice::finalise(ADMMessage* message, ADMMessage* response){
@@ -126,7 +136,11 @@ namespace Chetch{
             digitalWrite(pin, pinState);
             enqueueMessageToSend(MESSAGE_ID_TRIGGERED);
         }
+        on = pinState == HIGH;
+        raiseEvent(EVENT_SWITCH_TRIGGERED);
     }
 
-
+    bool SwitchDevice::isOn() {
+        return on;
+    }
 } //end namespace

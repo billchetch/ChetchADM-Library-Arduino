@@ -22,6 +22,7 @@ namespace Chetch{
 
 
             static const byte MESSAGE_ID_TRIGGERED = 200;
+            static const int EVENT_SWITCH_TRIGGERED = 1;
 
         private:
             SwitchMode mode;
@@ -29,6 +30,7 @@ namespace Chetch{
             bool pinState = false;
             int tolerance = 0;
             unsigned long recording = 0;
+            bool on = false;
             
         public: 
             
@@ -36,12 +38,14 @@ namespace Chetch{
 
             int getArgumentIndex(ADMMessage *message, MessageField field);
 
+            void configure(SwitchMode mode, byte pin, int tolerance, bool pinState = LOW);
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void finalise(ADMMessage *message, ADMMessage *response) override;
             void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
             virtual void trigger();
+            bool isOn();
 
     }; //end class
 } //end namespae

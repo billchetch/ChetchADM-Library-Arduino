@@ -81,6 +81,7 @@ namespace Chetch{
             //key properties
             double voltage = 0;
             double hz = 0; 
+            double precisionFactor = 10.0*1; //number of dps
             
             Target target = Target::NONE;
             double targetValue = -1; //if < 0 then no stabalising/adjustment is required
@@ -90,6 +91,7 @@ namespace Chetch{
             
             Direction voltageDirection = Direction::Stable;
             Direction hzDirection = Direction::Stable;
+            
 
         public: 
             static ZMPT101B* create(byte id, byte cat, char *dn);
@@ -112,6 +114,7 @@ namespace Chetch{
             //results
             void onAnalogRead(uint16_t v);
             void pauseSampling(bool pause);
+            bool isSamplingPaused();
             void assignResults(double newVoltage, double newHz);
             double getVoltage();
             double getHz();
@@ -122,8 +125,6 @@ namespace Chetch{
             bool inTargetRange();
             double adjustBy(); 
             Direction getDirection(double newVal, double oldValue, double tolerance = 0.0);
-            Direction getVoltageDirection();
-            Direction getHzDirection();
             Direction getDesiredDirection();
             Direction getCurrentDirection();
 

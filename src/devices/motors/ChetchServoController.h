@@ -21,7 +21,11 @@ namespace Chetch{
                 INCREMENT,
             };
 
+
+
             static const byte MESSAGE_ID_STOPPED_MOVING = 200;
+            static const int EVENT_STARTED_MOVING = 1;
+            static const int EVENT_STOPPED_MOVING = 2;
             
         private: 
             Servo* servo = NULL; 

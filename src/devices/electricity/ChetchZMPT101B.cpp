@@ -259,6 +259,10 @@ namespace Chetch{
         samplingPaused = pause;
     }
 
+    bool ZMPT101B::isSamplingPaused() {
+        return samplingPaused;
+    }
+
     ZMPT101B::Direction ZMPT101B::getDirection(double newVal, double oldVal, double tolerance) {
         double diff = newVal - oldVal;
         if (abs(diff) <= tolerance) {
@@ -272,16 +276,13 @@ namespace Chetch{
         }
     }
 
-    ZMPT101B::Direction ZMPT101B::getVoltageDirection() {
-        return voltageDirection;
-    }
-
-    ZMPT101B::Direction ZMPT101B::getHzDirection() {
-        return voltageDirection;
-    }
-
     void ZMPT101B::assignResults(double newVoltage, double newHz) {
         
+        //do some rounding
+        if(precisionFactor > 0){
+            newVoltage = round(newVoltage * precisionFactor) / precisionFactor;
+            newHz = round(newHz * precisionFactor) / precisionFactor;
+        }
 
         //assess direction
         voltageDirection = getDirection(newVoltage, voltage, 0.0);
@@ -319,8 +320,10 @@ namespace Chetch{
                 raiseEvent(EVENT_TARGET_REACHED);
             }
         }
-        else if (outOfRange){
+        else if (!outOfRange){
             outOfRange = true;
+            targetLost = false;
+            targetReached = false;
             raiseEvent(EVENT_OUT_OF_TARGET_RANGE);
         }
     }
@@ -369,7 +372,7 @@ namespace Chetch{
 
         double v = getCurrentValue();
         double adjustment = targetValue - v;
-        return abs(adjustment) < targetTolerance ? 0 : adjustment;
+        return abs(adjustment) <= targetTolerance ? 0 : adjustment;
     } 
 
     ZMPT101B::Direction ZMPT101B::getDesiredDirection() {
@@ -379,10 +382,10 @@ namespace Chetch{
     ZMPT101B::Direction ZMPT101B::getCurrentDirection() {
         switch(target) {
             case Target::HZ:
-                return getHzDirection();
+                return hzDirection;
 
             case Target::VOLTAGE:
-                return getVoltageDirection();
+                return voltageDirection;
 
             default:
                 return -1;
