@@ -83,6 +83,7 @@ namespace Chetch{
             double hz = 0; 
             double precisionFactor = 10.0*1; //number of dps
             
+            
             Target target = Target::NONE;
             double targetValue = -1; //if < 0 then no stabalising/adjustment is required
             double targetTolerance = 0; //deviations tolerated from target value before considered requiring adjustment
@@ -92,6 +93,18 @@ namespace Chetch{
             Direction voltageDirection = Direction::Stable;
             Direction hzDirection = Direction::Stable;
             
+            //event flags
+            bool outOfRange = false;
+            bool targetLost = false;
+            bool targetReached = false; //flag to not raise repeated events
+
+
+            //debug stuff
+            unsigned long val1 = 0;
+            unsigned long val2 = 0;
+            unsigned long val3 = 0;
+            unsigned long val4 = 0;
+            unsigned long val5 = 0;
 
         public: 
             static ZMPT101B* create(byte id, byte cat, char *dn);
@@ -113,7 +126,7 @@ namespace Chetch{
 
             //results
             void onAnalogRead(uint16_t v);
-            void pauseSampling(bool pause);
+            void pauseSampling(bool pause, bool reset);
             bool isSamplingPaused();
             void assignResults(double newVoltage, double newHz);
             double getVoltage();

@@ -115,33 +115,44 @@ namespace Chetch{
 
 
     int ServoController::getPosition(){
-        return servo == NULL ? -1 : servo->read();
+        //return servo == NULL ? -1 : servo->read(); //calculated position of the servo
+        return position;
     }
 
     void ServoController::moveTo(int pos){
-        if(servo == NULL)return;
+        if (servo == NULL)return;
 
-        if(upperBound > lowerBound){
+        if (upperBound > lowerBound) {
             if(pos < lowerBound){
                 pos = lowerBound;
+                raiseEvent(EVENT_LOWER_BOUND_REACHED);
             } else if(pos > upperBound){
                 pos = upperBound;
+                raiseEvent(EVENT_LOWER_BOUND_REACHED);
             }
         }
         
         moving = true;
         raiseEvent(EVENT_STARTED_MOVING);
 
-        if(!servo->attached()){
+        if (!servo->attached()) {
             //servo.write(position);
             servo->attach(pin); 
         }
         
-        servo->write(pos);
+        position = servo->write(pos);
     }
 
     void ServoController::rotateBy(int increment){
-        moveTo(getPosition() + increment);
+        int pos = getPosition() + increment;
+        moveTo(pos);
     }
 
+
+    bool ServoController::reachedLowerBound() {
+        return position == lowerBound;
+    }
+    bool ServoController::reachedUpperBound() {
+        return position == upperBound;
+    }
 } //end namespace

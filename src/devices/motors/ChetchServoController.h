@@ -26,13 +26,15 @@ namespace Chetch{
             static const byte MESSAGE_ID_STOPPED_MOVING = 200;
             static const int EVENT_STARTED_MOVING = 1;
             static const int EVENT_STOPPED_MOVING = 2;
+            static const int EVENT_LOWER_BOUND_REACHED = 3;
+            static const int EVENT_UPPER_BOUND_REACHED = 4;
             
         private: 
             Servo* servo = NULL; 
             byte pin = 0;
             int lowerBound = 0;
             int upperBound = 180; 
-            
+            int position = -1;
             bool moving = false; //flag for sending stopped moving event message
             
         public: 
@@ -53,6 +55,9 @@ namespace Chetch{
             int getPosition();
             void moveTo(int angle);
             void rotateBy(int increment);
+
+            bool reachedLowerBound();
+            bool reachedUpperBound();
     }; //end class
 } //end namespae
 #endif

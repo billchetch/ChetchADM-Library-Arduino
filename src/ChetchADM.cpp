@@ -564,7 +564,9 @@ namespace Chetch{
                     break;
 
                 case ADMMessage::MessageType::TYPE_FINALISE:
-                    finalise(message, response);
+                    if (attachMode != AttachmentMode::OBSERVER_OBSERVED) {
+                        finalise(message, response);
+                    }
                     break;
 
                 case ADMMessage::MessageType::TYPE_STATUS_REQUEST:

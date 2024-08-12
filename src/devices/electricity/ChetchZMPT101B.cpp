@@ -149,6 +149,11 @@ namespace Chetch{
         if(messageID == ArduinoDevice::MESSAGE_ID_REPORT){
             message->addDouble(getVoltage());
             message->addDouble(getHz());
+            message->addULong(val1);
+            message->addULong(val2);
+            message->addULong(val3);
+            message->addULong(val4);
+            message->addULong(val5);
         }
 
         if(messageID == MESSAGE_ID_ADJUSTMENT){
@@ -235,7 +240,9 @@ namespace Chetch{
             sampleCount += BUFFER_SIZE;
 
             //fill up buffer again for some more samples
+            cli();
             bufferIdx = 0;
+            sei();
         } //finished processing buffer
 
         //now process all the samples
@@ -244,7 +251,12 @@ namespace Chetch{
             double newVoltage = sqrt((double)summedVoltages / (double)sampleCount); // *scaleWaveform) + finalOffset;
             uint32_t duration = timer->interruptsToMicros(&ZMPT101B::handleTimerInterrupt, hzCountDuration);
             double newHz = (500000.0 * (double)hzCount) / (double)duration;
-
+            val1 = hzCountDuration;
+            val2 = timer->getCompareA();
+            val3 = timer->interruptCounts[1];
+            val4 = hzCountDuration * 1 * val2 * timer->prescaler;
+            val5 = timer->prescaler;
+            
             assignResults(newVoltage, newHz);
 
             //reset for next set of samples
@@ -255,8 +267,15 @@ namespace Chetch{
         } //end sample finished conditional
     }
 
-    void ZMPT101B::pauseSampling(bool pause) {
+    void ZMPT101B::pauseSampling(bool pause, bool resetValues) {
         samplingPaused = pause;
+        if (resetValues) {
+            voltage = 0;
+            hz = 0;
+            outOfRange = false;
+            targetLost = false;
+            targetReached = false;
+        }
     }
 
     bool ZMPT101B::isSamplingPaused() {
@@ -302,10 +321,8 @@ namespace Chetch{
         //raise some events
         raiseEvent(EVENT_NEW_RESULTS);
 
-        static bool outOfRange = false;
-        static bool targetLost = false;
-        static bool targetReached = false; //flag to not raise repeated events
-        if (inTargetRange()){
+        
+        if (inTargetRange()) {
             outOfRange = false;
             if (adjustBy() != 0) {
                 targetReached = false;
