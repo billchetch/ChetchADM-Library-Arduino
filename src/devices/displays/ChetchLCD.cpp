@@ -95,7 +95,25 @@ namespace Chetch{
 	void LCD::loop(){
         ArduinoDevice::loop();
        
+        static unsigned long msSinceReset = millis();
+        if (resetAfter > 0 && millis() - msSinceReset > resetAfter) {
+            msSinceReset = millis();
+            reset();
 
+            /*lcd->write4bits(0x03);
+            delayMicroseconds(4500); // wait min 4.1ms
+
+            // second try
+            lcd->write4bits(0x03);
+            delayMicroseconds(4500); // wait min 4.1ms
+
+            // third go!
+            lcd->write4bits(0x03);
+            delayMicroseconds(150);
+
+            // finally, set to 4-bit interface
+            lcd->write4bits(0x02);*/
+        }
     }
 
     ArduinoDevice::DeviceCommand LCD::executeCommand(ADMMessage *message, ADMMessage *response){
@@ -131,6 +149,25 @@ namespace Chetch{
 
     void LCD::reset(){
         if(columns > 0 && rows > 0){
+            /*digitalWrite(lcd->_rs_pin, LOW);
+            digitalWrite(lcd->_enable_pin, LOW);
+
+            //lcd->begin(columns, rows);
+            lcd->write4bits(0x03);
+            delayMicroseconds(4500); // wait min 4.1ms
+
+            // second try
+            lcd->write4bits(0x03);
+            delayMicroseconds(4500); // wait min 4.1ms
+
+            // third go!
+            lcd->write4bits(0x03);
+            delayMicroseconds(150);
+
+            // finally, set to 4-bit interface
+            lcd->write4bits(0x02);
+
+            printLine("", 1);*/
             lcd->begin(columns, rows);
             startedPause = 0;
             pauseDuration = 0;
@@ -184,7 +221,7 @@ namespace Chetch{
         }
     }
 
-    void LCD::pauseUpdates(unsigned int duration){
+    void LCD::pauseUpdates(long duration){
         pauseDuration = duration;
         if(pauseDuration > 0){
             startedPause = millis();
@@ -193,13 +230,21 @@ namespace Chetch{
         }
     }
 
+    void LCD::resumeUpdates() {
+        pauseDuration = 0;
+        startedPause = 0;
+    }
+
     bool LCD::canUpdate(){
         if(pauseDuration > 0){
             bool update = (millis() - startedPause > pauseDuration);
             if(update)pauseDuration = 0; //reset if can update
             return update;
+        } else if(pauseDuration < 0){
+            return false;
         } else {
             return true;
         }
     }
+    
 } //end namespace

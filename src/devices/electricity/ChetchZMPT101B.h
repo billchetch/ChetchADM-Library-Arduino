@@ -74,7 +74,7 @@ namespace Chetch{
 
             //settings for readings
             int midPoint = 512; // 512;
-            int hzNoiseThreshold = 50; //number of volts before we consider something above 0 volts
+            int hzThresholdVoltage = 100; //number of volts before we consider something above 0 volts
             //double scaleWaveform = 1.0;
             //double finalOffset = 0; //2.5;
 
@@ -121,12 +121,13 @@ namespace Chetch{
             void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void setVoltagePin(byte pin);
             void setTargetParameters(Target t, double tv, double tt, double tlb = 0.0, double tub = -1.0);
-            
+            void setHzThresholdVoltage(int threshold);
             void loop() override;
 
             //results
             void onAnalogRead(uint16_t v);
-            void pauseSampling(bool pause, bool reset);
+            void pauseSampling(bool reset);
+            void resumeSampling(bool reset);
             bool isSamplingPaused();
             void assignResults(double newVoltage, double newHz);
             double getVoltage();

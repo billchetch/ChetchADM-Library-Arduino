@@ -4,6 +4,8 @@
 #include <ChetchNetworkAPI.h>
 #include <ChetchADMConfig.h>
 #include <ChetchADM.h>
+#include "devices/displays/ChetchLCD.h"
+
 
 /*
 * NOTE: If you encounter problems using a standalone power supply (i.e. something other than the USB connector to a computer)
@@ -17,7 +19,13 @@
 //#include "mollusc.h"
 #include "plankton.h"
 
+
 #define TRACE true 
+
+//LCD defs
+#define LCD_ID 1
+#define LCD_ENABLE_PIN 6
+#define LCD_RS_PIN 7
 
 EthernetServer server(PORT);
 EthernetClient client;
@@ -26,6 +34,7 @@ using namespace Chetch;
 
 StreamFlowController stream(LOCAL_UART_BUFFER, REMOTE_UART_BUFFER, RECEIVE_BUFFER, SEND_BUFFER);
 ArduinoDeviceManager* ADM;
+LCD* lcd = NULL;
 
 bool statusPinState = false;
 void statusPin(bool val){
@@ -41,12 +50,21 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(STATUSPIN, OUTPUT);
   
+
+  //ADM creating
   stream.setCTSTimeout(CTS_TIMEOUT);
   ADM = ArduinoDeviceManager::create(&stream); 
   if(TRACE){
     Serial.println("Created ADM");
-  }    
-
+  }
+  ADM->initialise(ArduinoDeviceManager::AttachmentMode::OBSERVER_OBSERVED,
+      1,
+      CADC::AnalogReference::AREF_INTERNAL);
+  lcd = (LCD*)ADM->addDevice(LCD_ID, ArduinoDevice::Category::LCD, "LCD");
+  lcd->setPins(LCD::DataPinSequence::Pins_5_2, LCD_ENABLE_PIN, LCD_RS_PIN);
+  lcd->setDimensions(LCD::DisplayDimensions::D16x2);
+  lcd->setAsReady(true); //enable at the same time  
+  //end ADM creation
 
   EthernetManager::trace = TRACE;
   NetworkAPI::trace = TRACE;
@@ -71,18 +89,21 @@ void setup() {
     Ethernet.init(ETHERNET_INIT_PIN);
   }
 
-
+  //prep lcd for use
+  lcd->reset();
   do{
     setupAttempts++;
     if(TRACE){
       Serial.print("Attempting setup ... ");
       Serial.println(setupAttempts);
+      lcd->printLine("Attempt setup...");
     }
     statusPin(HIGH); //light stays on until server has started
 
     //Peform a hardware reset before trying anything else as this setup may be run as a result of a board or power reset
     if(RESETPIN > 0){
       EthernetManager::resetHardware(RESETPIN);
+      lcd->printLine("Reset hardware");
       //Wait an additional period just to be sure
       statusPin(LOW);
       delay(1000);
@@ -91,7 +112,9 @@ void setup() {
 
     //Now try and begin...
     serverStarted = false;
+    lcd->printLine("Begin Ethernet");
     if(EthernetManager::begin(mac, ip, router, subnet, ETHERNET_BEGIN_TIMEOUT)){
+      lcd->printLine("Begun Ethernet");
       //ethernet hardware is setup so try and register service
       if(TRACE){
         Serial.println("Ethernet successfully configured ... firing up server...");
@@ -108,17 +131,20 @@ void setup() {
         if(TRACE){
           Serial.println("Successfully registered service");
         }
+        lcd->printLine("Registered!");
         registeredAsService = true;
       } else {
         if(TRACE){
           Serial.println("Failed to register service"); 
         }
+        lcd->printLine("Failed Reg.!");
       }
       statusPin(LOW);
     } else { //problem with ethernet begin
       if(TRACE){
         Serial.println("Ethernet Failure!!!");
       }
+      lcd->printLine("Ethernet Fail!");
     }
     setupComplete = serverStarted && registeredAsService;
   } while(!setupComplete && setupAttempts < MAX_SETUP_ATTEMPTS);
@@ -126,8 +152,10 @@ void setup() {
   if(TRACE){
     if(!setupComplete){
       Serial.println("Setup failed to complete!");
+      lcd->printLine("Failed!");
     } else {
       Serial.println("Setup completed successfully!");
+      lcd->printLine("Setup!");
     }
   }
 }
@@ -154,6 +182,7 @@ void loop() {
   }
 
   //variety of conditions that trigger an reinitialising of the ethernet connection
+  
   if(resetHardware){
     if(TRACE && !EthernetManager::isLinked())Serial.println("Ethernet not linked");
     if(TRACE && EthernetManager::hardwareError())Serial.println("Ethernet hardware error");
@@ -189,6 +218,14 @@ void loop() {
   
   //will indicate status using built in LED only if the client is connected ... hence no led activity indicates no client connected
   ADM->loop(); 
+  static unsigned long lcdMillis = millis();
+  static unsigned long n = 0;
+  if(millis() - lcdMillis > 1000){
+    lcd->setCursor(0, 0);
+    lcd->print("Count: ");
+    lcd->print(n++);
+    lcdMillis = millis();
+  }
 
   if(!clientConnected){
     client = server.available();

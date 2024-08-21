@@ -17,7 +17,9 @@
 //#include "mollusc.h"
 #include "plankton.h"
 
-#define TRACE true 
+#include "governor.h"
+
+#define TRACE false 
 
 EthernetServer server(PORT);
 EthernetClient client;
@@ -41,12 +43,16 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(STATUSPIN, OUTPUT);
   
+  delay(500);
+  
+  //ADM creating
   stream.setCTSTimeout(CTS_TIMEOUT);
   ADM = ArduinoDeviceManager::create(&stream); 
   if(TRACE){
     Serial.println("Created ADM");
-  }    
-
+  }
+  setupGovernor(ADM);
+  //end ADM creation
 
   EthernetManager::trace = TRACE;
   NetworkAPI::trace = TRACE;
@@ -71,18 +77,21 @@ void setup() {
     Ethernet.init(ETHERNET_INIT_PIN);
   }
 
-
+  //prep lcd for use
+  lcd->reset();
   do{
     setupAttempts++;
     if(TRACE){
       Serial.print("Attempting setup ... ");
       Serial.println(setupAttempts);
+      lcd->printLine("Attempt setup...");
     }
     statusPin(HIGH); //light stays on until server has started
 
     //Peform a hardware reset before trying anything else as this setup may be run as a result of a board or power reset
     if(RESETPIN > 0){
       EthernetManager::resetHardware(RESETPIN);
+      lcd->printLine("Reset hardware");
       //Wait an additional period just to be sure
       statusPin(LOW);
       delay(1000);
@@ -91,7 +100,9 @@ void setup() {
 
     //Now try and begin...
     serverStarted = false;
+    lcd->printLine("Begin Ethernet");
     if(EthernetManager::begin(mac, ip, router, subnet, ETHERNET_BEGIN_TIMEOUT)){
+      lcd->printLine("Begun Ethernet");
       //ethernet hardware is setup so try and register service
       if(TRACE){
         Serial.println("Ethernet successfully configured ... firing up server...");
@@ -108,17 +119,20 @@ void setup() {
         if(TRACE){
           Serial.println("Successfully registered service");
         }
+        lcd->printLine("Registered!");
         registeredAsService = true;
       } else {
         if(TRACE){
           Serial.println("Failed to register service"); 
         }
+        lcd->printLine("Failed Reg.!");
       }
       statusPin(LOW);
     } else { //problem with ethernet begin
       if(TRACE){
         Serial.println("Ethernet Failure!!!");
       }
+      lcd->printLine("Ethernet Fail!");
     }
     setupComplete = serverStarted && registeredAsService;
   } while(!setupComplete && setupAttempts < MAX_SETUP_ATTEMPTS);
@@ -126,8 +140,10 @@ void setup() {
   if(TRACE){
     if(!setupComplete){
       Serial.println("Setup failed to complete!");
+      lcd->printLine("Failed!");
     } else {
       Serial.println("Setup completed successfully!");
+      lcd->printLine("Setup!");
     }
   }
 }
@@ -154,7 +170,10 @@ void loop() {
   }
 
   //variety of conditions that trigger an reinitialising of the ethernet connection
+  
   if(resetHardware){
+    lcd->reset();
+    lcd->printLine("Reset Ethernet");
     if(TRACE && !EthernetManager::isLinked())Serial.println("Ethernet not linked");
     if(TRACE && EthernetManager::hardwareError())Serial.println("Ethernet hardware error");
     if(TRACE && resetHardware)Serial.println("Reset hardware requested");
@@ -174,8 +193,10 @@ void loop() {
     resetHardware = false;
 
     //now try and begin ...
+    lcd->printLine("Begin Ethernet");
     if(EthernetManager::begin(mac, ip, router, subnet, ETHERNET_BEGIN_TIMEOUT)){
       //ok successful ethernet begin so fire up server
+      lcd->printLine("Begun Ethernet");
       if(TRACE)Serial.println("Ethernet begun so firing up server...");
       server.begin();
       serverStarted = true;
@@ -189,6 +210,15 @@ void loop() {
   
   //will indicate status using built in LED only if the client is connected ... hence no led activity indicates no client connected
   ADM->loop(); 
+  loopGovernor();
+  /*static unsigned long lcdMillis = millis();
+  static unsigned long n = 0;
+  if(millis() - lcdMillis > 1500){
+    lcd->setCursor(0, 0);
+    lcd->print("Count: ");
+    lcd->print(n++);
+    lcdMillis = millis();
+  }*/
 
   if(!clientConnected){
     client = server.available();

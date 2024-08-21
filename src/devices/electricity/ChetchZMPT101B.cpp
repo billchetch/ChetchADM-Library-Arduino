@@ -170,6 +170,10 @@ namespace Chetch{
         targetUpperBound = tub;
     }                   
     
+    void ZMPT101B::setHzThresholdVoltage(int threshold) {
+        hzThresholdVoltage = threshold;
+    }
+
     void ZMPT101B::onAnalogRead(uint16_t value) {
         //This method is called by the timer interrupt
         
@@ -211,10 +215,10 @@ namespace Chetch{
                 int currentVoltage = (int)buffer[i] - midPoint;
                 //tempBuffer[i] = currentVoltage; // buffer[i];
                 
-                if (currentVoltage > hzNoiseThreshold) {
+                if (currentVoltage > hzThresholdVoltage) {
                     currentPosition = 1;
                 }
-                else if (currentVoltage < -hzNoiseThreshold) {
+                else if (currentVoltage < -hzThresholdVoltage) {
                     currentPosition = -1;
                 }
                 else {
@@ -267,8 +271,19 @@ namespace Chetch{
         } //end sample finished conditional
     }
 
-    void ZMPT101B::pauseSampling(bool pause, bool resetValues) {
-        samplingPaused = pause;
+    void ZMPT101B::pauseSampling(bool resetValues) {
+        samplingPaused = true;
+        if (resetValues) {
+            voltage = 0;
+            hz = 0;
+            outOfRange = false;
+            targetLost = false;
+            targetReached = false;
+        }
+    }
+
+    void ZMPT101B::resumeSampling(bool resetValues) {
+        samplingPaused = false;
         if (resetValues) {
             voltage = 0;
             hz = 0;

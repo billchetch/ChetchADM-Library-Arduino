@@ -39,13 +39,16 @@ namespace Chetch{
             byte columns = 0;
             byte rows = 0;
             unsigned long startedPause = 0;
-            unsigned int pauseDuration = 0;
+            long pauseDuration = 0;
+            
 
         private:
             bool canUpdate();
             
         public: 
             
+            unsigned long resetAfter = 0;
+
             LCD(byte id, byte cat, char *dn);
             ~LCD() override;
 
@@ -56,6 +59,7 @@ namespace Chetch{
             bool configure(ADMMessage* message, ADMMessage* response) override;
             void populateMessageToSend(byte messageID, ADMMessage* message) override;
             void loop() override;
+            
             DeviceCommand executeCommand(ADMMessage *message, ADMMessage *response) override;
             void reset();
             void clear();
@@ -65,7 +69,8 @@ namespace Chetch{
             void printLine(char* s, byte line = 0, bool pad = true);
             void pad(int n);
             void pad(char* s);
-            void pauseUpdates(unsigned int duration);
+            void pauseUpdates(long duration = -1); //-1 is indefinite
+            void resumeUpdates();
     }; //end class
 } //end namespae
 #endif
