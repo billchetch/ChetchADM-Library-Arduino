@@ -19,7 +19,7 @@
 
 #include "governor.h"
 
-#define TRACE false 
+#define TRACE true 
 
 EthernetServer server(PORT);
 EthernetClient client;
@@ -44,7 +44,7 @@ void setup() {
   pinMode(STATUSPIN, OUTPUT);
   
   delay(500);
-  
+
   //ADM creating
   stream.setCTSTimeout(CTS_TIMEOUT);
   ADM = ArduinoDeviceManager::create(&stream); 
@@ -211,15 +211,7 @@ void loop() {
   //will indicate status using built in LED only if the client is connected ... hence no led activity indicates no client connected
   ADM->loop(); 
   loopGovernor();
-  /*static unsigned long lcdMillis = millis();
-  static unsigned long n = 0;
-  if(millis() - lcdMillis > 1500){
-    lcd->setCursor(0, 0);
-    lcd->print("Count: ");
-    lcd->print(n++);
-    lcdMillis = millis();
-  }*/
-
+  
   if(!clientConnected){
     client = server.available();
     if(client){
@@ -231,8 +223,8 @@ void loop() {
       clientConnected = true;
       resetHardware = false; //cancel all resets
     } else {
-      statusPin(!statusPinState);
-      delay(100);
+      //statusPin(!statusPinState); //flashes
+      //delay(100);
     }
   } else {
     //client is already connected so 

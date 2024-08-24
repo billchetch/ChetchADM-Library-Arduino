@@ -107,6 +107,7 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                 lcd->pauseUpdates(2000);
                 mode = argv;
                 break;
+
             case CMD_RESET_LCD:
                 lcd->reset();
                 break;
@@ -215,6 +216,9 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                 sprintf(output, "%s", zmpt->getSummary());
             }
             lcd->printLine(output);
+            memset(output, 0, 20);
+            sprintf(output, "SP=%d", svc->getPosition());
+            lcd->printLine(output, 1);
             break;
 
         case ZMPT101B::EVENT_TARGET_REACHED:
@@ -223,17 +227,6 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                 Serial.println();
             }
             targetLost = false;
-            char output[32];
-            if (svc->reachedUpperBound()) {
-                sprintf(output, "> SP=%d (UB) <", svc->getPosition());
-            }
-            else if (svc->reachedLowerBound()) {
-                sprintf(output, "> SP=%d (LB) <", svc->getPosition());
-            }
-            else {
-                sprintf(output, "> SP=%d <", svc->getPosition());
-            }
-            //lcd->printLine(output, 1);
             break;
 
         case ZMPT101B::EVENT_TARGET_LOST:
@@ -249,7 +242,6 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
         case ZMPT101B::EVENT_OUT_OF_TARGET_RANGE:
             if (mode == MODE_MANUAL || !engineOn)break;
             targetLost = false;
-            //lcd->reset();
             lcd->printLine("Out of range!", 1);
             lcd->pauseUpdates(2000);
             break;
@@ -263,21 +255,16 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
     svc->setPin(SVC_SERVO_PIN);
     svc->setBounds(45, 135);
     svc->createServo(Servo::ServoModel::MG996, SERVO_START_POS, 0, SERVO_RESOLUTION);
-    svc->addEventListener([](ArduinoDevice* device, int eventID){
+    /*svc->addEventListener([](ArduinoDevice* device, int eventID){
+                            char output[20];
                             switch(eventID){
                               case ServoController::EVENT_STARTED_MOVING:
-                                //the servo motion can cause the lcd to lose sync (nibble bit) 
                                 break;
                               case ServoController::EVENT_STOPPED_MOVING:
-                                if(mode == MODE_MANUAL){
-                                    //lcd->printLine("Manual Mode...");
-                                } else {
-
-                                }
                                 break;
                             }
                             return true;
-                          });
+                          });*/
     svc->setAsReady(true);
     
     bsp = (SwitchDevice*)ADM->addDevice(BSP_ID, ArduinoDevice::Category::SWITCH, "SWITCH");
@@ -351,25 +338,27 @@ void loopGovernor() {
                 switch (desiredDir) {
                 case ZMPT101B::Direction::Falling:
                     svc->rotateBy(-SERVO_ROTATE_INC);
-                    /*if (svc->reachedLowerBound()) {
+                    if (svc->reachedLowerBound()) {
                         lcd->printLine("<<<< SP=LB!", 1);
                     }
                     else {
                         sprintf(output, "<<<< SP <- %d", svc->getPosition());
                         lcd->printLine(output, 1);
-                    }*/
+                    }
+                    lcd->pauseUpdates(1000);
                     waitFor = WAIT_AFTER_TARGET_ACTION;
                     break;
 
                 case ZMPT101B::Direction::Rising:
                     svc->rotateBy(SERVO_ROTATE_INC);
-                    /*if (svc->reachedUpperBound()) {
+                    if (svc->reachedUpperBound()) {
                         lcd->printLine(">>>> SP=UB!", 1);
                     }
                     else {
                         sprintf(output, ">>>> SP -> %d", svc->getPosition());
                         lcd->printLine(output, 1);
-                    }*/
+                    }
+                    lcd->pauseUpdates(1000);
                     waitFor = WAIT_AFTER_TARGET_ACTION;
                     break;
 
@@ -382,11 +371,13 @@ void loopGovernor() {
                 switch (resultDir) {
                 case ZMPT101B::Direction::Falling:
                     lcd->printLine("<<<< Waiting...", 1);
+                    lcd->pauseUpdates(1000);
                     waitFor = WAIT_AFTER_TARGET_ACTION;
                     break;
 
                 case ZMPT101B::Direction::Rising:
                     lcd->printLine(">>>> Waiting...", 1);
+                    lcd->pauseUpdates(1000);
                     waitFor = WAIT_AFTER_TARGET_ACTION;
                     break;
 
