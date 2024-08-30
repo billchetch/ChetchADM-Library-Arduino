@@ -10,9 +10,12 @@
 
 //modes
 #define CMD_SET_MODE 1
+#define MODE_NONE 0 //used for start up when in testing mode
 #define MODE_TEST 1
 #define MODE_MANUAL 2
 #define MODE_AUTO 3
+#define MODE_CONFIG 4
+#define MODE_MONITOR 5 //for just reading the results and other info
 
 #define CMD_RESET_LCD 2
 
@@ -28,7 +31,14 @@
 
 //if in manual mode
 #define CMD_ROTATE_SERVO 20
-#define SERVO_ROTATE_INC 5 //in degrees
+#define SERVO_ROTATE_INC 1 //in multiples of servo resolution (see below)
+
+//in in config mode
+#define CMD_CHOOSE_CONFIG_OPTION 30
+#define CMD_UPDATE_CONFIG_OPTION_VALUE 31
+#define MAX_CONFIG_OPTIONS 3 //same as the index below
+char *configOptions[] = { "Rotate by", "Target Val.",  "Target Tol."};
+int configOptionsIndex = 0;
 
 //if in auto mode
 #define WAIT_AFTER_TARGET_ACTION 8 //how many �ycles to wait after an action is taken to reach target
@@ -50,8 +60,11 @@
 #define SVC_SERVO_PIN 30
 #define SERVO_START_POS 90
 #define SERVO_RESOLUTION 5
+#define SVC_LOWER_BOUND 15
+#define SVC_UPPER_BOUND 135
 #define BSP_ID 4
 #define BOSPUMP_PIN 8
+#define ENGINE_WARMUP_TIME 30*1000 //in millis ... the amount of time to wait before considering the engine warmed up (engineOn = true)
 
 namespace Chetch{
     
@@ -64,10 +77,15 @@ SwitchDevice* bsp = NULL;
 bool admConnected = false;
 
 //control variables
-int mode = MODE_AUTO; //this starts as a governor
+int mode = MODE_NONE; //this starts in an unselected mode
+//int mode = MODE_AUTO; //this starts as a governor
 bool targetLost = false;
 bool engineOn = false;
 unsigned long bspOnAt = 0;
+int rotateServoBy = SERVO_ROTATE_INC; //this is in steps of resolution
+double hzTarget = ZMPT_HZ_TARGET;
+double hzTargetTolerance = ZMPT_HZ_TARGET_TOLERANCE;
+
 
 void setupGovernor(ArduinoDeviceManager* ADM) {
 
@@ -89,6 +107,7 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                     if (!zmpt->isSamplingPaused()) {
                         zmpt->pauseSampling(true);
                     }
+                    zmpt->assignResults(220.0, hzTarget);
                 }
                 else if (argv == MODE_MANUAL) {
                     lcd->printLine("Manual Mode...");
@@ -98,13 +117,28 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                     sprintf(output, "SP=%d", svc->getPosition());
                     lcd->printLine(output, 1);
                 }
-                else {
+                else if (argv == MODE_CONFIG) {
+                    lcd->printLine("Config Mode...");
+                    if (!zmpt->isSamplingPaused()) {
+                        zmpt->pauseSampling(true);
+                    }
+                    lcd->printLine("> To select", 1);
+                    configOptionsIndex = MAX_CONFIG_OPTIONS - 1; //move to end so that first selection is at the beginning
+                } else if (argv == MODE_AUTO) {
                     lcd->printLine("Auto Mode...");
                     if (zmpt->isSamplingPaused()) {
                         zmpt->resumeSampling(true);
                     }
+                    sprintf(output, "SP=%d", svc->getPosition());
+                    lcd->printLine(output, 1);
+                } else if (argv == MODE_MONITOR) {
+                    lcd->printLine("Monitor Mode...");
+                    if (zmpt->isSamplingPaused()) {
+                        zmpt->resumeSampling(true);
+                    }
+                    lcd->printLine("", 1);
                 }
-                lcd->pauseUpdates(2000);
+                lcd->pauseUpdates(1500);
                 mode = argv;
                 break;
 
@@ -155,10 +189,10 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
             case CMD_ROTATE_SERVO:
                 if (mode != MODE_MANUAL)break;
                 if (argv == 1) {
-                    svc->rotateBy(SERVO_ROTATE_INC);
+                    svc->rotateBy(rotateServoBy*SERVO_RESOLUTION);
                 }
                 else if (argv == -1) {
-                    svc->rotateBy(-SERVO_ROTATE_INC);
+                    svc->rotateBy(-rotateServoBy*SERVO_RESOLUTION);
                 }
                 else {
                     svc->moveTo(SERVO_START_POS);
@@ -166,18 +200,58 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                 sprintf(output, "SP=%d", svc->getPosition());
                 lcd->printLine(output, 1);
                 break;
+
+              case CMD_CHOOSE_CONFIG_OPTION:
+              case CMD_UPDATE_CONFIG_OPTION_VALUE:
+                if (mode != MODE_CONFIG)break;
+                bool modifyValue = false;
+                if (command == CMD_CHOOSE_CONFIG_OPTION) {
+                  configOptionsIndex = (configOptionsIndex + 1) % MAX_CONFIG_OPTIONS;
+                } else {
+                  modifyValue = true;
+                }
+                sprintf(output, "> %s", configOptions[configOptionsIndex]);
+                lcd->printLine(output);
+                switch(configOptionsIndex){
+                  case 0: //
+                    if(modifyValue)rotateServoBy += 1*argv;
+                    sprintf(output, "%d", rotateServoBy*SERVO_RESOLUTION);
+                    lcd->printLine(output, 1);
+                    break;
+  
+                  case 1:
+                    if(modifyValue)hzTarget += 0.1*(double)argv;
+                    if(hzTarget < 0)hzTarget = 0.0;
+                    dtostrf(hzTarget, 2, 1, output);
+                    lcd->printLine(output, 1);
+                    zmpt->setTargetParameters(ZMPT101B::Target::HZ,
+                                              hzTarget,
+                                              hzTargetTolerance,
+                                              ZMPT_HZ_LOWERBOUND,
+                                              ZMPT_HZ_UPPERBOUND);
+                    break;
+
+                  case 2:
+                    if(modifyValue)hzTargetTolerance += 0.1*(double)argv;
+                    if(hzTargetTolerance < 0)hzTargetTolerance = 0.0;
+                    dtostrf(hzTargetTolerance, 2, 1, output);
+                    lcd->printLine(output, 1);
+                    zmpt->setTargetParameters(ZMPT101B::Target::HZ,
+                                              hzTarget,
+                                              hzTargetTolerance,
+                                              ZMPT_HZ_LOWERBOUND,
+                                              ZMPT_HZ_UPPERBOUND);
+                    break;
+                }
+                break;
             }
         }
         else {
             switch (message->type) {
             case ADMMessage::MessageType::TYPE_FINALISE:
                 admConnected = false;
-                lcd->reset();
                 break;
             default:
-                if(!admConnected){
-                  lcd->reset();
-                }
                 admConnected = true;
                 break;
             }
@@ -209,15 +283,13 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                 Serial.print(zmpt->getSummary());
                 Serial.println();
             }
-            if (admConnected) {
-                sprintf(output, "*%s", zmpt->getSummary());
-            }
-            else {
+            if (mode == MODE_TEST) {
+                sprintf(output, "T:%s", zmpt->getSummary());
+            } else {
                 sprintf(output, "%s", zmpt->getSummary());
             }
             lcd->printLine(output);
-            memset(output, 0, 20);
-            sprintf(output, "SP=%d", svc->getPosition());
+            sprintf(output, "SP=%d ES=%s", svc->getPosition(), engineOn ? "On" : (bsp->isOn() ? "BP On" : "Off"));
             lcd->printLine(output, 1);
             break;
 
@@ -253,7 +325,7 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
 
     svc = (ServoController*)ADM->addDevice(SVC_ID, ArduinoDevice::Category::SERVO, "SERVO");
     svc->setPin(SVC_SERVO_PIN);
-    svc->setBounds(45, 135);
+    svc->setBounds(SVC_LOWER_BOUND, SVC_UPPER_BOUND);
     svc->createServo(Servo::ServoModel::MG996, SERVO_START_POS, 0, SERVO_RESOLUTION);
     /*svc->addEventListener([](ArduinoDevice* device, int eventID){
                             char output[20];
@@ -273,7 +345,7 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
         char output[20];
         switch (eventID) {
         case SwitchDevice::EVENT_SWITCH_TRIGGERED:
-            lcd->clear();
+            //lcd->clear();
             if (bsp->isOn()) {
                 //lcd->printLine("Bosspump On!");
                 //sprintf(output, "SP=%d", svc->getPosition());
@@ -285,7 +357,7 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                 //lcd->printLine("Engine Off");
                 //sprintf(output, "SP=%d", svc->getPosition());
                 //lcd->printLine(output, 1);
-                zmpt->pauseSampling(true);
+                //zmpt->pauseSampling(true);
                 engineOn = false;
                 targetLost = false;
             }
@@ -307,17 +379,17 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
 
 void loopGovernor() {
     //monitoring engine on/off
-    /*if (bsp->isOn() && !engineOn && ((millis() - bspOnAt) > 2500)) {
+    if (bsp->isOn() && !engineOn && ((millis() - bspOnAt) > ENGINE_WARMUP_TIME)) {
         engineOn = true;
-        zmpt->resumeSampling(true);
-    } */
+        //zmpt->resumeSampling(true);
+    }
 
     
     //monitoring electricity
     static unsigned long ms2 = millis();
     static unsigned int waitFor = 0; //wait a number of cycles
     static double lastValue = 0.0;
-    if (mode != MODE_MANUAL && targetLost && ((millis() - ms2) > 250)) {
+    if ((mode == MODE_AUTO || mode == MODE_TEST) && targetLost && ((millis() - ms2) > 250)) {
         ms2 = millis();
 
         if (waitFor > 0) {
@@ -337,7 +409,7 @@ void loopGovernor() {
             if (resultDir != desiredDir) { //Take some action
                 switch (desiredDir) {
                 case ZMPT101B::Direction::Falling:
-                    svc->rotateBy(-SERVO_ROTATE_INC);
+                    svc->rotateBy(-rotateServoBy*SERVO_RESOLUTION);
                     if (svc->reachedLowerBound()) {
                         lcd->printLine("<<<< SP=LB!", 1);
                     }
@@ -350,7 +422,7 @@ void loopGovernor() {
                     break;
 
                 case ZMPT101B::Direction::Rising:
-                    svc->rotateBy(SERVO_ROTATE_INC);
+                    svc->rotateBy(rotateServoBy*SERVO_RESOLUTION);
                     if (svc->reachedUpperBound()) {
                         lcd->printLine(">>>> SP=UB!", 1);
                     }

@@ -144,6 +144,10 @@ void setup() {
     } else {
       Serial.println("Setup completed successfully!");
       lcd->printLine("Setup!");
+      if(mode == MODE_NONE){ //for testing purposes
+        zmpt->pauseSampling(true);
+        lcd->printLine("Select a mode...", 1);
+      }
     }
   }
 }
