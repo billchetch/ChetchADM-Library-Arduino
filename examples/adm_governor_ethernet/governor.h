@@ -31,7 +31,6 @@
 
 //if in manual mode
 #define CMD_ROTATE_SERVO 20
-#define SERVO_ROTATE_INC 1 //in multiples of servo resolution (see below)
 
 //in in config mode
 #define CMD_CHOOSE_CONFIG_OPTION 30
@@ -52,14 +51,15 @@ int configOptionsIndex = 0;
 #define ZMPT_REPORT_INTERVAL 1000
 #define ZMPT_HZ_THRESHOLD_VOLTAGE 110 //half of expected voltage
 #define ZMPT_PIN A0
-#define ZMPT_HZ_TARGET 50
-#define ZMPT_HZ_TARGET_TOLERANCE 0.5
+#define ZMPT_HZ_TARGET 51.0
+#define ZMPT_HZ_TARGET_TOLERANCE 1.0
 #define ZMPT_HZ_LOWERBOUND 46.0
 #define ZMPT_HZ_UPPERBOUND 54.0
 #define SVC_ID 3
 #define SVC_SERVO_PIN 30
 #define SERVO_START_POS 90
 #define SERVO_RESOLUTION 5
+#define SERVO_ROTATE_INC -3 //in multiples of servo resolution (see below)
 #define SVC_LOWER_BOUND 15
 #define SVC_UPPER_BOUND 135
 #define BSP_ID 4
@@ -389,7 +389,7 @@ void loopGovernor() {
     static unsigned long ms2 = millis();
     static unsigned int waitFor = 0; //wait a number of cycles
     static double lastValue = 0.0;
-    if ((mode == MODE_AUTO || mode == MODE_TEST) && targetLost && ((millis() - ms2) > 250)) {
+    if (((mode == MODE_AUTO && engineOn) || mode == MODE_TEST) && targetLost && ((millis() - ms2) > 250)) {
         ms2 = millis();
 
         if (waitFor > 0) {

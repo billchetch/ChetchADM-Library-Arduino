@@ -175,7 +175,7 @@ void loop() {
 
   //variety of conditions that trigger an reinitialising of the ethernet connection
   
-  if(resetHardware){
+  if(resetHardware && !bsp->isOn()){
     lcd->reset();
     lcd->printLine("Reset Ethernet");
     if(TRACE && !EthernetManager::isLinked())Serial.println("Ethernet not linked");
