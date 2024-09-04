@@ -52,15 +52,15 @@ int configOptionsIndex = 0;
 #define ZMPT_HZ_THRESHOLD_VOLTAGE 110 //half of expected voltage
 #define ZMPT_PIN A0
 #define ZMPT_HZ_TARGET 51.0
-#define ZMPT_HZ_TARGET_TOLERANCE 1.0
+#define ZMPT_HZ_TARGET_TOLERANCE 0.8
 #define ZMPT_HZ_LOWERBOUND 46.0
 #define ZMPT_HZ_UPPERBOUND 54.0
 #define SVC_ID 3
 #define SVC_SERVO_PIN 30
 #define SERVO_START_POS 90
 #define SERVO_RESOLUTION 5
-#define SERVO_ROTATE_INC -3 //in multiples of servo resolution (see below)
-#define SVC_LOWER_BOUND 15
+#define SERVO_ROTATE_INC -2 //in multiples of servo resolution (see below)
+#define SVC_LOWER_BOUND 10
 #define SVC_UPPER_BOUND 135
 #define BSP_ID 4
 #define BOSPUMP_PIN 8
