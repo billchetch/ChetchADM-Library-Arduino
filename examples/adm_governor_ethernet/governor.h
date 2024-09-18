@@ -53,8 +53,8 @@ int configOptionsIndex = 0;
 #define ZMPT_PIN A0
 #define ZMPT_HZ_TARGET 51.0
 #define ZMPT_HZ_TARGET_TOLERANCE 0.8
-#define ZMPT_HZ_LOWERBOUND 46.0
-#define ZMPT_HZ_UPPERBOUND 54.0
+#define ZMPT_HZ_LOWERBOUND 44.0
+#define ZMPT_HZ_UPPERBOUND 60.0
 #define SVC_ID 3
 #define SVC_SERVO_PIN 30
 #define SERVO_START_POS 90
@@ -77,8 +77,8 @@ SwitchDevice* bsp = NULL;
 bool admConnected = false;
 
 //control variables
-int mode = MODE_NONE; //this starts in an unselected mode
-//int mode = MODE_AUTO; //this starts as a governor
+//int mode = MODE_NONE; //this starts in an unselected mode
+int mode = MODE_AUTO; //this starts as a governor
 bool targetLost = false;
 bool engineOn = false;
 unsigned long bspOnAt = 0;
@@ -126,7 +126,7 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
                     configOptionsIndex = MAX_CONFIG_OPTIONS - 1; //move to end so that first selection is at the beginning
                 } else if (argv == MODE_AUTO) {
                     lcd->printLine("Auto Mode...");
-                    if (zmpt->isSamplingPaused()) {
+                    if (engineOn && zmpt->isSamplingPaused()) {
                         zmpt->resumeSampling(true);
                     }
                     sprintf(output, "SP=%d", svc->getPosition());
@@ -345,19 +345,21 @@ void setupGovernor(ArduinoDeviceManager* ADM) {
         char output[20];
         switch (eventID) {
         case SwitchDevice::EVENT_SWITCH_TRIGGERED:
-            //lcd->clear();
             if (bsp->isOn()) {
-                //lcd->printLine("Bosspump On!");
-                //sprintf(output, "SP=%d", svc->getPosition());
-                //lcd->printLine(output, 1);
+                lcd->printLine("Bosspump On!");
+                sprintf(output, "SP=%d", svc->getPosition());
+                lcd->printLine(output, 1);
                 bspOnAt = millis();
                 engineOn = false;
             }
             else {
-                //lcd->printLine("Engine Off");
-                //sprintf(output, "SP=%d", svc->getPosition());
-                //lcd->printLine(output, 1);
-                //zmpt->pauseSampling(true);
+                if(engineOn){
+                  svc->moveTo(SERVO_START_POS); //return to start position
+                  lcd->printLine("Engine Off");
+                  sprintf(output, "SP=%d", svc->getPosition());
+                  lcd->printLine(output, 1);
+                  zmpt->pauseSampling(true);
+                }
                 engineOn = false;
                 targetLost = false;
             }
@@ -381,7 +383,10 @@ void loopGovernor() {
     //monitoring engine on/off
     if (bsp->isOn() && !engineOn && ((millis() - bspOnAt) > ENGINE_WARMUP_TIME)) {
         engineOn = true;
-        //zmpt->resumeSampling(true);
+        if(mode == MODE_AUTO && zmpt->isSamplingPaused()){
+          zmpt->resumeSampling(true);
+        }
+        lcd->printLine("Engine On!");
     }
 
     
