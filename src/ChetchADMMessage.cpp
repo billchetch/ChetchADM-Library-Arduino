@@ -119,7 +119,7 @@ namespace Chetch{
 
     long ADMMessage::argumentAsLong(byte argIdx){
         if(hasArgument(argIdx)){
-            return Utils::bytesTo<long>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
+            return bytesTo<long>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
         } else {
             return 0;
         }
@@ -127,7 +127,7 @@ namespace Chetch{
 
     unsigned long ADMMessage::argumentAsULong(byte argIdx){
         if(hasArgument(argIdx)){
-            return Utils::bytesTo<unsigned long>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
+            return bytesTo<unsigned long>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
         } else {
             return 0;
         }
@@ -170,7 +170,7 @@ namespace Chetch{
 
     float ADMMessage::argumentAsFloat(byte argIdx){
         if(hasArgument(argIdx)){
-            return Utils::bytesTo<float>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
+            return bytesTo<float>(getArgument(argIdx), getArgumentSize(argIdx), littleEndian);
         } else {
             return 0;
         }

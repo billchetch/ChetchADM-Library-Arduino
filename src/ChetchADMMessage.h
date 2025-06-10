@@ -44,6 +44,15 @@ namespace Chetch{
             static const byte HEADER_SIZE = 4; //type, tag, target, sender
             
 
+            template <typename T> static T bytesTo(byte *bytes, int numberOfBytes, bool littleEndian){
+                //TODO: cater for not littleEndian
+                T retVal = 0;
+                for(int i = 0; i < numberOfBytes; i++){
+                    ((byte *)&retVal)[i] = bytes[i];
+                }
+                return retVal;
+            };
+            
         private:
             byte maxBytes = 0;
             byte *bytes; //an array of all the bytes the message uses
